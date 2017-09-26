@@ -18,15 +18,15 @@ func _ready():
 	marker = get_node("RedDot")
 	root = get_node("/root")
 	hex_marker = find_node("HexMarker")
-	self.display_hex_id()
+	# self.display_hex_id()
 
 func _input(event):
 	if event.type == InputEvent.KEY:
 		if event.scancode == KEY_ESCAPE:
 			get_tree().quit()
-	elif event.type == InputEvent.MOUSE_BUTTON:
+	elif event.is_action_pressed('mouse_click'):
 		marker.set_pos(event.pos)
-		print("Got Tile "+String(self.get_tile(event.pos))+" at position "+String(event.pos))
+		# print("Got Tile "+String(self.get_tile(event.pos))+" at position "+String(event.pos))
 		self.highlight_hex(event.pos)
 
 func _fixed_process(delta):
@@ -54,13 +54,31 @@ func get_tile(world_position):
 	
 # Debug method to draw around the region of a tile to highlight it
 func highlight_hex(position):
-	# get hexagon from world_position
+	# get coordinates of hexagon in grid from global pixel coordinates
 	var hex_position = hexmap.world_to_map(position)
+	print("Position of hexagon relative to grid is "+String(hex_position))
+
 	var hex_world_pos = hexmap.map_to_world(hex_position)
+	print("Calculated global hexagon position "+String(hex_world_pos)+" from grid relative "+String(hex_position))
+
+	# Draw some infos on the tile
 	var new_highlight = hex_marker.duplicate()
-	new_highlight.set_pos(hex_world_pos)
+	var global_pos_label = Label.new()
+	var grid_pos_label = Label.new()
+	print("CellSize: "+String(hexmap.get_cell_size()))
+	var highlight_pos = hexmap.get_cell_size() + hex_world_pos
+	new_highlight.set_pos(highlight_pos)
+	global_pos_label.set_text(String(hex_world_pos))
+	global_pos_label.set_pos(hex_world_pos)
+	grid_pos_label.set_text(String(hex_position))
+	var grid_pos_label_pos = Vector2(hex_world_pos.x, hex_world_pos.y+20)
+	grid_pos_label.set_pos(grid_pos_label_pos)
 	self.add_child(new_highlight)
+	self.add_child(global_pos_label)
+	self.add_child(grid_pos_label)
 	new_highlight.set_owner(get_tree().get_edited_scene_root())
+	global_pos_label.set_owner(get_tree().get_edited_scene_root())
+	grid_pos_label.set_owner(get_tree().get_edited_scene_root())
 
 func display_hex_id():
 	var tile_world_pos = null
