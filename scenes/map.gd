@@ -7,6 +7,7 @@ var tiles = null
 var hexmap = null
 var marker = null
 var root = null
+var hex_highlight = null
 
 func _ready():
 	set_fixed_process(true)
@@ -17,6 +18,7 @@ func _ready():
 	marker = get_node("RedDot")
 	root = get_node("/root")
 	self.display_hex_id()
+	hex_highlight = preload("res://assets/images/hex_outline_red.png")
 
 func _input(event):
 	if event.type == InputEvent.KEY:
@@ -62,9 +64,15 @@ func display_hex_id():
 			tile_world_pos = hexmap.map_to_world(Vector2(tile_x, tile_y))
 			print("tile_world_pos set: "+String(tile_world_pos))
 			# self.draw_circle(tile_world_pos, hexmap.get_cell_size().x, Color(globals.getColor('red')[0],globals.getColor('red')[1], globals.getColor('red')[2]))
-			var new_node = Label.new()
-			new_node.set_text(String(tile_world_pos))
-			new_node.set_pos(tile_world_pos)
-			self.add_child(new_node)
-			print("Attempted to add_child to map and now setting owner")
-			new_node.set_owner(get_tree().get_edited_scene_root())
+			var new_label = Label.new()
+			new_label.set_text(String(tile_world_pos))
+			new_label.set_pos(tile_world_pos)
+			self.add_child(new_label)
+			new_label.set_owner(get_tree().get_edited_scene_root())
+			## Highlight
+			var new_highlight = Sprite.new()
+			new_highlight.set_texture(hex_highlight)
+			new_highlight.set_pos(tile_world_pos)
+			self.add_child(new_highlight)
+			print(new_highlight)
+			new_highlight.set_owner(get_tree().get_edited_scene_root())
