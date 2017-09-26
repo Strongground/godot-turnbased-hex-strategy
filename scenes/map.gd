@@ -7,7 +7,7 @@ var tiles = null
 var hexmap = null
 var marker = null
 var root = null
-var hex_highlight = null
+var hex_marker = null
 
 func _ready():
 	set_fixed_process(true)
@@ -17,8 +17,8 @@ func _ready():
 	hexmap = get_node("MapZones")
 	marker = get_node("RedDot")
 	root = get_node("/root")
+	hex_marker = find_node("HexMarker")
 	self.display_hex_id()
-	hex_highlight = preload("res://assets/images/hex_outline_red.png")
 
 func _input(event):
 	if event.type == InputEvent.KEY:
@@ -27,6 +27,7 @@ func _input(event):
 	elif event.type == InputEvent.MOUSE_BUTTON:
 		marker.set_pos(event.pos)
 		print("Got Tile "+String(self.get_tile(event.pos))+" at position "+String(event.pos))
+		self.highlight_hex(event.pos)
 
 func _fixed_process(delta):
 	pass
@@ -54,7 +55,12 @@ func get_tile(world_position):
 # Debug method to draw around the region of a tile to highlight it
 func highlight_hex(position):
 	# get hexagon from world_position
-	pass
+	var hex_position = hexmap.world_to_map(position)
+	var hex_world_pos = hexmap.map_to_world(hex_position)
+	var new_highlight = hex_marker.duplicate()
+	new_highlight.set_pos(hex_world_pos)
+	self.add_child(new_highlight)
+	new_highlight.set_owner(get_tree().get_edited_scene_root())
 
 func display_hex_id():
 	var tile_world_pos = null
@@ -62,17 +68,15 @@ func display_hex_id():
 		for tile_y in range(-7, 10):
 			# print("["+String(tile_x)+","+String(tile_y)+"]")
 			tile_world_pos = hexmap.map_to_world(Vector2(tile_x, tile_y))
-			print("tile_world_pos set: "+String(tile_world_pos))
+			# print("tile_world_pos set: "+String(tile_world_pos))
 			# self.draw_circle(tile_world_pos, hexmap.get_cell_size().x, Color(globals.getColor('red')[0],globals.getColor('red')[1], globals.getColor('red')[2]))
 			var new_label = Label.new()
 			new_label.set_text(String(tile_world_pos))
 			new_label.set_pos(tile_world_pos)
 			self.add_child(new_label)
 			new_label.set_owner(get_tree().get_edited_scene_root())
-			## Highlight
-			var new_highlight = Sprite.new()
-			new_highlight.set_texture(hex_highlight)
+			## Highlight each hex tile
+			var new_highlight = hex_marker.duplicate()
 			new_highlight.set_pos(tile_world_pos)
 			self.add_child(new_highlight)
-			print(new_highlight)
 			new_highlight.set_owner(get_tree().get_edited_scene_root())

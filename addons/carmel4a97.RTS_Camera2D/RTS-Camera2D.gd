@@ -116,7 +116,10 @@ func _fixed_process(delta):
 	var camera_new_bottom = get_pos().y + camera_movement.y + self.half_viewport_y
 	
 	if camera_new_left > self.get_limit(0) and camera_new_right < self.get_limit(2) and camera_new_top > self.get_limit(1) and camera_new_bottom < self.get_limit(3):
-		set_pos(get_pos() + camera_movement * get_zoom())
+		# print("Updating camera position")
+		self.set_pos(self.get_pos() + camera_movement * get_zoom())
+	# else:
+		# print("Not updating camera position because condition was not true")
 	
 	# Set camera movement to zero, update old mouse position.
 	camera_movement = Vector2(0,0)
