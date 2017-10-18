@@ -1,7 +1,7 @@
 [gd_scene load_steps=5 format=1]
 
-[ext_resource path="res://classes/unit.gd" type="Script" id=1]
-[ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
+[ext_resource path="res://classes/editor_marker.gd" type="Script" id=1]
+[ext_resource path="res://assets/icons/editor_marker_city.png" type="Texture" id=2]
 [ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
 
 [sub_resource type="CircleShape2D" id=1]
@@ -9,40 +9,35 @@
 custom_solver_bias = 0.0
 radius = 10.0
 
-[node name="Unit" type="Area2D"]
+[node name="EditorMarker" type="Area2D"]
 
 input/pickable = true
 shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Matrix32( 6.31008, 0, 0, 6.31008, 0, -2 )
+shapes/0/transform = Matrix32( 6.31008, 0, 0, 6.31008, -2, 1 )
 shapes/0/trigger = false
 gravity_vec = Vector2( 0, 1 )
-gravity = 100.0
+gravity = 98.0
 linear_damp = 0.1
 angular_damp = 1.0
 script/script = ExtResource( 1 )
-is_selectable = true
-unit_id = ""
-unit_type = 0
-unit_owner = 0
-unit_faction = 0
-direction = "RIGHT"
-graphical_scheme = null
+is_selectable = false
+map_text = ""
+type = null
 
-[node name="UnitImage" type="Sprite" parent="."]
+[node name="Icon" type="Sprite" parent="."]
 
-transform/scale = Vector2( 0.352323, 0.352323 )
-z/z = 2
-z/relative = false
+transform/pos = Vector2( 0, 0.999999 )
+transform/scale = Vector2( 0.843744, 0.843744 )
 texture = ExtResource( 2 )
 
-[node name="HexOutline" type="Sprite" parent="."]
+[node name="hex_outline" type="Sprite" parent="."]
 
 visibility/opacity = 0.0
 texture = ExtResource( 3 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 
-transform/pos = Vector2( 0, -2 )
+transform/pos = Vector2( -2, 1 )
 transform/scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
 trigger = false

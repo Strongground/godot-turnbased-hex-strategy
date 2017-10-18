@@ -5,15 +5,18 @@ extends Node
 # @return Dictionary
 static func getColors():
     var colors = {
-        'red':   [204,0,0],
-		'white': [255,255,255],
-		'black': [0,0,0]
+        'red':    [204,0,0],
+		'white':  [255,255,255],
+		'black':  [0,0,0],
+		'yellow': [0,255,255],
+		'green':  [0,255,0],
+		'blue':	  [0,0,255]
     }
     return colors
 
-# Get Array with RGB values by common color name (i.e. 'white' returns [255,255,255])
+# Return array with RGB values by common color name (i.e. 'white' returns [255,255,255])
 # @return Array
-static func getColor(color_name):
+static func getColorArray(color_name):
 	var colors = getColors()
 	if colors.has(color_name):
 		return colors[color_name]
@@ -21,11 +24,11 @@ static func getColor(color_name):
 		# if color not in dict, return pink as easy-to-notice fallback
 		return [255,192,203]
 
-# Return true if color exists in color dictionary. Convienience method to avoid messy implementations to avoid NPEs all over.
-# @return Boolean
-static func hasColor(color_name):
+# Return Color() by common color name (i.e. 'red' returns Color(204,0,0))
+static func getColor(color_name):
 	var colors = getColors()
-	for color in colors:
-		if color_name == color:
-			return true
-	return false
+	if colors.has(color_name):
+		return Color(colors[color_name][0],colors[color_name][1],colors[color_name][2])
+	else:
+		# if color not in dict, return pink as easy-to-notice fallback
+		return [255,192,203]

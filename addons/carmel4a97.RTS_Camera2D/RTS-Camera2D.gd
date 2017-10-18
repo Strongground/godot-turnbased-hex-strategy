@@ -30,12 +30,14 @@ export (bool) var drag = true
 export (bool) var edge = false
 export (bool) var wheel = true
 
-export (int) var zoom_out_limit = 100
+export (float) var zoom_out_limit = 1
+export (float) var zoom_in_limit = 0.5
 
 # Camera speed in px/s.
 export (int) var camera_speed = 450 
 
 # Initial zoom value taken from Editor.
+# @TODO Seems to have no effect
 var camera_zoom = get_zoom()
 
 # Value meaning how near to the window edge (in px) the mouse must be,
@@ -44,7 +46,7 @@ export (int) var camera_margin = 50
 
 # It changes a camera zoom value in units... (?, but it works... it probably
 # multiplies camera size by 1+camera_zoom_speed)
-const camera_zoom_speed = Vector2(0.5, 0.5)
+const camera_zoom_speed = Vector2(0.0075, 0.0075)
 
 # Vector of camera's movement / second.
 var camera_movement = Vector2()
@@ -56,6 +58,11 @@ var _prev_mouse_pos = null
 var half_viewport_x = 0.0
 var half_viewport_y = 0.0
 
+var GUI = null
+var GUI_zoomLabel = null
+var GUI_position = null
+var scale_factor = 1
+
 # INPUTS
 
 # Right mouse button was or is pressed.
@@ -64,12 +71,34 @@ var __rmbk = false
 var __keys = [false, false, false, false]
 
 func _ready():
+	# This is the factor by which the viewport and all elements are upscaled on hidpi-screens,
+	# use it as divider to get original coordinates. If no hidpi detected, it is set to 1,
+	# which shold not affect anything, and thus can be used anyhwere
+	if OS.get_screen_dpi() >= 240:
+		scale_factor = 2
 	set_h_drag_enabled(false)
 	set_v_drag_enabled(false)
 	set_enable_follow_smoothing(false)
 	set_follow_smoothing(4)
 	set_fixed_process(true)
 	set_process_unhandled_input(true)
+	GUI = find_node('GUI')
+	GUI_zoomLabel = find_node('ZoomLevel')
+	self._updateGUI()
+	
+func _updateGUI():
+	# Set scale of GUI which happens to always be 0.5 more than camera_zoom level to look right
+	# GUI.set_scale(camera_zoom + Vector2(0.5,0.5))
+	# # Calc and set position of GUI from viewport height minus GUI heigth (with correct scale)
+	# var viewport_size = get_viewport().get_rect().size
+	# GUI_position = Vector2(
+	# 	0,
+	# 	(viewport_size.y / scale_factor) - (GUI.get_size().y * GUI.get_scale().y)
+	# )
+	# GUI.set_pos(GUI_position)
+	# Debugging
+	# print("GUI position is: "+String(GUI_position))
+	pass
 
 func _fixed_process(delta):
 	half_viewport_x = get_viewport().get_rect().size.x / 2
@@ -116,10 +145,7 @@ func _fixed_process(delta):
 	var camera_new_bottom = get_pos().y + camera_movement.y + self.half_viewport_y
 	
 	if camera_new_left > self.get_limit(0) and camera_new_right < self.get_limit(2) and camera_new_top > self.get_limit(1) and camera_new_bottom < self.get_limit(3):
-		# print("Updating camera position")
 		self.set_pos(self.get_pos() + camera_movement * get_zoom())
-	# else:
-		# print("Not updating camera position because condition was not true")
 	
 	# Set camera movement to zero, update old mouse position.
 	camera_movement = Vector2(0,0)
@@ -132,22 +158,27 @@ func _unhandled_input(event):
 			__rmbk = true
 		else:
 			__rmbk = false
-		
-		# Check if mouse wheel was used. Not handled by ImputMap!
+
+		# Check if mouse wheel was used. Not handled by InputMap!
 		if wheel:
-			# Checking if future zoom won't be under 0.
+			# Checking if future zoom won't be under 0 and zoom_in_limit.
 			# In that case engine will flip screen.
 			if event.button_index == BUTTON_WHEEL_UP and\
-			camera_zoom.x - camera_zoom_speed.x > 0 and\
-			camera_zoom.y - camera_zoom_speed.y > 0:
+			zoom_in_limit > 0 and\
+			camera_zoom.x - camera_zoom_speed.x > zoom_in_limit and\
+			camera_zoom.y - camera_zoom_speed.y > zoom_in_limit:
 				camera_zoom -= camera_zoom_speed
+				GUI_zoomLabel.set_text(String(camera_zoom))
 				set_zoom(camera_zoom)
+				self._updateGUI()
 			# Checking if future zoom won't be above zoom_out_limit.
 			if event.button_index == BUTTON_WHEEL_DOWN and\
-			camera_zoom.x + camera_zoom_speed.x < zoom_out_limit and\
-			camera_zoom.y + camera_zoom_speed.y < zoom_out_limit:
+				camera_zoom.x + camera_zoom_speed.x < zoom_out_limit and\
+				camera_zoom.y + camera_zoom_speed.y < zoom_out_limit:
 				camera_zoom += camera_zoom_speed
+				GUI_zoomLabel.set_text(String(camera_zoom))
 				set_zoom(camera_zoom)
+				self._updateGUI()
 	# Control by keyboard handled by InputMap.
 	if event.type == InputEvent.KEY and key:
 		if event.is_action_pressed("ui_left"):
