@@ -54,9 +54,18 @@ func _ready():
 # Return a object with attributes for the tile with the given tileset index.
 # @input Int the tileset index
 func _get_tile_attributes_by_index(index):
-	index
 	if index <= tile_types.size() or index >= 0:
 		return tile_types[index]
+	else:
+		print("Error: tilemap.gd - No tile type with that index:"+String(index))
+		return false
+
+# Return an attribute by its name for the tile with given tileset index.__keys
+# @input Int the tileset index
+# @input String attribute name
+func _get_tile_attribute_by_index(index, attribute):
+	if index <= tile_types.size() or index >= 0:
+		return tile_types[index][String(attribute)]
 	else:
 		print("Error: tilemap.gd - No tile type with that index:"+String(index))
 		return false

@@ -15,16 +15,17 @@ extends Node2D
 var camera = null
 var globals = null
 var tiles = null
+var tile_list = null
 var hexmap = null
+var hex_offset = null
+var current_tile = null
 var marker = null
 var root = null
 var hex_marker = null
 var counter = 0
 var mouse_pos_ui = null
 var camera_pos_ui = null
-var tile_list = null
-var hex_offset = null
-var current_tile = null
+var hex_directions = null
 
 func _ready():
 	set_fixed_process(true)
@@ -38,490 +39,72 @@ func _ready():
 	mouse_pos_ui = find_node('MousePos')
 	camera_pos_ui = find_node('CameraPos')
 	hex_offset = Vector2(-6,0)
-	tile_list = [
-		[-3, -7],
-		[-1, -7],
-		[1, -7],
-		[3, -7],
-		[5, -7],
-		[7, -7],
-		[9, -7],
-		[11, -7],
-		[13, -7],
-		[15, -7],
-		[17, -7],
-		[19, -7],
-		[21, -7],
-		[23, -7],
-		[25, -7],
-		[-3, -6],
-		[-2, -6],
-		[-1, -6],
-		[0, -6],
-		[1, -6],
-		[2, -6],
-		[3, -6],
-		[4, -6],
-		[5, -6],
-		[6, -6],
-		[7, -6],
-		[8, -6],
-		[9, -6],
-		[10, -6],
-		[11, -6],
-		[12, -6],
-		[13, -6],
-		[14, -6],
-		[15, -6],
-		[16, -6],
-		[17, -6],
-		[18, -6],
-		[19, -6],
-		[20, -6],
-		[21, -6],
-		[22, -6],
-		[23, -6],
-		[24, -6],
-		[25, -6],
-		[-3, -5],
-		[-2, -5],
-		[-1, -5],
-		[0, -5],
-		[1, -5],
-		[2, -5],
-		[3, -5],
-		[4, -5],
-		[5, -5],
-		[6, -5],
-		[7, -5],
-		[8, -5],
-		[9, -5],
-		[10, -5],
-		[11, -5],
-		[12, -5],
-		[13, -5],
-		[14, -5],
-		[15, -5],
-		[16, -5],
-		[17, -5],
-		[18, -5],
-		[19, -5],
-		[20, -5],
-		[21, -5],
-		[22, -5],
-		[23, -5],
-		[24, -5],
-		[25, -5],
-		[-3, -4],
-		[-2, -4],
-		[-1, -4],
-		[0, -4],
-		[1, -4],
-		[2, -4],
-		[3, -4],
-		[4, -4],
-		[5, -4],
-		[6, -4],
-		[7, -4],
-		[8, -4],
-		[9, -4],
-		[10, -4],
-		[11, -4],
-		[12, -4],
-		[13, -4],
-		[14, -4],
-		[15, -4],
-		[16, -4],
-		[17, -4],
-		[18, -4],
-		[19, -4],
-		[20, -4],
-		[21, -4],
-		[22, -4],
-		[23, -4],
-		[24, -4],
-		[25, -4],
-		[-3, -3],
-		[-2, -3],
-		[-1, -3],
-		[0, -3],
-		[1, -3],
-		[2, -3],
-		[3, -3],
-		[4, -3],
-		[5, -3],
-		[6, -3],
-		[7, -3],
-		[8, -3],
-		[9, -3],
-		[10, -3],
-		[11, -3],
-		[12, -3],
-		[13, -3],
-		[14, -3],
-		[15, -3],
-		[16, -3],
-		[17, -3],
-		[18, -3],
-		[19, -3],
-		[20, -3],
-		[21, -3],
-		[22, -3],
-		[23, -3],
-		[24, -3],
-		[25, -3],
-		[-3, -2],
-		[-2, -2],
-		[-1, -2],
-		[0, -2],
-		[1, -2],
-		[2, -2],
-		[3, -2],
-		[4, -2],
-		[5, -2],
-		[6, -2],
-		[7, -2],
-		[8, -2],
-		[9, -2],
-		[10, -2],
-		[11, -2],
-		[12, -2],
-		[13, -2],
-		[14, -2],
-		[15, -2],
-		[16, -2],
-		[17, -2],
-		[18, -2],
-		[19, -2],
-		[20, -2],
-		[21, -2],
-		[22, -2],
-		[23, -2],
-		[24, -2],
-		[25, -2],
-		[-3, -1],
-		[-2, -1],
-		[-1, -1],
-		[0, -1],
-		[1, -1],
-		[2, -1],
-		[3, -1],
-		[4, -1],
-		[5, -1],
-		[6, -1],
-		[7, -1],
-		[8, -1],
-		[9, -1],
-		[10, -1],
-		[11, -1],
-		[12, -1],
-		[13, -1],
-		[14, -1],
-		[15, -1],
-		[16, -1],
-		[17, -1],
-		[18, -1],
-		[19, -1],
-		[20, -1],
-		[21, -1],
-		[22, -1],
-		[23, -1],
-		[24, -1],
-		[25, -1],
-		[-3, 0],
-		[-2, 0],
-		[-1, 0],
-		[0, 0],
-		[1, 0],
-		[2, 0],
-		[3, 0],
-		[4, 0],
-		[5, 0],
-		[6, 0],
-		[7, 0],
-		[8, 0],
-		[9, 0],
-		[10, 0],
-		[11, 0],
-		[12, 0],
-		[13, 0],
-		[14, 0],
-		[15, 0],
-		[16, 0],
-		[17, 0],
-		[18, 0],
-		[19, 0],
-		[20, 0],
-		[21, 0],
-		[22, 0],
-		[23, 0],
-		[24, 0],
-		[25, 0],
-		[-3, 1],
-		[-2, 1],
-		[-1, 1],
-		[0, 1],
-		[1, 1],
-		[2, 1],
-		[3, 1],
-		[4, 1],
-		[5, 1],
-		[6, 1],
-		[7, 1],
-		[8, 1],
-		[9, 1],
-		[10, 1],
-		[11, 1],
-		[12, 1],
-		[13, 1],
-		[14, 1],
-		[15, 1],
-		[16, 1],
-		[17, 1],
-		[18, 1],
-		[19, 1],
-		[20, 1],
-		[21, 1],
-		[22, 1],
-		[23, 1],
-		[24, 1],
-		[25, 1],
-		[-3, 2],
-		[-2, 2],
-		[-1, 2],
-		[0, 2],
-		[1, 2],
-		[2, 2],
-		[3, 2],
-		[4, 2],
-		[5, 2],
-		[6, 2],
-		[7, 2],
-		[8, 2],
-		[9, 2],
-		[10, 2],
-		[11, 2],
-		[12, 2],
-		[13, 2],
-		[14, 2],
-		[15, 2],
-		[16, 2],
-		[17, 2],
-		[18, 2],
-		[19, 2],
-		[20, 2],
-		[21, 2],
-		[22, 2],
-		[23, 2],
-		[24, 2],
-		[25, 2],
-		[-3, 3],
-		[-2, 3],
-		[-1, 3],
-		[0, 3],
-		[1, 3],
-		[2, 3],
-		[3, 3],
-		[4, 3],
-		[5, 3],
-		[6, 3],
-		[7, 3],
-		[8, 3],
-		[9, 3],
-		[10, 3],
-		[11, 3],
-		[12, 3],
-		[13, 3],
-		[14, 3],
-		[15, 3],
-		[16, 3],
-		[17, 3],
-		[18, 3],
-		[19, 3],
-		[20, 3],
-		[21, 3],
-		[22, 3],
-		[23, 3],
-		[24, 3],
-		[25, 3],
-		[-3, 4],
-		[-2, 4],
-		[-1, 4],
-		[0, 4],
-		[1, 4],
-		[2, 4],
-		[3, 4],
-		[4, 4],
-		[5, 4],
-		[6, 4],
-		[7, 4],
-		[8, 4],
-		[9, 4],
-		[10, 4],
-		[11, 4],
-		[12, 4],
-		[13, 4],
-		[14, 4],
-		[15, 4],
-		[16, 4],
-		[17, 4],
-		[18, 4],
-		[19, 4],
-		[20, 4],
-		[21, 4],
-		[22, 4],
-		[23, 4],
-		[24, 4],
-		[25, 4],
-		[-3, 5],
-		[-2, 5],
-		[-1, 5],
-		[0, 5],
-		[1, 5],
-		[2, 5],
-		[3, 5],
-		[4, 5],
-		[5, 5],
-		[6, 5],
-		[7, 5],
-		[8, 5],
-		[9, 5],
-		[10, 5],
-		[11, 5],
-		[12, 5],
-		[13, 5],
-		[14, 5],
-		[15, 5],
-		[16, 5],
-		[17, 5],
-		[18, 5],
-		[19, 5],
-		[20, 5],
-		[21, 5],
-		[22, 5],
-		[23, 5],
-		[24, 5],
-		[25, 5],
-		[-3, 6],
-		[-2, 6],
-		[-1, 6],
-		[0, 6],
-		[1, 6],
-		[2, 6],
-		[3, 6],
-		[4, 6],
-		[5, 6],
-		[6, 6],
-		[7, 6],
-		[8, 6],
-		[9, 6],
-		[10, 6],
-		[11, 6],
-		[12, 6],
-		[13, 6],
-		[14, 6],
-		[15, 6],
-		[16, 6],
-		[17, 6],
-		[18, 6],
-		[19, 6],
-		[20, 6],
-		[21, 6],
-		[22, 6],
-		[23, 6],
-		[24, 6],
-		[25, 6],
-		[-3, 7],
-		[-2, 7],
-		[-1, 7],
-		[0, 7],
-		[1, 7],
-		[2, 7],
-		[3, 7],
-		[4, 7],
-		[5, 7],
-		[6, 7],
-		[7, 7],
-		[8, 7],
-		[9, 7],
-		[10, 7],
-		[11, 7],
-		[12, 7],
-		[13, 7],
-		[14, 7],
-		[15, 7],
-		[16, 7],
-		[17, 7],
-		[18, 7],
-		[19, 7],
-		[20, 7],
-		[21, 7],
-		[22, 7],
-		[23, 7],
-		[24, 7],
-		[25, 7],
-		[-3, 8],
-		[-2, 8],
-		[-1, 8],
-		[0, 8],
-		[1, 8],
-		[2, 8],
-		[3, 8],
-		[4, 8],
-		[5, 8],
-		[6, 8],
-		[7, 8],
-		[8, 8],
-		[9, 8],
-		[10, 8],
-		[11, 8],
-		[12, 8],
-		[13, 8],
-		[14, 8],
-		[15, 8],
-		[16, 8],
-		[17, 8],
-		[18, 8],
-		[19, 8],
-		[20, 8],
-		[21, 8],
-		[22, 8],
-		[23, 8],
-		[24, 8],
-		[25, 8],
-		[-3, 9],
-		[-2, 9],
-		[-1, 9],
-		[0, 9],
-		[1, 9],
-		[2, 9],
-		[3, 9],
-		[4, 9],
-		[5, 9],
-		[6, 9],
-		[7, 9],
-		[8, 9],
-		[9, 9],
-		[10, 9],
-		[11, 9],
-		[12, 9],
-		[13, 9],
-		[14, 9],
-		[15, 9],
-		[16, 9],
-		[17, 9],
-		[18, 9],
-		[19, 9],
-		[20, 9],
-		[21, 9],
-		[22, 9],
-		[23, 9],
-		[24, 9],
-		[25, 9]
+	# This table serves as easy shortcut for the grid local coordinate change
+	# that needs to be done when a neighbour of a hex tile has to be found.
+	# The sorting is identical for odd and even, so hex_directions[0] always
+	# gives the northern neighbour.
+	hex_directions = [
+		# Even columns
+	    [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]],
+		# Odd columns
+	    [[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
 	]
-	# # Iterate over each tile and perform some action
-	# for tile in tile_list:
-	# 	self.display_terrain_type(tile)
+	tile_list = _build_hex_object_database()
+
+# Build a database of tiles with look-up tables for neighbours and tileset information 
+# to allow pathfinding and game logic to work.
+# @returns {Array} List of all tiles on the map with precompiled information about every tile.
+func _build_hex_object_database():
+	var all_tiles = hexmap.get_used_cells()
+	var tiles = []
+	var i = 0
+	for tile in all_tiles:
+		tiles.append({
+			'id': i,
+			'grid_pos': tile,
+			'terrain': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'terrain'),
+			'move_cost': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'move_cost'),
+			'name': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'name'),
+			# contains the grid local positions of all neighbours
+			'neighbours': {
+				'n':  _get_hex_neighbour_pos(tile, 0),
+				'ne': _get_hex_neighbour_pos(tile, 1),
+				'se': _get_hex_neighbour_pos(tile, 2),
+				's':  _get_hex_neighbour_pos(tile, 3),
+				'sw': _get_hex_neighbour_pos(tile, 4),
+				'nw': _get_hex_neighbour_pos(tile, 5),
+			}
+		})
+		i+=1
+	return tiles
+
+# Get the neighbouring tile of a given tile, by ID and direction
+# @input {Int} ID of the hex for which the neighbour should be returned
+# @input {Int} Direction of the neighbour that should be returned. Starting with 0 at 'NW'
+# @returns {Vector2} grid local position of the neighbour
+func _get_hex_neighbour_pos(hex_position, direction):
+	var parity = int(hex_position[0]) & 1
+	var resolved_direction = self.hex_directions[parity][direction]
+	return Vector2(
+		hex_position[0] + resolved_direction[0],
+		hex_position[1] + resolved_direction[1])
+
+# Get the hex tile object by world position
+# @input {Vector2} hex_position - global position of tile
+# @returns {Object} The tile object
+func _get_hex_object_from_global_pos(position):
+	var grid_position = hexmap.world_to_map(position)
+	for tile in tile_list:
+		if tile['grid_pos'] == grid_position:
+			return tile
+
+# Get the hex tile object by grid local position
+# @input {Vector2} hex_position - grid local position of tile
+# @returns {Object} The tile object
+func _get_hex_object_from_grid_pos(position):
+	for tile in tile_list:
+		if tile['grid_pos'] == position:
+			return tile
 
 func _input(event):
 	# Maybe outsource this to a click controller module, or maybe delegate all
@@ -532,18 +115,12 @@ func _input(event):
 	elif event.is_action_pressed('mouse_click'):
 		# Once set the actual global mouse position needed for conversion of the coordinates
 		var click_pos = self.get_global_mouse_pos()
-	
 		# Display information directly on top of the selected hex (position in different relations)
 		self.highlight_hex(click_pos)
-		
 		# Set current tile attributes for use by decision logic
 		current_tile = self.get_tile(click_pos)
-
-		# print("Current tile: "+String(current_tile))
-
-		# try to mark the outer dimensions (via four edges) of the selected hexagon
-		# based on double conversion of click_pos coordinates.
-		# self.mark_hex_dimensions(click_pos)
+		# Highlight neighbouring hexes of selected hex
+		self.highlight_neighbours(click_pos)
 
 func _fixed_process(delta):
 	pass
@@ -560,7 +137,7 @@ func get_tile(position):
 	tile.position = grid_pos
 	return tile
 	
-# Method to draw a outline of a tile to highlight it
+# Method to draw a outline on one tile at a time to highlight it
 # @input {Vector2} position - of the click in global coordinates
 func highlight_hex(position):
 	# get grid local coordinates of hexagon from global click coordinates
@@ -578,7 +155,9 @@ func highlight_hex(position):
 
 # Used to display additional information on top of the tile, also create a new marker on every
 # tile click and does not delete the old one
-# Also requires attribute for marker Color()
+# @input {Vector2} Global position of the tile
+# @input {Color} Color of the markers created
+# @input {Bool} If the coordinates should be rendered onto the tile
 func highlight_every_hex(position, marker_color, show_coords):
 	# get grid local coordinates of hexagon from global click coordinates
 	var global_hex_position = hexmap.world_to_map(position)
@@ -612,7 +191,29 @@ func highlight_every_hex(position, marker_color, show_coords):
 		self.add_child(grid_pos_label)
 		global_pos_label.set_owner(get_tree().get_edited_scene_root())
 		grid_pos_label.set_owner(get_tree().get_current_scene())
-		
+
+# Create a highlight marker on a given hex that stays.
+# @input {Vector2} global position of the hex tile
+# @input {Color} Color of the markers created
+func set_marker(hex_world_pos, marker_color):
+	var highlight_pos = Vector2(hex_world_pos.x + self.hex_offset.x + (hexmap.get_cell_size().x/2),
+								hex_world_pos.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
+	# duplicate the highlight
+	var new_highlight = hex_marker.duplicate()
+	new_highlight.set_modulate(globals.getColor(String(marker_color)))
+	# position the highlight
+	new_highlight.set_pos(highlight_pos)
+	# add the highlight to scene
+	self.add_child(new_highlight)
+	
+# Highlight the neighbours of a hex tile at a given global position
+# @input {Vector2} global position of the tile
+func highlight_neighbours(global_position):
+	var selected_tile = self._get_hex_object_from_global_pos(global_position)
+	for neighbour_entry in selected_tile.neighbours:
+		print(neighbour_entry)
+		var neighbour_tile_pos = hexmap.map_to_world(selected_tile.neighbours[neighbour_entry])
+		self.set_marker(neighbour_tile_pos, 'red')
 
 # Debug method to write every tile and its tilemap index into a file for checking
 func create_tile_list(tilemap):
@@ -624,7 +225,7 @@ func create_tile_list(tilemap):
 	print('Done storing')
 
 # Tries to mark the dimensions of the hex tile based on hexmap based coordinates with dots
-# @input Vector2 world space coordinates of tiles
+# @input {Vector2} world space coordinates of tiles
 func mark_hex_dimensions(position):
 	# global position to grid position
 	var grid_pos = hexmap.world_to_map(position)
@@ -660,14 +261,21 @@ func mark_hex_dimensions(position):
 	marker3.set_owner(get_tree().get_edited_scene_root())
 	marker4.set_owner(get_tree().get_edited_scene_root())
 
-# Display ID for hex tile at grid-based coordinates
-# Overlay the information onto the tile itself
-# @input {Vector2} grid_coordinates - of tile
-# @input {String} counter - Int as string that counts up hexagon ids
-func display_hex_id(grid_coordinates, counter=""):
-	var tile_world_pos = hexmap.map_to_world(Vector2(grid_coordinates[0],grid_coordinates[1]))
+# Display various coordinates for hex tiles at grid-based coordinates
+# Render the information onto the tile itself
+# @input {Vector2} input_coordinates - grid local coordinates of tile
+# @input {String} show_coordinates - String of the name of coordinates that should be shown
+# Possible values are: "grid", "global", "id"
+func display_hex_info(input_coordinates, show_coordinates):
 	var new_label = Label.new()
-	new_label.set_text(String(hexmap.get_cell(grid_coordinates[0],grid_coordinates[1]))+" - "+String(counter))
+	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
+	# Set content of label based on parameters
+	if show_coordinates == "global":
+		new_label.set_text(String(tile_world_pos))
+	elif show_coordinates == "grid":
+		new_label.set_text(String(input_coordinates))
+	elif show_coordinates == "id":
+		new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
 	new_label.set_pos(tile_world_pos)
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
