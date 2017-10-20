@@ -26,6 +26,7 @@ var counter = 0
 var mouse_pos_ui = null
 var camera_pos_ui = null
 var hex_directions = null
+var all_tiles
 
 func _ready():
 	set_fixed_process(true)
@@ -43,6 +44,7 @@ func _ready():
 	# that needs to be done when a neighbour of a hex tile has to be found.
 	# The sorting is identical for odd and even, so hex_directions[0] always
 	# gives the northern neighbour.
+	all_tiles = hexmap.get_used_cells()
 	hex_directions = [
 		# Even columns
 	    [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]],
@@ -50,12 +52,12 @@ func _ready():
 	    [[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
 	]
 	tile_list = _build_hex_object_database()
+	_visit_map(tile_list)
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
 # @returns {Array} List of all tiles on the map with precompiled information about every tile.
 func _build_hex_object_database():
-	var all_tiles = hexmap.get_used_cells()
 	var tiles = []
 	var i = 0
 	for tile in all_tiles:
@@ -65,7 +67,8 @@ func _build_hex_object_database():
 			'terrain': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'terrain'),
 			'move_cost': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'move_cost'),
 			'name': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'name'),
-			# contains the grid local positions of all neighbours
+			# contains the grid local positions of all neighbours. may also be null if no neighbour
+			# exists for a direction.
 			'neighbours': {
 				'n':  _get_hex_neighbour_pos(tile, 0),
 				'ne': _get_hex_neighbour_pos(tile, 1),
@@ -80,14 +83,18 @@ func _build_hex_object_database():
 
 # Get the neighbouring tile of a given tile, by ID and direction
 # @input {Int} ID of the hex for which the neighbour should be returned
-# @input {Int} Direction of the neighbour that should be returned. Starting with 0 at 'NW'
-# @returns {Vector2} grid local position of the neighbour
+# @input {Int} Direction of the neighbour that should be returned
+# @returns {Vector2|null} grid local position of the neighbour or null if neighbour does not exist
 func _get_hex_neighbour_pos(hex_position, direction):
 	var parity = int(hex_position[0]) & 1
 	var resolved_direction = self.hex_directions[parity][direction]
-	return Vector2(
+	var result_coordinates = Vector2(
 		hex_position[0] + resolved_direction[0],
 		hex_position[1] + resolved_direction[1])
+	if result_coordinates in all_tiles:
+		return result_coordinates
+	else:
+		return null
 
 # Get the hex tile object by world position
 # @input {Vector2} hex_position - global position of tile
@@ -104,6 +111,14 @@ func _get_hex_object_from_global_pos(position):
 func _get_hex_object_from_grid_pos(position):
 	for tile in tile_list:
 		if tile['grid_pos'] == position:
+			return tile
+	
+# Get the hex tile object by its ID
+# @input {int} The ID of the tile to get
+# @returns {Object} The tile object
+func _get_hex_object_from_id(id):
+	for tile in tile_list:
+		if tile['id'] == id:
 			return tile
 
 func _input(event):
@@ -149,9 +164,69 @@ func highlight_hex(position):
 								hex_world_pos.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
 	hex_marker.set_pos(highlight_pos)
 
+# Breadth First Search implementation
+# @input {Array} array of tile objects without visitation information
+# @returns {Array} array of tile objects with visitation information
+func _visit_map(tiles):
+	# No Queue() in GD, so using array instead
+	var frontier = [] 
+	frontier.push_front(tiles[0]) # Start with first tile, try to use central one later
+	var visited = []
+	var current = null
+	var next = null
+	var i = 0
+
+	while not frontier.empty():
+		current = frontier[0]
+		self._mark_grid_position(current['grid_pos'], i)
+		frontier.pop_front()
+		for neighbour in current['neighbours']:
+			var next_tile_object = _get_hex_object_from_grid_pos(current['neighbours'][neighbour])
+			# A neighbour may be null if the tile is on the edge of the map. In that case, skip.
+			if next_tile_object != null:
+				next = next_tile_object
+			else:
+				continue
+			if not visited.has(next):
+				frontier.append(next)
+				visited.append(next)
+		i += 1
+
+# Quick helper function to help visualize the working of the flood fill
+func _mark_grid_position(grid_position, counter):
+	var new_marker = marker.duplicate()
+	var counter_label = Label.new()
+	var hex_world_pos = hexmap.map_to_world(grid_position)
+	var marker_pos = Vector2(hex_world_pos.x + self.hex_offset.x + (hexmap.get_cell_size().x/2),
+							 hex_world_pos.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
+	counter_label.set_text(String(counter))
+	new_marker.set_pos(marker_pos)
+	counter_label.set_pos(Vector2(marker_pos.x, marker_pos.y + 15))
+	self.add_child(new_marker)
+	self.add_child(counter_label)
+	counter_label.set_owner(get_tree().get_edited_scene_root())
+	new_marker.set_owner(get_tree().get_edited_scene_root())
+
+
 ############################################################
 # These methods are for debug purposes only
 ############################################################
+
+# Debug Logger that does not overflow like a fucking pussy every time more than one
+# line of code is printed out!
+# @input {String} The file name of the log file
+# @input {String|Object} The log message or object, will be converted to string
+func debug_log(filename, message):
+	var log_path = 'res://logs/'
+	var file_ending = '.log'
+	var logfile = File.new()
+	logfile.open('res://logs/pathfinding.log', File.READ_WRITE)
+	# logfile.open(log_path+filename+file_ending, File.READ_WRITE)
+	logfile.seek_end() # Find end
+	logfile.store_string('\n') # Newline
+	if message:
+		logfile.store_string(String(message))
+	logfile.close()
 
 # Used to display additional information on top of the tile, also create a new marker on every
 # tile click and does not delete the old one
@@ -210,7 +285,7 @@ func set_marker(hex_world_pos, marker_color):
 # @input {Vector2} global position of the tile
 func highlight_neighbours(global_position):
 	var selected_tile = self._get_hex_object_from_global_pos(global_position)
-	for neighbour_entry in selected_tile.neighbours:
+	for neighbour_entry in selected_tile['neighbours']:
 		print(neighbour_entry)
 		var neighbour_tile_pos = hexmap.map_to_world(selected_tile.neighbours[neighbour_entry])
 		self.set_marker(neighbour_tile_pos, 'red')
