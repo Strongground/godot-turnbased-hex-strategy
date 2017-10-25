@@ -29,6 +29,10 @@ var arrow_marker = null
 var neighbour_position_rotation_table = null
 var GUI = null
 var units = []
+var markers = []
+var click_counter = 0
+var start_position = null
+var target_position = null
 
 func _ready():
 	set_fixed_process(true)
@@ -62,8 +66,6 @@ func _ready():
 		'nw': -30
 	}
 	tile_list = _build_hex_object_database()
-	# Show the center of the screen as gotten from camera
-	# _set_marker(camera.get_screen_center(), 'blue')
 	# Create a global list of all units on the map and their positions
 	self._create_unit_list()
 	self._update_units()
@@ -103,8 +105,18 @@ func _update_units():
 # Create a list of all units and their grid local positions
 func _create_unit_list():
 	for node in self.get_children():
-		if 'entity_type' in node and node.entity_type == 'unit':
+		if 'type' in node and node.type == 'unit':
 			units.append({
+				'node': node,
+				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
+			})
+
+# Create list of all editor markers on the map
+# @TODO Try to merge this into one list for all entities
+func _create_marker_list():
+	for node in self.get_children():
+		if 'type' in node and node.type == 'editor_marker':
+			markers.append({
 				'node': node,
 				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
 			})
@@ -160,17 +172,32 @@ func _input(event):
 		var click_pos = self.get_global_mouse_pos()
 		### If clicked on tilemap
 		if self._is_tilemap(click_pos) and not self._is_unit(click_pos):
-			# On click on a tile, flood fill the map
-			self._visit_map(click_pos)
-			self._show_origin(tile_list)
-			# Display information directly on top of the selected hex (position in different relations)
-			self.highlight_hex(click_pos)
+			# On click on two tiles, flood fill the map and get path from first to second click
+			if click_counter < 1:
+				print('First click')
+				# On first click, determine start position
+				start_position = click_pos
+				self.highlight_hex(click_pos)
+				click_counter += 1
+			elif click_counter == 1:
+				print('Second click')
+				# On second click
+				click_counter += 1
+				# click_counter = 0
+				target_position = click_pos
+				self._visit_map(start_position, target_position, true)
+			else:
+				self._visit_map(start_position)
+				self._show_origin(tile_list)
 			# Set current tile attributes for use by decision logic
 			current_tile = self.get_tile(click_pos)
+
 			# Highlight neighbouring hexes of selected hex
 			# self._highlight_neighbours(click_pos)
+			
 			# Show the popup with tile information
-			# GUI._show_tile_info_popup(get_hex_object_from_global_pos(click_pos))
+			GUI._show_tile_info_popup(get_hex_object_from_global_pos(click_pos))
+
 		elif self._is_unit(click_pos):
 			print("A unit was clicked!")	
 			# @TODO If unit clicked, call its get_path method
@@ -231,7 +258,7 @@ func _get_center_of_hex(position):
 # @input {Vector2} start_position from where to calculate the visitation
 # @input {Vector2|null} (optional) target_position, global coordinates, stops the visitation
 # early if the target is reached
-func _visit_map(start_position, target_position=null):
+func _visit_map(start_position, target_position=null, set_markers=null):
 	# No Queue() in GD, so using array instead for frontier
 	var frontier = [] 
 	# Start the visitation witht the tile gotten from the click position
@@ -245,9 +272,13 @@ func _visit_map(start_position, target_position=null):
 	while not frontier.empty():
 		current = frontier[0]
 
-		# if target_position is already found, stop vistation to speed up overall calculation
+		# if target_position is already found, stop visitation to speed up overall calculation
 		if target_position != null and current['grid_pos'] == self.get_hex_object_from_global_pos(target_position)['grid_pos']:
+			print('Found target tile, breaking now!')
 			break
+		
+		if set_markers == true:
+			self._set_marker(hexmap.map_to_world(current.grid_pos), 'green')
 
 		frontier.pop_front()
 		for neighbour in current['neighbours']:

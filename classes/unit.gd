@@ -48,7 +48,7 @@ func update():
 ##### Internal methods
 func _ready():
 	## Init ingame
-	entity_type = 'unit'
+	type = 'unit'
 	set_fixed_process(true)
 	set_process_input(true)
 	unit_sprite = find_node('UnitImage')
@@ -60,15 +60,15 @@ func _set_direction():
 	if self.direction == "RIGHT":
 		self.unit_sprite.set_flip_h(true)
 
-func _input(event):
-	pass
-
-func _process(delta):
-	pass
-
 # Calculate the path from a given tile to another given tile, all in grid local coordinates
 # @input {Vector2} current_position - from where to calculate the path
 # @input {Vector2} target_position
 # @returns {Array} list of tiles to visit, in order of visitation
 func _get_path(target_position):
-	root._visit_map(self.grid_location, target_position)
+	return root._visit_map(self.grid_location, target_position)
+	
+func _input(event):
+	pass
+
+func _process(delta):
+	pass
