@@ -100,6 +100,15 @@ func _updateGUI():
 	# print("GUI position is: "+String(GUI_position))
 	pass
 
+# Get centered position relative to screen size 
+func get_screen_center():
+	var camera_position = self.get_pos()
+	var vp_center = Vector2(
+		camera_position.x,
+		camera_position.y
+	)
+	return vp_center
+
 func _fixed_process(delta):
 	half_viewport_x = get_viewport().get_rect().size.x / 2
 	half_viewport_y = get_viewport().get_rect().size.y / 2

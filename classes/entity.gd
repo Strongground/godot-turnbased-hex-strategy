@@ -11,6 +11,7 @@ var hex_outline = null
 var hexmap = null
 var offset = null
 var red_dot = null
+var entity_type = null
 
 ## Called every time the node is added to the scene.
 func _ready():

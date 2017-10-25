@@ -13,6 +13,7 @@ func _ready():
 	# Initialization here
 	hex_label_template = root.find_node('HexLabelTemplate')
 	icon = find_node('Icon')
+	entity_type = 'editor_marker'
 	# If map text is given, render it on the map
 	if map_text.length() > 0:
 		self.create_map_text(map_text)

@@ -48,11 +48,11 @@ func update():
 ##### Internal methods
 func _ready():
 	## Init ingame
+	entity_type = 'unit'
 	set_fixed_process(true)
 	set_process_input(true)
 	unit_sprite = find_node('UnitImage')
 	# Call _update to set all attributes and appearance initially based on editor config
-	self.update()
 
 # If unit should face right, flip it. Otherwise, do nothing
 # because all units should face left per default.
@@ -66,7 +66,9 @@ func _input(event):
 func _process(delta):
 	pass
 
-# Find a path to the target position from the current position of this unit
-# @input {Vector2} The target position
-func _find_path(target_position):
-	pass
+# Calculate the path from a given tile to another given tile, all in grid local coordinates
+# @input {Vector2} current_position - from where to calculate the path
+# @input {Vector2} target_position
+# @returns {Array} list of tiles to visit, in order of visitation
+func _get_path(target_position):
+	root._visit_map(self.grid_location, target_position)
