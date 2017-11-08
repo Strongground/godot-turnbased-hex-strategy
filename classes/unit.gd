@@ -39,20 +39,39 @@ export var unit_id = ''
 
 # Private class members
 var unit_sprite = null
+var move_tween = null
+var animation_step_active = false
+var animation_step = 0
+var animation_path_array = []
+var offset = null
 
 # This function should update the appearance of the unit, calculate stat changes etc.
 # ater each round. There is no need to do this in _process since its all turnbased anyway.
 func update():
 	self._set_direction()
 
+# Animates this units movement on a given path from one tile to another over via n tiles
+# @input {Array} the array containing every tile in order of the path
+func animate_path(path_array):
+	animation_path_array = path_array
+	_animate_step(path_array[0], 0)
+
+func _animate_step(current_tile, step):
+	animation_step_active = true
+	self.animation_step = step
+	move_tween.interpolate_property(self, 'transform/pos', self.get_global_pos(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	move_tween.start()
+
 ##### Internal methods
 func _ready():
 	## Init ingame
 	type = 'unit'
+	# Set necessary offset for correct position relative to grid
+	offset = Vector2(-6, 0)
 	set_fixed_process(true)
 	set_process_input(true)
 	unit_sprite = find_node('UnitImage')
-	# Call _update to set all attributes and appearance initially based on editor config
+	move_tween = find_node('MoveTween')
 
 # If unit should face right, flip it. Otherwise, do nothing
 # because all units should face left per default.
@@ -72,3 +91,13 @@ func _input(event):
 
 func _process(delta):
 	pass
+
+func _on_MoveTween_tween_complete(object, key):
+	animation_step_active = false
+	if animation_path_array.size()-1 > animation_step:
+		# Animate next step
+		animation_step += 1
+		_animate_step(animation_path_array[animation_step], animation_step)
+	else:
+		# Done animating, update unit
+		self.update()

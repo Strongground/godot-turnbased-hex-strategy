@@ -17,22 +17,28 @@ var globals = null
 var tiles = null
 var tile_list = null
 var hexmap = null
+var hex_grid = null
 var hex_offset = null
 var current_tile = null
 var marker = null
+var rect = null
 var root = null
 var hex_marker = null
+var hex_fill = null
 var counter = 0
 var hex_directions = null
 var all_tiles = null
 var arrow_marker = null
 var neighbour_position_rotation_table = null
 var GUI = null
-var units = []
-var markers = []
+var entities = []
 var click_counter = 0
 var start_position = null
 var target_position = null
+var selected_unit = null
+var movement_selection = false
+var tween = null
+var grid_visible = false
 
 func _ready():
 	set_fixed_process(true)
@@ -42,8 +48,12 @@ func _ready():
 	globals = get_node('/root/globals')
 	hexmap = get_node('MapZones')
 	marker = get_node('RedDot')
+	hex_grid = get_node('HexGridOverlay')
+	rect = get_node('SizeRect')
 	hex_marker = find_node('HexMarker')
+	hex_fill = find_node('Hex_Fill')
 	arrow_marker = find_node('Arrow')
+	tween = find_node('Tween')
 	GUI = find_node('GUI')
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
@@ -66,9 +76,11 @@ func _ready():
 		'nw': -30
 	}
 	tile_list = _build_hex_object_database()
-	# Create a global list of all units on the map and their positions
-	self._create_unit_list()
+	# Create a global list of all entities on the map, their type, positions and nodes
+	entities = self._create_entity_list()
 	self._update_units()
+	# GUI ready functions
+	GUI.disable_movement_button(true)
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
@@ -99,27 +111,32 @@ func _build_hex_object_database():
 
 # Update all unit nodes. This is necessary because of strange ready()-order in Godot
 func _update_units():
-	for unit in units:
-		unit.node.update() 
+	for entity in entities:
+		if entity.type == 'unit':
+			entity.node.update() 
 
-# Create a list of all units and their grid local positions
-func _create_unit_list():
+# Get entity of given id
+func _get_entity_by_id(id):
+	for entity in entities:
+		if entity.id == id:
+			return entity
+
+# Create a list of all entities and their grid local positions as well as nodes
+func _create_entity_list():
+	var result = []
+	var i = 0
 	for node in self.get_children():
-		if 'type' in node and node.type == 'unit':
-			units.append({
+		if 'type' in node and node.type == 'unit' \
+			or 'type' in node and node.type == 'editor_marker':
+			node.set_id(i)
+			result.append({
+				'id': i,
 				'node': node,
+				'type': node.get_type(),
 				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
 			})
-
-# Create list of all editor markers on the map
-# @TODO Try to merge this into one list for all entities
-func _create_marker_list():
-	for node in self.get_children():
-		if 'type' in node and node.type == 'editor_marker':
-			markers.append({
-				'node': node,
-				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
-			})
+			i += 1
+	return result
 
 # Get the neighbouring tile of a given tile, by ID and direction
 # @input {Int} ID of the hex for which the neighbour should be returned
@@ -170,25 +187,51 @@ func _input(event):
 	elif event.is_action_pressed('mouse_click'):
 		# Once set the actual global mouse position needed for conversion of the coordinates
 		var click_pos = self.get_global_mouse_pos()
+		
 		### If clicked on tilemap
-		if self._is_tilemap(click_pos) and not self._is_unit(click_pos):
-			# On click on two tiles, flood fill the map and get path from first to second click
-			if click_counter < 1:
-				print('First click')
-				# On first click, determine start position
-				start_position = click_pos
-				self.highlight_hex(click_pos)
-				click_counter += 1
-			elif click_counter == 1:
-				print('Second click')
-				# On second click
-				click_counter += 1
-				# click_counter = 0
-				target_position = click_pos
-				self._visit_map(start_position, target_position, true)
-			else:
-				self._visit_map(start_position)
-				self._show_origin(tile_list)
+		if self._is_tilemap(click_pos) and not self._is_unit(click_pos) and not GUI.is_gui_clicked():
+			
+			# Deselect all selectable entities
+			#self.deselect_all_entities()
+
+			# If in state of movement and unit is selected, next click sets movement target
+			# and triggers pathfinding to it, saving the resulting path array at the selected
+			# unit.
+			if self.movement_selection == true and self.selected_unit != null:
+				var unit = _get_entity_by_id(self.selected_unit)
+				var new_path = find_path(unit.node.get_global_pos(), click_pos)
+				unit.node.set_path(new_path)
+				# _show_path(new_path)
+				unit.node.animate_path(new_path)
+				unit.node.deselect()
+				self.movement_selection = false
+
+			##### On click on two tiles, flood fill the map and get path from first to second click
+			# if click_counter < 1:
+			# 	print('First click')
+			# 	# On first click, determine start position
+			# 	start_position = click_pos
+			# 	# increment click counter
+			# 	click_counter += 1
+			# 	# color clicked (starting) tile red
+			# 	var vis_start_tile = self.get_hex_object_from_global_pos(start_position)
+			# 	self._set_hex_fill(hexmap.map_to_world(vis_start_tile.grid_pos), 'red', 'path_vis')
+			# elif click_counter == 1:
+			# 	print('Second click')
+			# 	# On second click, determine target position
+			# 	# reset counter
+			# 	click_counter += 1
+			# 	target_position = click_pos
+			# 	var path = self.find_path(start_position, target_position)
+			# 	self._show_path(path)
+			# else:
+			# 	print('Third click')
+			# 	# On third click reset click counter
+			# 	click_counter = 0
+			# 	# and delete path visualisation
+			# 	self._delete_all_nodes_with('path_vis')
+			#### END
+				
 			# Set current tile attributes for use by decision logic
 			current_tile = self.get_tile(click_pos)
 
@@ -196,11 +239,15 @@ func _input(event):
 			# self._highlight_neighbours(click_pos)
 			
 			# Show the popup with tile information
-			GUI._show_tile_info_popup(get_hex_object_from_global_pos(click_pos))
+			# GUI._show_tile_info_popup(get_hex_object_from_global_pos(click_pos))
+			# GUI._show_tile_info_popup(current_tile)
 
+		### Unit was selected
 		elif self._is_unit(click_pos):
-			print("A unit was clicked!")	
-			# @TODO If unit clicked, call its get_path method
+			var selected_unit = self._is_unit(click_pos, true)
+			selected_unit.node.select()
+			GUI.disable_movement_button(false)
+			
 
 func _fixed_process(delta):
 	pass
@@ -208,6 +255,7 @@ func _fixed_process(delta):
 # Check if there is a tilemap at the given position
 # Use this to wrap up input loop, to avoid NPE when clicked outside tilemap
 # @input {Vector2} position of the click to check for tilemap
+# @returns {Boolean} return true if there is no entity at given coords
 func _is_tilemap(position):
 	var tile = get_hex_object_from_global_pos(position)
 	if tile != null and tile.size() > 1:
@@ -216,11 +264,36 @@ func _is_tilemap(position):
 
 # Determine if there is a unit at the grid local position that is given
 # @input {Vector2} position of the click to check for unit
-func _is_unit(position):
+# @input {Boolean} (optional) return unit object if true
+# @returns {Boolean | Object} return true if there is a unit at given coords
+func _is_unit(position, return_unit=false):
 	var grid_position = hexmap.world_to_map(position)
-	for unit in units:
-		if unit.grid_pos == grid_position:
-			return true
+	for entity in entities:
+		if entity.node.get_type() == 'unit':
+			if entity.grid_pos == grid_position:
+				if return_unit == true:
+					return entity
+				else:
+					return true
+	return false
+
+# Deselects all selectable entities on the map 
+func deselect_all_entities():
+	for entity in entities:
+		if entity.node.has_method('is_selected') and entity.node.is_selected():
+			# If a unit is deselected
+			if entity.type == 'unit':
+				GUI.disable_movement_button(true)
+			entity.node.deselect()
+
+# Getter for unit_selected. This is faster than iterating over all
+# units and check each for its 'selected' states
+# @returns {Boolean} Returns true if a unit was selected.
+func _is_unit_selected():
+	for entity in entities:
+		if entity.type == 'unit':
+			if entity.node.is_selected():
+				return true
 	return false
 
 # Method to return a tiles attributes as defined in tilemap.gd
@@ -255,47 +328,87 @@ func _get_center_of_hex(position):
 				   position.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
 
 # Breadth First Search implementation
-# @input {Vector2} start_position from where to calculate the visitation
+# @input {Vector2} start_position global coordinates, from where to calculate the visitation
 # @input {Vector2|null} (optional) target_position, global coordinates, stops the visitation
 # early if the target is reached
-func _visit_map(start_position, target_position=null, set_markers=null):
+func _visit_map(start_position, target_position=null):
 	# No Queue() in GD, so using array instead for frontier
-	var frontier = [] 
+	# No PriorityQueue() either in GD, so the frontier array will contain
+	# a tuple in each entry, with the full tile-object and priority (a.k.a. cost).
+	# We will then sort the array based on that value by using sorted with cost as 
+	# key. Sadly, Godot does not offer 'sorted' function, so we implement this 
+	# manually by using 'custom_sort'
+	var frontier = []
 	# Start the visitation witht the tile gotten from the click position
 	var start_tile = get_hex_object_from_global_pos(start_position)
-	frontier.push_front(tile_list[start_tile['id']])
+	frontier.push_front([tile_list[start_tile['id']], 0]) # Start tile has cost 0
 	
 	var visited = []
 	var current = null
 	var next = null
 	var i = 0
+	var cost_so_far = {
+		# Cost for start tile is always 0 and cost_so_far cannot be empty
+		String(start_tile['id']): 0
+	}
+
 	while not frontier.empty():
-		current = frontier[0]
+		frontier.sort_custom(self, "_sort_by_second_attr") # First sort frontier by cost attribute in each tuple
+		current = frontier[0] # Now current[0] gives the tile object, current[1] the associated cost
 
 		# if target_position is already found, stop visitation to speed up overall calculation
-		if target_position != null and current['grid_pos'] == self.get_hex_object_from_global_pos(target_position)['grid_pos']:
+		if target_position != null and current[0]['grid_pos'] == self.get_hex_object_from_global_pos(target_position)['grid_pos']:
 			print('Found target tile, breaking now!')
 			break
 		
-		if set_markers == true:
-			self._set_marker(hexmap.map_to_world(current.grid_pos), 'green')
-
 		frontier.pop_front()
-		for neighbour in current['neighbours']:
-			var next_tile_object = _get_hex_object_from_grid_pos(current['neighbours'][neighbour])
+		for neighbour in current[0]['neighbours']:
+			var next_tile_object = _get_hex_object_from_grid_pos(current[0]['neighbours'][neighbour])
 			# A neighbour may be null if the tile is on the edge of the map. In that case, skip.
 			if next_tile_object != null:
 				next = next_tile_object
 			else:
 				continue
-			if not visited.has(next):
+			### Uniform cost search part
+			# Calculate the movement cost by next tile movement cost and adding current
+			var new_cost = cost_so_far[String(current[0]['id'])] + next['move_cost']
+			if not cost_so_far.has(String(next['id'])) || new_cost < cost_so_far[String(next['id'])]:
+				cost_so_far[String(next['id'])] = new_cost
+				var cost = new_cost
 				next['came_from'] = {
-					'id': current.id, 
+					'id': current[0].id,
 					'dir': neighbour
 				}
-				frontier.append(next)
+				frontier.append([next, cost])
 				visited.append(next)
+				# Show movement cost per tile
+				# self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
 		i += 1
+
+# Determine path from tile to tile, all coordinates are global
+# @input {Vector2} start_position, from this the start tile is derived
+# @input {Vector2} target_position, from this the target tile is derived
+# @returns {Array} path to the target tile
+func find_path(start_position, target_position):
+	self._visit_map(start_position, target_position)
+	var start_tile = self.get_hex_object_from_global_pos(start_position)
+	var target_tile = self.get_hex_object_from_global_pos(target_position)
+	var current = null
+	var path = []
+	
+	# add target to path array
+	current = target_tile
+	path.append(current)
+
+	while current.id != start_tile.id:
+		current = self._get_hex_object_from_id(current.came_from.id)
+		path.append(current)
+	
+	# finally add start to path array
+	path.append(start_tile)
+	# invert path array so it goes from start to target and return
+	path.invert()
+	return path
 
 # Helper function to help visualize the working of the flood fill
 # @input {Vector2} The grid local position of the tile to mark
@@ -313,9 +426,34 @@ func _mark_grid_position(grid_position, counter):
 	counter_label.set_owner(get_tree().get_edited_scene_root())
 	new_marker.set_owner(get_tree().get_edited_scene_root())
 
-############################################################
+# Sorting helper to compare second attribut of two given arrays
+# @input {Array} Array A to compare
+# @input {Array} Array B to compare
+# @output {Boolean} True if second attribute from A is smaller than
+# second attribute from B
+func _sort_by_second_attr(a, b):
+	return a[1] < b[1]
+
+##########################################################################
 # These methods are for debug purposes only
-############################################################
+# They should be deleted, cleaned and integrated or very well hidden away
+##########################################################################
+
+# Helper function to visualize the path found by flood fill by rendering
+# a marker on top of every tile in the path
+# @input {Array} the found path
+func _show_path(path):
+	for tile in path:
+		# don't color first tile, this is done in input loop for immediate visual feedback
+		if tile == path[0]:
+			pass
+		# color last tile green
+		elif tile == path[path.size()-1]:
+			self._set_hex_fill(hexmap.map_to_world(tile.grid_pos), 'green', 'path_vis')
+		# color all other tiles blue
+		else:
+			self._set_hex_fill(hexmap.map_to_world(tile.grid_pos), 'blue', 'path_vis')
+
 
 # Helper function to visualize the breadcrumbs in each tile object added by flood fill
 # by rendering an arrow on every tile, pointing to the origin tile.
@@ -400,17 +538,22 @@ func highlight_every_hex(position, marker_color, show_coords):
 		grid_pos_label.set_owner(get_tree().get_current_scene())
 
 # Create a highlight marker on a given hex that stays.
+# This looks different than the hex highlight in that it
+# overlays the whole hex with a transparent colored fill
 # @input {Vector2} global position of the hex tile
 # @input {Color} Color of the markers created
-func _set_marker(hex_world_pos, marker_color):
+# @input {String} (optional) Name of the marker node
+func _set_hex_fill(hex_world_pos, marker_color, opt_name=null):
 	var highlight_pos = _get_center_of_hex(hex_world_pos)
 	# duplicate the highlight
-	var new_highlight = hex_marker.duplicate()
-	new_highlight.set_modulate(globals.getColor(String(marker_color)))
+	var new_hex_fill = hex_fill.duplicate()
+	if opt_name != null:
+		new_hex_fill.set_name(opt_name)
+	new_hex_fill.set_modulate(globals.getColor(String(marker_color)))
 	# position the highlight
-	new_highlight.set_pos(highlight_pos)
+	new_hex_fill.set_pos(highlight_pos)
 	# add the highlight to scene
-	self.add_child(new_highlight)
+	self.add_child(new_hex_fill)
 	
 # Highlight the neighbours of a hex tile at a given global position
 # @input {Vector2} global position of the tile
@@ -419,7 +562,7 @@ func _highlight_neighbours(global_position):
 	for neighbour_entry in selected_tile['neighbours']:
 		if selected_tile.neighbours[neighbour_entry] != null:
 			var neighbour_tile_pos = hexmap.map_to_world(selected_tile.neighbours[neighbour_entry])
-			self._set_marker(neighbour_tile_pos, 'red')
+			self._set_hex_fill(neighbour_tile_pos, 'red')
 
 # Debug method to write every tile and its tilemap index into a file for checking.
 # Per default the file is res://tiles.txt and it mus exist before calling this method.
@@ -431,6 +574,27 @@ func _export_tile_list(tilemap):
 	myfile.store_string(String(tilemap.get_used_cells()))
 	myfile.close()
 	print('Done storing')
+
+# Renders red dot at given position relative to given parent
+# @input {Vector2} position to render dot
+# @input {Object} parent node of the created sprite
+func _render_dot(position, parent):
+	var new_marker = marker.duplicate()
+	new_marker.set_pos(position)
+	parent.add_child(new_marker)
+	new_marker.set_owner(get_tree().get_edited_scene_root())
+
+# Renders a texture frame at given position, with given size, 
+# relative to given parent
+# @input {Vector2} top left position to begin render box
+# @input {Vector2} size dimensions of the box
+# @input {Object} parent node of the created box
+func _render_size_rect(position, size, parent):
+	var new_rect = rect.duplicate()
+	new_rect.set_pos(position)
+	new_rect.set_size(size)
+	parent.add_child(new_rect)
+	new_rect.set_owner(get_tree().get_edited_scene_root())
 
 # Tries to mark the dimensions of the hex tile based on hexmap based coordinates with dots
 # @input {Vector2} world space coordinates of tiles
@@ -477,14 +641,21 @@ func _mark_hex_dimensions(position):
 func _display_hex_info(input_coordinates, show_coordinates):
 	var new_label = Label.new()
 	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
-	# Set content of label based on parameters
-	if show_coordinates == "global":
-		new_label.set_text(String(tile_world_pos))
-	elif show_coordinates == "grid":
-		new_label.set_text(String(input_coordinates))
-	elif show_coordinates == "id":
-		new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
+	new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
 	new_label.set_pos(tile_world_pos)
+	self.add_child(new_label)
+	new_label.set_owner(get_tree().get_edited_scene_root())
+
+# Render given information onto the tile itself
+# @input {Vector2} input_coordinates - grid local coordinates of tile
+# @input {String} String that should be rendered on the tile
+func _render_on_tile(input_coordinates, info, opt_name):
+	var new_label = Label.new()
+	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
+	new_label.set_text(info)
+	new_label.set_pos(tile_world_pos)
+	if opt_name != null:
+		new_label.set_name(opt_name)
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
 
@@ -502,3 +673,18 @@ func _display_terrain_type(grid_coordinates):
 	# Attach label
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
+
+func _on_ToggleGridButton_pressed():
+	print(String(grid_visible))
+	var from_opacity = null
+	var to_opacity = null
+	if grid_visible:
+		from_opacity = 0.3
+		to_opacity = 0
+		grid_visible = false
+	else:
+		from_opacity = 0
+		to_opacity = 0.3
+		grid_visible = true
+	tween.interpolate_property(hex_grid, 'visibility/opacity', from_opacity, to_opacity, 2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+	tween.start()

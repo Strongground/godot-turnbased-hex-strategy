@@ -38,5 +38,5 @@ func _create_map_text(text):
 		self.get_pos().y - hexmap.get_cell_size().y + 20
 	))
 	# add to scene
-	new_label.set_opacity(0)
+	# new_label.set_opacity(0)
 	root.call_deferred('add_child',new_label)

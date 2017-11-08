@@ -21,12 +21,12 @@ linear_damp = 0.1
 angular_damp = 1.0
 script/script = ExtResource( 1 )
 is_selectable = true
-unit_id = ""
 unit_type = 0
 unit_owner = 0
 unit_faction = 0
 direction = "RIGHT"
 graphical_scheme = null
+unit_id = ""
 
 [node name="UnitImage" type="Sprite" parent="."]
 
@@ -47,5 +47,14 @@ transform/scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
 trigger = false
 _update_shape_index = 0
+
+[node name="MoveTween" type="Tween" parent="."]
+
+playback/process_mode = 1
+playback/active = false
+playback/repeat = false
+playback/speed = 1.0
+
+[connection signal="tween_complete" from="MoveTween" to="." method="_on_MoveTween_tween_complete"]
 
 
