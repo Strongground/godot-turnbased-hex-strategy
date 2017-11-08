@@ -59,8 +59,6 @@ var half_viewport_x = 0.0
 var half_viewport_y = 0.0
 
 var GUI = null
-var GUI_zoomLabel = null
-var GUI_position = null
 var scale_factor = 1
 
 # INPUTS
@@ -73,7 +71,8 @@ var __keys = [false, false, false, false]
 func _ready():
 	# This is the factor by which the viewport and all elements are upscaled on hidpi-screens,
 	# use it as divider to get original coordinates. If no hidpi detected, it is set to 1,
-	# which shold not affect anything, and thus can be used anyhwere
+	# which should not affect anything in calculations, and thus scale_factpr can be used without 
+	# explicit check for dpi
 	if OS.get_screen_dpi() >= 240:
 		scale_factor = 2
 	set_h_drag_enabled(false)
@@ -83,35 +82,24 @@ func _ready():
 	set_fixed_process(true)
 	set_process_unhandled_input(true)
 	GUI = find_node('GUI')
-	GUI_zoomLabel = find_node('ZoomLevel')
 	self._updateGUI()
 	
 func _updateGUI():
-	# Set scale of GUI which happens to always be 0.5 more than camera_zoom level to look right
-	# GUI.set_scale(camera_zoom + Vector2(0.5,0.5))
-	# # Calc and set position of GUI from viewport height minus GUI heigth (with correct scale)
-	# var viewport_size = get_viewport().get_rect().size
-	# GUI_position = Vector2(
-	# 	0,
-	# 	(viewport_size.y / scale_factor) - (GUI.get_size().y * GUI.get_scale().y)
-	# )
-	# GUI.set_pos(GUI_position)
-	# Debugging
-	# print("GUI position is: "+String(GUI_position))
-	pass
+	# Set scale of GUI to camera_zoom level so it is visually the same scale
+	GUI.set_scale(camera_zoom * scale_factor)
 
 # Get centered position relative to screen size 
 func get_screen_center():
 	var camera_position = self.get_pos()
 	var vp_center = Vector2(
-		camera_position.x,
-		camera_position.y
+		camera_position.x / scale_factor,
+		camera_position.y / scale_factor
 	)
 	return vp_center
 
 func _fixed_process(delta):
-	half_viewport_x = get_viewport().get_rect().size.x / 2
-	half_viewport_y = get_viewport().get_rect().size.y / 2
+	half_viewport_x = get_viewport().get_rect().size.x / scale_factor
+	half_viewport_y = get_viewport().get_rect().size.y / scale_factor
 	
 	# Move camera by keys defined in InputMap (ui_left/top/right/bottom).
 	if key:
@@ -177,7 +165,6 @@ func _unhandled_input(event):
 			camera_zoom.x - camera_zoom_speed.x > zoom_in_limit and\
 			camera_zoom.y - camera_zoom_speed.y > zoom_in_limit:
 				camera_zoom -= camera_zoom_speed
-				GUI_zoomLabel.set_text(String(camera_zoom))
 				set_zoom(camera_zoom)
 				self._updateGUI()
 			# Checking if future zoom won't be above zoom_out_limit.
@@ -185,7 +172,6 @@ func _unhandled_input(event):
 				camera_zoom.x + camera_zoom_speed.x < zoom_out_limit and\
 				camera_zoom.y + camera_zoom_speed.y < zoom_out_limit:
 				camera_zoom += camera_zoom_speed
-				GUI_zoomLabel.set_text(String(camera_zoom))
 				set_zoom(camera_zoom)
 				self._updateGUI()
 	# Control by keyboard handled by InputMap.
