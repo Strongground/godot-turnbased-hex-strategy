@@ -1,0 +1,7 @@
+# Theme configuration
+name: 'Example Theme'
+description: 'This serves to illustrate the basic contents of a theme package.'
+units: 'units.yml'
+weapons: 'weapons.yml'
+factions: 'factions.yml'
+modifiers: 'mods.yml'

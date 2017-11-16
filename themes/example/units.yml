@@ -1,0 +1,23 @@
+### Unit list
+# Contains definitions for all units in the game.
+# Will be parsed in-game and refined as the development goes on.
+
+# Note that the top level ID is not used and just used as a container.
+# You can name it as you like. The ID used in the game is actually `unit_id`
+
+# EXAMPLE VEHICLES
+example1:
+  unit_id: 'example_land_1'
+  display_name: 'Example Unit'
+  description: 'This is the basic example/placeholder land unit to illustrate how land units work.'
+  unit_faction: 'example_good_guys'
+  graphical_schemes:
+    desert: 'desert'
+    woodlands: 'camo'
+  # Basic stats
+  base_defense: 2
+  armored: 1
+  can_traverse: 'LAND'
+  movement_points: 4
+  main_weapon: 'mg50cal'
+  main_ammo: 15

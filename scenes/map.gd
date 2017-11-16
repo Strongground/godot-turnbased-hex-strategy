@@ -1,15 +1,30 @@
 extends Node2D
 
 # General thougt on this class:
-# The map class should serve as a parent class from which all maps in the game inherit
+# This is the new game class which - for historic reasons - is still named 'map'. 
+# The following paragraphs do not talk about this class, but rather a new - to be created - 
+# class.
+# 
+# The map class should serve as a parent class from which all map instances in the game inherit
 # general comfort functions to select hexes and display information about hexes (highlighting,
-# showing of terrain information etc.)
-# It may later also contain information on the goals of the map such as victory hexes and 
-# offer methods to get state of these goals (as long as they are hex based).
+# showing of terrain information etc.). These functions are currently present in this ('game')
+# class script.
+#
+# The map class may also contain information on the goals of the map such as victory hexes and 
+# offer methods to get state of these goals (as long as they are hex or region based).
 #
 # This class should be used as parent for the map/game scene. The game scene will then be
 # filled with the necessary entities either by hand (level editing in Godot) or automatically
 # (procedurally generated levels?)
+#
+# Proposed structure of the scene tree during a running mission would be like this:
+# game
+# L main camera
+# 	L GUI
+# L map
+# 	L map graphic
+#   L overlays
+# L all entities
 
 # member vars here
 var camera = null
@@ -673,6 +688,11 @@ func _display_terrain_type(grid_coordinates):
 	# Attach label
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
+
+
+##########################################################################
+# Automatically created methods for signalling
+##########################################################################
 
 func _on_ToggleGridButton_pressed():
 	print(String(grid_visible))
