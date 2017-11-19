@@ -54,6 +54,7 @@ var selected_unit = null
 var movement_selection = false
 var tween = null
 var grid_visible = false
+var theme_manager = false
 
 func _ready():
 	set_fixed_process(true)
@@ -70,6 +71,9 @@ func _ready():
 	arrow_marker = find_node('Arrow')
 	tween = find_node('Tween')
 	GUI = find_node('GUI')
+	theme_manager = find_node('ThemeManager')
+	# Load theme
+	theme_manager.load_theme('example')
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
@@ -96,6 +100,7 @@ func _ready():
 	self._update_units()
 	# GUI ready functions
 	GUI.disable_movement_button(true)
+
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.

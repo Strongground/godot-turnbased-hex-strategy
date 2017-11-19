@@ -19,17 +19,18 @@ Following is a draft of the contained files inside a themes folder and their con
     * description
     * picture
     * icon
-    * units file name
-    * weapons file name
-    * factions file name
-    * modifiers file name
+    * data_files
+        * units file name
+        * weapons file name
+        * factions file name
+        * modifiers file name
 * `units.yaml`
     * example unit 1
         * unit_id
         * display_name
         * description
         * unit_faction
-        * graphical_schemes
+        * unit_sprites
         * base_defense
         * armored
         * can_traverse
@@ -42,11 +43,19 @@ Following is a draft of the contained files inside a themes folder and their con
     * weapon_id
     * display_name
     * description
+    * attack_strength
     * armor_piercing
-    * exclusive_against
-    * effect/s (Array?)
-    * sound/s (Array?)
+    * attacks_units
     * area_of_effect
+    * range
+    * effect
+        * spritesheet_1
+        * (spritesheet_2)
+        * ...
+    * sound
+        * sound_1
+        * (sound 2)
+        * ...
 * `factions.yaml`
     * faction_id
     * display_name
@@ -55,9 +64,10 @@ Following is a draft of the contained files inside a themes folder and their con
     * mod_id
     * display_name
     * description
+    * duration
     * modifiers
-        * stat, modifier
-        * stat 2, modifier 2
+        * stat_1, modifier_1
+        * (stat_2, modifier_2)
         * ...
 
 ### TODO and open questions

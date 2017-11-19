@@ -1,0 +1,59 @@
+# This contains all modifiers for this theme. A modifier is a combination of a
+# stat modifier for a unit (for example '+1 movement_points', '-2 base_defense')
+# as well as description, icon and name for showing ingame.
+# It can have a duration as well.
+# One modifier can only be active once per unit but unlimited modifiers can be applied
+# per unit.
+
+# As in all theme data files, the container ID of a modifier is not used in game,
+# only the 'mod_id' inside the container, so name the containers like you want.
+
+# duration: Number of turns until the modifier will be removed.
+# It can be applied again immedietly. If the duration is set to -1, the modifier
+# will never be removed, except explicitly.
+
+# modifiers: Contains the name of an attribute of units. But not all of them can
+# be modified by a modifier. Just for reference, the attributes available to modifiers
+# are:
+# base_defense
+# armored
+# movement_points
+#
+# The modifier itself is just an int that can be either negative or positive. It is added to the
+# units attribute when the modifier is active for a given unit.
+# Please note:
+# All attributes will be capped to zero. Negative values for ammo, movement_points etc. don't make
+# sense. So to set an attribute to 0, without knowing the value before, use arbitrary large modifiers
+# like -999.
+# If an attribute that can be either "bool" or "int" is changed by a modifier and the result
+# is <= 0, it will result in the attribute being "false" while any other result will change
+# the attribute type to "int" if it was "bool".
+# If a attribute is modified twice in the same modifier, and it is applied, the last occurance
+# will win.
+
+modifier_0:
+  mod_id: 'in_fear'
+  display_name: 'In Fear'
+  description: 'The constant stress of being changed at the very core of its existence as well as not knowing if it will even be in the final game has induced a deep and existential fear in this unit, severly limiting its ability to move any more.'
+  duration: -1
+  modifiers: 
+    movement_points: '-3'
+
+modifier_1:
+  mod_id: 'driven_prototype'
+  display_name: 'Driven Prototype'
+  description: 'This unit is driven by the knowledge, that it is a prototype of all units in the game to come. This knowledge leads it to extraordinary feats, giving boosts to all stats.'
+  duration: 5
+  modifiers:
+    movement_points: 2
+    base_defense: 3
+    attack_bonus: 2
+
+modifier_2:
+  mod_id: 'god_mode'
+  display_name: 'God Mod(e)'
+  description: 'Somehow this unit found the cheat codes for (its simulated) life and thus is now almost invincible. At least it thinks so...'
+  duration: -1
+  modifiers:
+    base_defense: 999
+    amored: 999

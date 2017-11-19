@@ -67,7 +67,7 @@ export (int) var armor = 0
 # What medium this unit can move in/on primarily.
 # @TODO What to do with amphibious units? Or units that generally
 # can traverse more than one medium?
-export (String, "LAND", "AIR", "WATER", "UNDERWATER") var can_traverse = ''
+export (String, "LAND", "AIR", "WATER") var can_traverse = ''
 
 # Movement points
 # These are consumed when moving from one tile to another tile. The amount of points
@@ -93,6 +93,13 @@ export (int) var main_weapon = 0
 # many shots it carries.
 export (int) var main_ammo = 0
 
+# Attack bonus
+# This can be thought of as a "base_attack" value of the unit. It could be used to signify
+# better training of this unit or technical characteristics that would give this unit a
+# significant attack boost compared to another unit with the same main_weapon. It is simply
+# added to the main_weapon attack_strength value.
+# Otherwise this will be mostly used via modifiers.
+export (int) var attack_bonus = 0
 
 # Private class members
 var unit_sprite = null

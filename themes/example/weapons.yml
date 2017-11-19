@@ -1,0 +1,152 @@
+### This holds information about the attacks (or weapons) of
+### units in the game (defined via units.yaml). Units reference
+### the ID of a weapon from this file. Here, the characterictics
+### of the weapons are put in detail. This is to avoid duplication
+### since the assumption is, that there is always less variety
+### in weapons than units - but this may depend on the specifity of
+### the theme.
+###
+### As with units, the ID used in game is the weapon_id attribute.
+### The name of the container for each weapon in this file is never
+### used, therefore doesn't matter.
+
+### Some attributes explained:
+### attack_strength
+### Main attack value that is set against base_defense and other attribute
+### bonuses and modifiers
+### --
+### armor_piercing
+### If zero, weapon has reduced effect against armored targets
+### If 1, @TODO What then?
+### If greater than zero, @TODO What then?
+### --
+### area_of_effect
+### how many tiles surrounding the impacting tile are hit?
+### --
+### aoe_falloff
+### Values in percentage of fallof from center to outer tiles.
+### Explanation:
+### If area_of_effect is 3 and this is set to 0, all tiles that are hit share
+### the same amount of damage dealt. This is useful for artillery where multiple
+### warheads are hitting a broader area.
+### If area_of_effect is 3 and this is set to a value greater than 0, the center
+### tile will have 100% damage effect, the tiles immediatly surrounding it only 50% and
+### the outer ring of tiles only 25% of the damage effect.
+### --
+### range
+### how far away can the target be, so that attacking with this weapon is possible?
+### 1 means units have to be adjacent.
+### --
+### effect
+### references a spritesheet for an animation.
+### --
+### sound
+### references a soundfile that is played, whenever this weapon fires. The sound should
+### include the firing as well as the 'hit' sound (explosion, impact of bullets, impact
+### of blade etc.)
+### @TODO Maybe think about having hit sound and firing sound separated later. Hit sound
+### could indicate wether target is armored or not and even if hit or miss.
+
+mg50cal:
+  weapon_id: 'mg50cal'
+  display_name: 'Mk2 Heavy Machinegun (Cal 50)'
+  description: 'Description for this weapon comes here.'
+  attack_strength: 3
+  armor_piercing: 1
+  attacks_units: 'LAND' # @TODO Check for Array or single value!
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/mg_fire.png'
+  sound: 'fx/50cal.wav'
+
+tow:
+  weapon_id: 'tow'
+  display_name: 'BGM-71 TOW Missile System'
+  description: 'The BGM-71 is an American anti-tank missile, first produced in 1970. It is one of the most widely used anti-tank guided missiles worldwide.'
+  attack_strength: 4
+  armor_piercing: 3
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 2
+  effect: 'fx/missile_fire.png'
+  sound: 'fx/missile.wav'
+
+assault_rifles:
+  weapon_id: 'assault_rifles'
+  display_name: 'Assault Rifles'
+  description: 'Assault rifles are the mainstay of a modern infantry fighting force. They can be extended by various modules and modern assault rifles are versatile weapon platforms that can fill many roles. Still, most assault rifles in use are soviet era/cold war era rifles with simple mechanics.'
+  attack_strength: 2
+  armor_piercing: 0
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/mg_fire.png'
+  sound: 'fx/assault_rifles.wav'
+
+javelin:
+  weapon_id: 'javelin'
+  display_name: 'Javelin Medium Antiarmor Missile'
+  description: 'The Javelin Antiarmor Weapon System was introduced in the 1990s and offers a bigger warhead and better guiding, which results in higher survivability of the soldiers employing it. However, its range is lower than that of the TOW missile system.'
+  attack_strength: 5
+  armor_piercing: 3
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/missile_fire.png'
+  sound: 'fx/missile.wav'
+
+m242_cannon:
+  weapon_id: 'm242_cannon'
+  display_name: 'M242 Bushmaster Cannon'
+  description: 'The M242 Bushmaster is a 25mm chain-driven autocannon. It has a good medium range of 3km and is one of the most successful modern autocannons.'
+  attack_strength: 4
+  armor_piercing: 2
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 2
+  effect: 'fx/cannon_fire.png'
+  sound: 'fx/cannon.wav'
+
+irregular_rifles:
+  weapon_id: 'irregular_rifles'
+  display_name: 'Assorted Irregular Rifles'
+  description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rifles, even WW2 weapons that where handed down the generations, but also weapons meant for game hunting or improvised devices.'
+  attack_strength: 2
+  armor_piercing: 0
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/mg_fire.png'
+  sound: 'fx/assault_rifles.wav'
+
+irregular_heavy:
+  weapon_id: 'irregular_heavy'
+  display_name: 'Irregular Heavy Weapons'
+  description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rocket propelled grenade launchers (RPG) and machineguns like the famous PK family, RPD or RPK weapons and others. Explosives are either improvised or soviet surplus.'
+  attack_strength: 3
+  armor_piercing: 2
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/missile_fire.png'
+  sound: 'fx/heavy_weapons_mixed.wav'
+
+small_arms:
+  weapon_id: 'small_arms'
+  display_name: 'Small Arms/Civilian Weapons'
+  description: 'This includes hunting rifles, pistols or handed down weapon trophies from previous World Wars that are now used in times of emergency to provide a basic level of self defense.'
+  attack_strength: 1
+  armor_piercing: 0
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'fx/mg_fire.png'
+  sound: 'fx/small_arms.wav'

@@ -1,0 +1,23 @@
+# This is the factions file. It contains all factions of a theme.
+# A faction is, at this point, not much more than a container. It does nothing.
+
+# As in all theme data files, the container ID of a modifier is not used in game,
+# only the `faction_id` inside the container, so name the containers like you want.
+
+faction_us:
+  faction_id: 'usarmy'
+  display_name: 'US Army'
+  description: "We're the good guys!"
+  icon: 'factions/usarmy.jpg'
+
+faction_taliban:
+  faction_id: 'taliban'
+  display_name: 'Taliban'
+  description: 'These are the real bad guys...'
+  icon: 'factions/taliban.jpg'
+
+faction_civ:
+  faction_id: 'civilians'
+  display_name: 'Innocent Civilians'
+  description: 'Protect us, we are unarmed.'
+  icon: 'factions/civies.jpg'

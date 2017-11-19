@@ -1,1 +1,1 @@
-{"weapons": "weapons.yml", "modifiers": "mods.yml", "name": "Example Theme", "units": "units.yml", "factions": "factions.yml", "description": "This serves to illustrate the basic contents of a theme package."}
+{"data_files": [{"units": "units.json"}, {"weapons": "weapons.json"}, {"factions": "factions.json"}, {"modifiers": "mods.json"}], "name": "Example Theme", "description": "This serves to illustrate the basic contents of a theme package."}
