@@ -1,8 +1,9 @@
 ### Unit list
 # Contains definitions for all units in the game.
-# Will be parsed in-game and refined as the development goes on.
+# Will be parsed in-game and used to create the different unit types at runtime.
 
 # Some attributes explained:
+# 
 # unit_sprites (path to one image file)
 # This contains one or more sprites that are shown in game to represent
 # the unit on the map. If more than one sprite is found, the one shown is selected randomly.
@@ -37,12 +38,11 @@
 # to another unit with the same main_weapon.
 # This will be mostly used via modifiers.
 
-# Note that the top level ID is not used and just used as a container.
-# You can name it as you like. The ID used in the game is actually `unit_id`
+# Note that the container id / top level ID given is the id of the unit.
+# It is not explicitly named but used as "unit_id"
 
 # US Army
 hmmwv_tow:
-  unit_id: 'hmmwv_tow'
   display_name: 'HMMWV/TOW'
   description: 'This is the classical "High Mobility Multipurpose Wheeled Vehicle" used by the US military since 1985. It features some protection agains small arms fire. This variant features a TOW rocket launcher against medium armored targets like APCs.'
   unit_faction: 'usarmy'
@@ -58,7 +58,6 @@ hmmwv_tow:
   attack_bonus: 0
 
 us_infantry_rifles:
-  unit_id: 'us_infantry_rifles'
   display_name: 'US Army Infantry - Rifle Squad'
   description: 'The standard US Army infantry squad consists of two fireteams with each 4 soldiers. This unit has assault rifles and grenades at its disposal.'
   unit_faction: 'usarmy'
@@ -74,7 +73,6 @@ us_infantry_rifles:
   attack_bonus: 0
 
 us_marines_javelin:
-  unit_id: 'us_marines_javelin'
   display_name: 'US Navy Marines - Antiarmor Team'
   description: 'A Marines Javelin Missile squad consisting of eight marines with two antiarmor Javelin Missile systems. They can take out even heavy armored tanks but need shielding against infantry threats.'
   unit_faction: 'usarmy'
@@ -90,7 +88,6 @@ us_marines_javelin:
   attack_bonus: 0
 
 m2a3_bradley:
-  unit_id: 'm2a3_bradley'
   display_name: 'M2/A3 Bradley - IFV' 
   description: 'The Bradley Infantry Fighting Vehicle is a vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soliders.'
   unit_faction: 'usarmy'
@@ -107,7 +104,6 @@ m2a3_bradley:
 
 ## Bad guys
 militia_rifles:
-  unit_id: 'milita_rifles'
   display_name: 'Village Militia Rifles Group'
   description: 'When the local warlord decided to support the Taliban, these villagers mobilized. A group consists of about 10-15 people. Arming themselves with weapons as soviet assault rifles, hand-down WW2 relicts and home-made grenades, they have various levels of training. Some never fired a shot before. They lack tactics and equipment, being always low on ammo.'
   unit_faction: 'taliban'
@@ -123,7 +119,6 @@ militia_rifles:
   attack_bonus: 0
 
 taliban_heavy_weapons:
-  unit_id: 'taliban_heavy_weapons'
   display_name: 'Taliban Heavy Weapons Squad'
   description: 'Having received some formal training at a secret camp in the mountains, these 9 men lack the drill and tactics, but else pass as soldiers. They have some standard equipment, soviet-era RPG missiles and launcher as well as at least one machinegunner.'
   unit_faction: 'taliban'
@@ -140,7 +135,6 @@ taliban_heavy_weapons:
 
 # Civilians
 refugees:
-  unit_id: 'refugees'
   display_name: 'Civilians/Refugees'
   description: "A civilian treck of women, men and children who have just been able to flee from the battles and bring some of their belongings with them. Some brought small arms for hunting or self defense, but they can't hope to do more than deter wild dogs or a lone criminal on the road."
   unit_faction: 'civilians'

@@ -33,14 +33,23 @@ func load_theme(theme_name):
     for data_file in data_files:
         var file_path = theme_path + '/' + String(data_file).split(':',1)[1].split(')',1)[0]
         theme_object[String(data_file).split(':',1)[0].split('(',1)[1]] = _read_json(file_path)
-    print(String(theme_object))
     return theme_object
 
 # Public Getter for unit object
 # @outputs {Dictionary} Dict containing all units and their attributes.
 func get_units():
     if _is_theme_loaded():
-        result = theme_object['units']
+        var result = theme_object['units']
+        return result
+
+# Public Getter for specific unit object
+# @input {String} id of the unit to get
+# @outputs {Array} Attributes of the unit
+func get_unit(unit_id):
+    if _is_theme_loaded():
+        var units = theme_object['units']
+        if unit_id in units:
+            return units[String(unit_id)]
 
 # This reads a JSON file and returns a dictionary containing all information from it.
 # @input {String} the path to a file, relative to res://

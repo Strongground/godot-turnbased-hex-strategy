@@ -4,20 +4,17 @@
 # As in all theme data files, the container ID of a modifier is not used in game,
 # only the `faction_id` inside the container, so name the containers like you want.
 
-faction_us:
-  faction_id: 'usarmy'
+usarmy:
   display_name: 'US Army'
   description: "We're the good guys!"
   icon: 'factions/usarmy.jpg'
 
-faction_taliban:
-  faction_id: 'taliban'
+taliban:
   display_name: 'Taliban'
   description: 'These are the real bad guys...'
   icon: 'factions/taliban.jpg'
 
-faction_civ:
-  faction_id: 'civilians'
+civilians:
   display_name: 'Innocent Civilians'
   description: 'Protect us, we are unarmed.'
   icon: 'factions/civies.jpg'

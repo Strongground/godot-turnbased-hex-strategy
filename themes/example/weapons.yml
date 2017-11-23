@@ -6,7 +6,6 @@
 ### in weapons than units - but this may depend on the specifity of
 ### the theme.
 ###
-### As with units, the ID used in game is the weapon_id attribute.
 ### The name of the container for each weapon in this file is never
 ### used, therefore doesn't matter.
 
@@ -48,7 +47,6 @@
 ### could indicate wether target is armored or not and even if hit or miss.
 
 mg50cal:
-  weapon_id: 'mg50cal'
   display_name: 'Mk2 Heavy Machinegun (Cal 50)'
   description: 'Description for this weapon comes here.'
   attack_strength: 3
@@ -61,7 +59,6 @@ mg50cal:
   sound: 'fx/50cal.wav'
 
 tow:
-  weapon_id: 'tow'
   display_name: 'BGM-71 TOW Missile System'
   description: 'The BGM-71 is an American anti-tank missile, first produced in 1970. It is one of the most widely used anti-tank guided missiles worldwide.'
   attack_strength: 4
@@ -74,7 +71,6 @@ tow:
   sound: 'fx/missile.wav'
 
 assault_rifles:
-  weapon_id: 'assault_rifles'
   display_name: 'Assault Rifles'
   description: 'Assault rifles are the mainstay of a modern infantry fighting force. They can be extended by various modules and modern assault rifles are versatile weapon platforms that can fill many roles. Still, most assault rifles in use are soviet era/cold war era rifles with simple mechanics.'
   attack_strength: 2
@@ -87,7 +83,6 @@ assault_rifles:
   sound: 'fx/assault_rifles.wav'
 
 javelin:
-  weapon_id: 'javelin'
   display_name: 'Javelin Medium Antiarmor Missile'
   description: 'The Javelin Antiarmor Weapon System was introduced in the 1990s and offers a bigger warhead and better guiding, which results in higher survivability of the soldiers employing it. However, its range is lower than that of the TOW missile system.'
   attack_strength: 5
@@ -100,7 +95,6 @@ javelin:
   sound: 'fx/missile.wav'
 
 m242_cannon:
-  weapon_id: 'm242_cannon'
   display_name: 'M242 Bushmaster Cannon'
   description: 'The M242 Bushmaster is a 25mm chain-driven autocannon. It has a good medium range of 3km and is one of the most successful modern autocannons.'
   attack_strength: 4
@@ -113,7 +107,6 @@ m242_cannon:
   sound: 'fx/cannon.wav'
 
 irregular_rifles:
-  weapon_id: 'irregular_rifles'
   display_name: 'Assorted Irregular Rifles'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rifles, even WW2 weapons that where handed down the generations, but also weapons meant for game hunting or improvised devices.'
   attack_strength: 2
@@ -126,7 +119,6 @@ irregular_rifles:
   sound: 'fx/assault_rifles.wav'
 
 irregular_heavy:
-  weapon_id: 'irregular_heavy'
   display_name: 'Irregular Heavy Weapons'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rocket propelled grenade launchers (RPG) and machineguns like the famous PK family, RPD or RPK weapons and others. Explosives are either improvised or soviet surplus.'
   attack_strength: 3
@@ -139,7 +131,6 @@ irregular_heavy:
   sound: 'fx/heavy_weapons_mixed.wav'
 
 small_arms:
-  weapon_id: 'small_arms'
   display_name: 'Small Arms/Civilian Weapons'
   description: 'This includes hunting rifles, pistols or handed down weapon trophies from previous World Wars that are now used in times of emergency to provide a basic level of self defense.'
   attack_strength: 1

@@ -1,10 +1,5 @@
 extends Node2D
 
-# General thougt on this class:
-# This is the new game class which - for historic reasons - is still named 'map'. 
-# The following paragraphs do not talk about this class, but rather a new - to be created - 
-# class.
-# 
 # The map class should serve as a parent class from which all map instances in the game inherit
 # general comfort functions to select hexes and display information about hexes (highlighting,
 # showing of terrain information etc.). These functions are currently present in this ('game')
