@@ -24,11 +24,17 @@ static func getColorArray(color_name):
 		# if color not in dict, return pink as easy-to-notice fallback
 		return [255,192,203]
 
-# Return Color() by common color name (i.e. 'red' returns Color(204,0,0))
-static func getColor(color_name):
+# Return Color() by common color name (i.e. 'red' returns Color(204,0,0,1))
+# Allows to specifiy opacity. If ommitted or invalid, '1' is assumed
+# @return Color
+static func getColor(color_name, opacity=1):
+	if opacity > 1 || opacity < 0:
+		opacity = 1
 	var colors = getColors()
 	if colors.has(color_name):
-		return Color(colors[color_name][0],colors[color_name][1],colors[color_name][2])
+		var retrieved_color = colors[color_name]
+		retrieved_color.append(opacity)
+		return Color(retrieved_color[0], retrieved_color[1], retrieved_color[2], retrieved_color[3])
 	else:
 		# if color not in dict, return pink as easy-to-notice fallback
-		return [255,192,203]
+		return Color(255,192,203,1)

@@ -15,8 +15,10 @@ var panel_area = null
 # the main menu bar/panel
 # @returns {Boolean} true if the mouse position is over a GUI element 
 func is_gui_clicked():
-	var click_pos = get_viewport().get_mouse_pos()
-	var panel_top_border_begin = get_viewport().get_rect().size.y - panel_pos.y
+	var click_pos = get_viewport().get_mouse_position()
+	var panel_pos_y = panel_pos.y
+	var viewport_size_y = get_viewport().size.y
+	var panel_top_border_begin = get_viewport().size.y - panel_pos.y
 	print('Click inside GUI: '+String(click_pos.y > panel_top_border_begin))
 	return click_pos.y > panel_top_border_begin
 	
@@ -27,16 +29,16 @@ func disable_movement_button(disabled):
 
 # Init
 func _ready():
-	set_fixed_process(true)
 	set_process_input(true)
 	camera = get_parent()
 	root = get_tree().get_current_scene()
 	tile_info_popup = camera.find_node('Tile_Info')
 	tile_info_popup_text = tile_info_popup.find_node('Tile_Text')
 	move_button = find_node('MoveButton')
-	#####
+	##### Panel
 	panel = find_node('Panel')
-	panel_pos = self.panel.get_pos()
+	panel_pos = self.panel.get_transform()
+	panel_pos = self.panel.rect_position
 	panel_size = self.panel.get_size()
 
 # Handle input
@@ -52,13 +54,13 @@ func _show_tile_info_popup(tile_object):
 		popup_pos.x,
 		popup_pos.y - self.get_size().y
 	)
-	tile_info_popup.set_pos(popup_pos)
+	tile_info_popup.set_position(popup_pos)
 	tile_info_popup_text.set_text(String(tile_object))
 	tile_info_popup.popup()
 
-func _fixed_process(delta):
+func _physics_process(delta):
 	var popup_pos = camera.get_screen_center()
-	tile_info_popup.set_pos(popup_pos)
+	tile_info_popup.set_position(popup_pos)
 
 # If MoveButton in GUI pressed, and a unit is selected,
 # set movement selection

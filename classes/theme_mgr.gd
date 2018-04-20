@@ -55,13 +55,14 @@ func get_unit(unit_id):
 # @input {String} the path to a file, relative to res://
 # @outputs {Dictionary} A dictionary containing all nodes from the JSON file
 func _read_json(file_path):
-    var file_contents_json = {}
-    var file = File.new()
-    file.open(file_path, file.READ)
-    var text = file.get_as_text()
-    file_contents_json.parse_json(text)
-    file.close()
-    return file_contents_json
+	var file_contents_json = {}
+	var file = File.new()
+	file.open(file_path, file.READ)
+	var text = file.get_as_text()
+	file_contents_json = parse_json(text)
+	print(typeof(file_contents_json))
+	file.close()
+	return file_contents_json
 
 # This function parses a themes config file given as an object.
 # @input {Dictionary} config file as dict

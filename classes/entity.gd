@@ -15,13 +15,10 @@ var id = null
 
 ## Called every time the node is added to the scene.
 func _ready():
-	set_fixed_process(true)
-	if get_tree().is_editor_hint():
+	if Engine.is_editor_hint():
 		# This is only executed in editor
 		self._snap_to_grid()
 	else:
-		# Normal init when inside the game
-		set_fixed_process(true)
 		# Get necessary siblings
 		root = get_tree().get_current_scene()
 		hex_outline = find_node('HexOutline')
@@ -31,8 +28,8 @@ func _ready():
 		# Default function calls
 		self._snap_to_grid()
 		
-func _fixed_process(delta):
-	if get_tree().is_editor_hint():
+func _physics_process(delta):
+	if Engine.is_editor_hint():
 		# This is only executed in editor
 		self._snap_to_grid()
 
@@ -87,17 +84,17 @@ func deselect():
 func _show_marker(color):
 	# show hex outline, color must be string representation of common color name
 	hex_outline.set_modulate(globals.getColor(color))
-	hex_outline.set_opacity(1)
+	hex_outline.show()
 	
 # hide any visible marker
 func _hide_marker():
-	hex_outline.set_opacity(0)
+	hex_outline.hide()
 
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():
-	var grid_coords = hexmap.world_to_map(self.get_global_pos())
+	var grid_coords = hexmap.world_to_map(self.get_global_position())
 	var world_coords = get_centered_grid_pos(grid_coords, Vector2(-6,0))
-	self.set_pos(world_coords)
+	self.set_position(world_coords)
 
 # Helper function that returns the centered coordinates corrected
 # by given offset

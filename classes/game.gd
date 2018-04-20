@@ -50,10 +50,19 @@ var movement_selection = false
 var tween = null
 var grid_visible = false
 var theme_manager = false
+## Loop vars
+var turn_counter = 0
+var player_active = null
+var player_rotation = []
+var players = []
+## debug labels
+var label_player = null
+var label_turn = null
 
 func _ready():
-    set_fixed_process(true)
     set_process_input(true)
+    var registered_players = ['Human Tester', 'Test AI (Dumb)', 'Test AI (Clever)'] # Later this would need to come out of menu selection
+    players = _create_players(registered_players)
     camera = find_node('MainCamera')
     root = get_node('/root')
     globals = get_node('/root/globals')
@@ -67,6 +76,8 @@ func _ready():
     tween = find_node('Tween')
     GUI = find_node('GUI')
     theme_manager = find_node('ThemeManager')
+    label_player = find_node('CurrentPlayer')
+    label_turn = find_node('CurrentTurn')
     # Load theme
     theme_manager.load_theme('example')
     hex_offset = Vector2(-6,0)
@@ -97,8 +108,31 @@ func _ready():
     GUI.disable_movement_button(true)
     # Test load a unit from theme
     var test_unit = theme_manager.get_unit('militia_rifles')
-    print(String(test_unit))
 
+# Instanciate the associated nodes for each registered player.
+# @input {Array} of Strings to name the Nodes, ID will be created automatically
+# @returns {Array} of player object references
+func _create_players(registered_player_array):
+    var result_array = []
+    var i = 0
+    for player_node_name in registered_player_array:
+        var player = load("res://classes/player.tscn")
+        var player_instance = player.instance()
+        player_instance.set_name(String(player_node_name))
+        result_array.append({'node': player_instance, 'id': i})
+        add_child(player_instance)
+        i += 1
+    return result_array
+    
+# Get a player object by its id from the global array of players.
+# @returns {Object | False} If a player object with the given ID can be found,
+# it is returned. Otherwise, false is returned.
+func get_player_by_id(id):
+    for player in players:
+        if player['id'] == id:
+            return player
+        else:
+            return false
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
@@ -151,7 +185,7 @@ func _create_entity_list():
                 'id': i,
                 'node': node,
                 'type': node.get_type(),
-                'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
+                'grid_pos': self._get_hex_object_from_global_pos(node.get_global_position()).grid_pos
             })
             i += 1
     return result
@@ -174,8 +208,8 @@ func _get_hex_neighbour_pos(hex_position, direction):
 # Get the hex tile object by world position
 # @input {Vector2} hex_position - global position of tile
 # @returns {Object} The tile object
-func get_hex_object_from_global_pos(position):
-    var grid_position = hexmap.world_to_map(position)
+func _get_hex_object_from_global_pos(given_position):
+    var grid_position = hexmap.world_to_map(given_position)
     for tile in tile_list:
         if tile['grid_pos'] == grid_position:
             return tile
@@ -183,9 +217,9 @@ func get_hex_object_from_global_pos(position):
 # Get the hex tile object by grid local position
 # @input {Vector2} hex_position - grid local position of tile
 # @returns {Object} The tile object
-func _get_hex_object_from_grid_pos(position):
+func _get_hex_object_from_grid_pos(given_position):
     for tile in tile_list:
-        if tile['grid_pos'] == position:
+        if tile['grid_pos'] == given_position:
             return tile
     
 # Get the hex tile object by its ID
@@ -199,12 +233,12 @@ func _get_hex_object_from_id(id):
 func _input(event):
     # Maybe outsource this to a click controller module, or maybe delegate all
     # click events to appropiate nodes from here. Ask Q/A
-    if event.type == InputEvent.KEY:
+    if event is InputEventKey:
         if event.scancode == KEY_ESCAPE:
             get_tree().quit()
     elif event.is_action_pressed('mouse_click'):
         # Once set the actual global mouse position needed for conversion of the coordinates
-        var click_pos = self.get_global_mouse_pos()
+        var click_pos = self.get_global_mouse_position()
         
         ### If clicked on tilemap
         if self._is_tilemap(click_pos) and not self._is_unit(click_pos) and not GUI.is_gui_clicked():
@@ -212,12 +246,12 @@ func _input(event):
             # Deselect all selectable entities
             #self.deselect_all_entities()
 
-            # If in state of movement and unit is selected, next click sets movement target
-            # and triggers pathfinding to it, saving the resulting path array at the selected
-            # unit.
+            # If in state of movement and unit owned by active player is selected, next click 
+            # sets movement target and triggers pathfinding to it, saving the resulting path 
+            # array at the selected unit.
             if self.movement_selection == true and self.selected_unit != null:
                 var unit = _get_entity_by_id(self.selected_unit)
-                var new_path = find_path(unit.node.get_global_pos(), click_pos)
+                var new_path = find_path(unit.node.get_global_position(), click_pos)
                 unit.node.set_path(new_path)
                 # _show_path(new_path)
                 unit.node.animate_path(new_path)
@@ -232,7 +266,7 @@ func _input(event):
             # 	# increment click counter
             # 	click_counter += 1
             # 	# color clicked (starting) tile red
-            # 	var vis_start_tile = self.get_hex_object_from_global_pos(start_position)
+            # 	var vis_start_tile = self._get_hex_object_from_global_pos(start_position)
             # 	self._set_hex_fill(hexmap.map_to_world(vis_start_tile.grid_pos), 'red', 'path_vis')
             # elif click_counter == 1:
             # 	print('Second click')
@@ -257,7 +291,7 @@ func _input(event):
             # self._highlight_neighbours(click_pos)
             
             # Show the popup with tile information
-            # GUI._show_tile_info_popup(get_hex_object_from_global_pos(click_pos))
+            # GUI._show_tile_info_popup(_get_hex_object_from_global_pos(click_pos))
             # GUI._show_tile_info_popup(current_tile)
 
         ### Unit was selected
@@ -265,17 +299,62 @@ func _input(event):
             var selected_unit = self._is_unit(click_pos, true)
             selected_unit.node.select()
             GUI.disable_movement_button(false)
-            
 
-func _fixed_process(delta):
-    pass
+# Process the current turn
+func _end_turn():
+    _advance_player_rotation()
+    turn_counter += 1
+
+func _advance_player_rotation():
+    var player_status = null
+    var next_player = ''
+    # populate the player_rotation first time this method is called
+    if players.size() != player_rotation.size():
+        for count in range(0, players.size()):
+            # for first player, set to active (because he is the only one) 
+            if count == 0:
+                player_status = true
+            else:
+                player_status = false
+            player_rotation.append({
+                'id': count,
+                'active': player_status
+            })
+    # determine next player id
+    for player in player_rotation:
+        # found active player, set it to inactive and determine id of next one
+        if player['active']:
+            # Set player entry in player_rotation to 'not active'
+            player['active'] = false
+            # Set player object itself to 'not active'
+            players[player['id']]['node'].set_active(false)
+            if player['id']+1 > players.size()-1:
+                # if we reached end of list of players, set next_player index to 0 again
+                next_player = players[0]['node']
+                # Set next player in player_rotation 'active'
+                player_rotation[0]['active'] = true
+            else:
+                # else set to current players id + 1
+                next_player = players[(player['id']+1)]['node']
+                # Set next player in player_rotation 'active'
+                player_rotation[player['id']+1]['active'] = true
+            # Set next player object 'active'
+            next_player.set_active(true)
+            player_active = next_player
+            break
+    
+func _physics_process(delta):
+    if player_active != null:
+        label_player.set_text(String(player_active['id']))
+    if turn_counter:
+        label_turn.set_text(String(turn_counter))
 
 # Check if there is a tilemap at the given position
 # Use this to wrap up input loop, to avoid NPE when clicked outside tilemap
 # @input {Vector2} position of the click to check for tilemap
 # @returns {Boolean} return true if there is no entity at given coords
-func _is_tilemap(position):
-    var tile = get_hex_object_from_global_pos(position)
+func _is_tilemap(given_position):
+    var tile = _get_hex_object_from_global_pos(given_position)
     if tile != null and tile.size() > 1:
         return true
     return false
@@ -284,8 +363,8 @@ func _is_tilemap(position):
 # @input {Vector2} position of the click to check for unit
 # @input {Boolean} (optional) return unit object if true
 # @returns {Boolean | Object} return true if there is a unit at given coords
-func _is_unit(position, return_unit=false):
-    var grid_position = hexmap.world_to_map(position)
+func _is_unit(given_position, return_unit=false):
+    var grid_position = hexmap.world_to_map(given_position)
     for entity in entities:
         if entity.node.get_type() == 'unit':
             if entity.grid_pos == grid_position:
@@ -317,9 +396,9 @@ func _is_unit_selected():
 # Method to return a tiles attributes as defined in tilemap.gd
 # @input {Vector2} global click position
 # @returns {Object} the tile object
-func get_tile(position):
+func get_tile(given_position):
     # Calculate grid position from world position
-    var grid_pos = hexmap.world_to_map(position)
+    var grid_pos = hexmap.world_to_map(given_position)
     # Get tile attributes based on tileset index
     var tile = hexmap._get_tile_attributes_by_index(hexmap.get_cell(grid_pos.x, grid_pos.y))
     # Enrich the returned tile object for debugging purposes
@@ -329,21 +408,21 @@ func get_tile(position):
     
 # Method to draw a outline on one tile at a time to highlight it
 # @input {Vector2} position - of the click in global coordinates
-func highlight_hex(position):
+func highlight_hex(given_position):
     # get grid local coordinates of hexagon from global click coordinates
-    var global_hex_position = hexmap.world_to_map(position)
+    var global_hex_position = hexmap.world_to_map(given_position)
     # get global coordinates of hexagon from grid local coordinates
     var hex_world_pos = hexmap.map_to_world(global_hex_position)
     # calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
     var highlight_pos = _get_center_of_hex(hex_world_pos)
-    hex_marker.set_pos(highlight_pos)
+    hex_marker.set_position(highlight_pos)
 
 # Returns the centered position of the tile, which position is given
 # @input {Vector2} global position of hex
 # @output {Vector2} global position of center of hex
-func _get_center_of_hex(position):
-    return Vector2(position.x + self.hex_offset.x + (hexmap.get_cell_size().x/2),
-                   position.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
+func _get_center_of_hex(given_position):
+    return Vector2(given_position.x + self.hex_offset.x + (hexmap.get_cell_size().x/2),
+                   given_position.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
 
 # Breadth First Search implementation
 # @input {Vector2} start_position global coordinates, from where to calculate the visitation
@@ -358,7 +437,7 @@ func _visit_map(start_position, target_position=null):
     # manually by using 'custom_sort'
     var frontier = []
     # Start the visitation witht the tile gotten from the click position
-    var start_tile = get_hex_object_from_global_pos(start_position)
+    var start_tile = _get_hex_object_from_global_pos(start_position)
     frontier.push_front([tile_list[start_tile['id']], 0]) # Start tile has cost 0
     
     var visited = []
@@ -375,7 +454,7 @@ func _visit_map(start_position, target_position=null):
         current = frontier[0] # Now current[0] gives the tile object, current[1] the associated cost
 
         # if target_position is already found, stop visitation to speed up overall calculation
-        if target_position != null and current[0]['grid_pos'] == self.get_hex_object_from_global_pos(target_position)['grid_pos']:
+        if target_position != null and current[0]['grid_pos'] == self._get_hex_object_from_global_pos(target_position)['grid_pos']:
             print('Found target tile, breaking now!')
             break
         
@@ -409,8 +488,8 @@ func _visit_map(start_position, target_position=null):
 # @returns {Array} path to the target tile
 func find_path(start_position, target_position):
     self._visit_map(start_position, target_position)
-    var start_tile = self.get_hex_object_from_global_pos(start_position)
-    var target_tile = self.get_hex_object_from_global_pos(target_position)
+    var start_tile = self._get_hex_object_from_global_pos(start_position)
+    var target_tile = self._get_hex_object_from_global_pos(target_position)
     var current = null
     var path = []
     
@@ -437,8 +516,8 @@ func _mark_grid_position(grid_position, counter):
     var hex_world_pos = hexmap.map_to_world(grid_position)
     var marker_pos = _get_center_of_hex(hex_world_pos)
     counter_label.set_text(String(counter))
-    new_marker.set_pos(marker_pos)
-    counter_label.set_pos(Vector2(marker_pos.x, marker_pos.y + 15))
+    new_marker.set_position(marker_pos)
+    counter_label.set_position(Vector2(marker_pos.x, marker_pos.y + 15))
     self.add_child(new_marker)
     self.add_child(counter_label)
     counter_label.set_owner(get_tree().get_edited_scene_root())
@@ -489,7 +568,7 @@ func _show_origin(tile_list):
         var origin_dir = tile.came_from.dir
         var arrow_rotation = neighbour_position_rotation_table[origin_dir]
         new_arrow.set_rotd(arrow_rotation)
-        new_arrow.set_pos(arrow_pos)
+        new_arrow.set_position(arrow_pos)
         self.add_child(new_arrow)
         new_arrow.set_owner(get_tree().get_edited_scene_root())
 
@@ -522,9 +601,9 @@ func debug_log(filename, message):
 # @input {Vector2} Global position of the tile
 # @input {Color} Color of the markers created
 # @input {Bool} If the coordinates should be rendered onto the tile
-func highlight_every_hex(position, marker_color, show_coords):
+func highlight_every_hex(given_position, marker_color, show_coords):
     # get grid local coordinates of hexagon from global click coordinates
-    var global_hex_position = hexmap.world_to_map(position)
+    var global_hex_position = hexmap.world_to_map(given_position)
     # get global coordinates of hexagon from grid local coordinates
     var hex_world_pos = hexmap.map_to_world(global_hex_position)
     # calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
@@ -533,7 +612,7 @@ func highlight_every_hex(position, marker_color, show_coords):
     var new_highlight = hex_marker.duplicate()
     new_highlight.set_modulate(marker_color)
     # position the highlight
-    new_highlight.set_pos(highlight_pos)
+    new_highlight.set_position(highlight_pos)
     # add the highlight to scene
     self.add_child(new_highlight)
     new_highlight.set_owner(get_tree().get_edited_scene_root())
@@ -543,9 +622,9 @@ func highlight_every_hex(position, marker_color, show_coords):
         var global_pos_label = Label.new()
         var grid_pos_label = Label.new()
         # Position the labels
-        global_pos_label.set_pos(hex_world_pos)
+        global_pos_label.set_position(hex_world_pos)
         var grid_pos_label_pos = Vector2(hex_world_pos.x, hex_world_pos.y+20)
-        grid_pos_label.set_pos(grid_pos_label_pos)
+        grid_pos_label.set_position(grid_pos_label_pos)
         # Fill the labels with text
         global_pos_label.set_text(String(hex_world_pos))
         grid_pos_label.set_text(String(global_hex_position))
@@ -569,14 +648,14 @@ func _set_hex_fill(hex_world_pos, marker_color, opt_name=null):
         new_hex_fill.set_name(opt_name)
     new_hex_fill.set_modulate(globals.getColor(String(marker_color)))
     # position the highlight
-    new_hex_fill.set_pos(highlight_pos)
+    new_hex_fill.set_position(highlight_pos)
     # add the highlight to scene
     self.add_child(new_hex_fill)
     
 # Highlight the neighbours of a hex tile at a given global position
 # @input {Vector2} global position of the tile
-func _highlight_neighbours(global_position):
-    var selected_tile = self.get_hex_object_from_global_pos(global_position)
+func _highlight_neighbours(given_global_position):
+    var selected_tile = self._get_hex_object_from_global_pos(given_global_position)
     for neighbour_entry in selected_tile['neighbours']:
         if selected_tile.neighbours[neighbour_entry] != null:
             var neighbour_tile_pos = hexmap.map_to_world(selected_tile.neighbours[neighbour_entry])
@@ -596,9 +675,9 @@ func _export_tile_list(tilemap):
 # Renders red dot at given position relative to given parent
 # @input {Vector2} position to render dot
 # @input {Object} parent node of the created sprite
-func _render_dot(position, parent):
+func _render_dot(given_position, parent):
     var new_marker = marker.duplicate()
-    new_marker.set_pos(position)
+    new_marker.set_position(given_position)
     parent.add_child(new_marker)
     new_marker.set_owner(get_tree().get_edited_scene_root())
 
@@ -607,18 +686,18 @@ func _render_dot(position, parent):
 # @input {Vector2} top left position to begin render box
 # @input {Vector2} size dimensions of the box
 # @input {Object} parent node of the created box
-func _render_size_rect(position, size, parent):
+func _render_size_rect(given_position, size, parent):
     var new_rect = rect.duplicate()
-    new_rect.set_pos(position)
+    new_rect.set_position(given_position)
     new_rect.set_size(size)
     parent.add_child(new_rect)
     new_rect.set_owner(get_tree().get_edited_scene_root())
 
 # Tries to mark the dimensions of the hex tile based on hexmap based coordinates with dots
 # @input {Vector2} world space coordinates of tiles
-func _mark_hex_dimensions(position):
+func _mark_hex_dimensions(given_position):
     # global position to grid position
-    var grid_pos = hexmap.world_to_map(position)
+    var grid_pos = hexmap.world_to_map(given_position)
     # grid position back to global position
     var global_pos = hexmap.map_to_world(grid_pos)
     # get dimensions of cell
@@ -631,16 +710,16 @@ func _mark_hex_dimensions(position):
     # set positions of each marker
     # set top left (0,0)
     var pos1 = global_pos
-    marker1.set_pos(pos1)
+    marker1.set_position(pos1)
     # set top right (0+110,0)
     var pos2 = Vector2(global_pos.x+hex_size.x, global_pos.y)
-    marker2.set_pos(pos2)
+    marker2.set_position(pos2)
     # set bottom left (0,0+128)
     var pos3 = Vector2(global_pos.x, global_pos.y+hex_size.y)
-    marker3.set_pos(pos3)
+    marker3.set_position(pos3)
     # set bottom right (0+110,0+128)
     var pos4 = global_pos+hex_size
-    marker4.set_pos(pos4)
+    marker4.set_position(pos4)
     # add the markers to scene
     self.add_child(marker1)
     self.add_child(marker2)
@@ -660,7 +739,7 @@ func _display_hex_info(input_coordinates, show_coordinates):
     var new_label = Label.new()
     var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
     new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
-    new_label.set_pos(tile_world_pos)
+    new_label.set_position(tile_world_pos)
     self.add_child(new_label)
     new_label.set_owner(get_tree().get_edited_scene_root())
 
@@ -671,7 +750,7 @@ func _render_on_tile(input_coordinates, info, opt_name):
     var new_label = Label.new()
     var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
     new_label.set_text(info)
-    new_label.set_pos(tile_world_pos)
+    new_label.set_position(tile_world_pos)
     if opt_name != null:
         new_label.set_name(opt_name)
     self.add_child(new_label)
@@ -687,7 +766,7 @@ func _display_terrain_type(grid_coordinates):
     var y_pos = grid_coordinates[1] + (hexmap.get_cell_size().y/2)
     var x_pos = grid_coordinates[0]
     var tile_world_pos = hexmap.map_to_world(Vector2(x_pos,y_pos))
-    new_label.set_pos(tile_world_pos)
+    new_label.set_position(tile_world_pos)
     # Attach label
     self.add_child(new_label)
     new_label.set_owner(get_tree().get_edited_scene_root())
@@ -698,16 +777,18 @@ func _display_terrain_type(grid_coordinates):
 ##########################################################################
 
 func _on_ToggleGridButton_pressed():
-    print(String(grid_visible))
     var from_opacity = null
     var to_opacity = null
     if grid_visible:
-        from_opacity = 0.3
-        to_opacity = 0
+        from_opacity = Color(1, 1, 1, 0.3)
+        to_opacity = Color(1, 1, 1, 0)
         grid_visible = false
     else:
-        from_opacity = 0
-        to_opacity = 0.3
+        from_opacity = Color(1, 1, 1, 0)
+        to_opacity = Color(1, 1, 1, 0.3)
         grid_visible = true
-    tween.interpolate_property(hex_grid, 'visibility/opacity', from_opacity, to_opacity, 2, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
+    tween.interpolate_property(hex_grid, 'modulate', from_opacity, to_opacity, 2.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
     tween.start()
+
+func _on_EndTurnButton_pressed():
+	_end_turn()

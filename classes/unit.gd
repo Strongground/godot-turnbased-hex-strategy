@@ -109,6 +109,10 @@ var animation_step = 0
 var animation_path_array = []
 var offset = null
 
+# This function a boolean indicating if the currently active player is the owner of this unit.
+func owned_by_active_player():
+	return root.player_active['id'] == self.unit_owner
+
 # This function should update the appearance of the unit, calculate stat changes etc.
 # ater each round. There is no need to do this in _process since its all turnbased anyway.
 func update():
@@ -123,7 +127,7 @@ func animate_path(path_array):
 func _animate_step(current_tile, step):
 	animation_step_active = true
 	self.animation_step = step
-	move_tween.interpolate_property(self, 'transform/pos', self.get_global_pos(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	move_tween.interpolate_property(self, 'transform/pos', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
 	move_tween.start()
 
 ##### Internal methods
@@ -132,7 +136,6 @@ func _ready():
 	type = 'unit'
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
-	set_fixed_process(true)
 	set_process_input(true)
 	unit_sprite = find_node('UnitImage')
 	move_tween = find_node('MoveTween')

@@ -1,14 +1,24 @@
 # ToDo & Documentation
+
+## ToDo
+
+[X] Implement turnbased game loop as described further below
+[ ] Fix that a unit can only be moved once (bug?)
+[ ] Implement some kind of UI lock state, where any action that is uninterruptible should lock any input from player until completion.
+Camera movement should be independent of this (or maybe just automatic camera movement?)
+[ ] A method to flood fill the tiles around a unit with a certain range/depth should be implemented/derivated from the flood fill already implemented for the pathfinding code. This method will be used for calculating the attack/movement/sight range of units
+[ ] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
+
 ## Themes
 Since a theme is at its core designed to represent a specific time in human history or a specific theatre of conflict, it is appropriate to think of a theme as an "era". 
 
 Technically speaking, a theme is a folder containing multiple files, with a structure that is imposed by convention.
 
 ## Theme Manager
-The theme manager is supposed to provide a Class of getters that provide the information inside a `YAML` file, which by design is structured to be easily edited and read by a game designer, for the classes in the game - like "unit" - to consume.
+The theme manager is supposed to provide a Class of getters that provide the information inside a `XML` which is created out of a `YAML` file - which by design is structured to be easily edited and read, e.g. by a level designer - for the classes in the game, like "unit", to consume.
 
 ### Theme format
-A theme consists of some basic information like "name" and maybe a short "description" or a picture to show in some future implementation of an ingame "theme manager GUI".
+A theme consists of some basic information like "name" and maybe a short "description", "author" or a picture to show in some future implementation of an ingame "theme manager GUI".
 
 But, maybe most important, is the reference to the YAML-files, that contain all theme specific data.
 
@@ -76,23 +86,54 @@ Following is a draft of the contained files inside a themes folder and their con
 
 ## Game core mechanics
 ### Turnbased behaviour
-Implement some kind of 'game' class (refactor currently `map.gd` class?) that controls turns and players and so on. Basic idea: The game class keeps track of number of turns and Array of players. A player is a simple object that is bound to a faction and has an ID.
+Implement some kind of 'game' class (refactor current `map.gd` class?) that controls turns and players and so on. Basic idea: The game class keeps track of number of turns and Array of players. A player is a simple object that is bound to a faction and has an ID. Units in the game are "owned" by a player who exlusively can fully interact with them (e.g. issue move orders, attack orders etc.)
 
 For the first few turns of the game (where 'few' is 'number of players') an Array is populated with the IDs of players. This is used to determine the order of players turns.
 
-The effect of actions is immediatly visible in game. An attack on another unit instantly yields the result. If an attacked unit is destroyed, it will no longer be available for commands for the owning player in his turn. Movement to another tile is irreversible.
+The effect of actions is immediatly visible in game. An attack on another unit instantly yields the result. If an attacked unit is destroyed, it will no longer be available for commands for the owning player in his turn. However a unit with higher "initiative" value than the attacker will be able to shoot first, when attacked. Movement to another tile is irreversible.
 
-#### Fill player rotation
-Before each turn, there is a check if `players.count() == player_rotation.count()`. If no, the following happens:
+#### Fill player rotation (obsolete)
+-Before each turn, there is a check if `players.count() == player_rotation.count()`. If no, the following happens:-
 
-During first turn, the player at `players[turn_counter]` is set to `active=true` and allowed to interact with units on the map where he is `unit.unit_owner`. `player.id` is added to `player_rotation` at index `turn_counter`. After the player ends the turn, the player is set to `active=false`, `turn_counter` is incremented and the player at `players[turn_counter]` is set to `active=true`, the loop continues.
+-During first turn, the player at `players[turn_counter]` is set to `active=true` and allowed to interact with units on the map where he is `unit.unit_owner`. `player.id` is added to `player_rotation` at index `turn_counter`. After the player ends the turn, the player is set to `active=false`, `turn_counter` is incremented and the player at `players[turn_counter]` is set to `active=true`, the loop continues.
 
-#### Player rotation full
-If the check is no longer true because all players have been added to the `player_rotation` Array, the following happens:
+#### Player rotation full (obsolete)
+-If the check is no longer true because all players have been added to the `player_rotation` Array, the following happens:-
 
-In an infinite loop (`while true`), enter a `while player.active` loop `for player in players[player_rotation]` where he can interact with units on the map with `unit.unit_owner == player.id`.
-Each pass from one player to the next increments the `turn_counter`.
+-Enter a `while player.active` loop `for player in players[player_rotation]` where he can interact with units on the map with `unit.unit_owner == player.id`.-
+-Each pass from one player to the next increments the `turn_counter` and sets the `player_active` to the next player.-
 
+##### Ideas for the game loop
+UI has a button "end turn", which sends a signal to trigger a method `end_turn()`. 
+This method then does the turn processing - set current player inactive, set next player active and so on.
+This method is called `advance_turn()`. It can also be called if a turn change is desirable outside the regular "User ends turn"-pattern.
+
+The input-handler compares ID of `active_player` with the clicked units `unit_owner` attribute before acting on the supposed action of the player, e.g. moving, attack etc.
 
 ## Line Of Sight / Fog Of War
-Oh boy this is a whole other story.
+An Array of visibility information must be kept somewhere. For each tile on the map, there must be a value for each player
+if the tile and its contents are visible. This central array is then updated according to unit movement.
+Maybe save this information in global "tile_list" for each tile so it is easily accessible.
+
+## Workflow of scenario editing
+a) User creates a new scene for the scenario.
+b) It must contain a node instance of map-class, allowing for attribtues like 'map image', 'description', 'name' etc. to be set.
+c) A toolscript _once_ creates associated nodes in hierarchy under the map node (tilemap, camera-boundary, etc.), which are then customized by the User (sizing and positioning of the camera-boundary node, painting of the tilemap, etc.)
+d) The map node has a attribute 'theme', which is filled with the name of the theme to be used. (Make this easier somehow? Detect all themes and offer selection?)
+e) A tool script will then trigger the parsing of the theme's files and populate lists of the contained entities (e.g. units).
+f) Entities are placed
+    i) For unit-entities, one of the theme-contained unit-types can be selected via `unit_id`-attribute from a dropdown containing all available `unit_id`s from the theme. 
+    ii) A tool script is triggered by the selection and updates the entity (appearance, orientation etc.)
+g) The map node has a attribute 'player_number'.
+    i) This number serves as iterator count for a tool script to create attributes for each supposed player.
+    ii) Attributes created for each player are 'name', 'faction' (gotten from theme), etc.
+h) Map node attributes like 'name', 'author', 'image' etc. are used in a future implementation of a theme-change-UI.
+
+## Workflow of selecting themes / scenarios depending on them ingame (far off)
+*Specifics of the UI will not be discussed as this is still ages away.*
+The User can select a scenario. A scenario (a.k.a map) has a dependency for a specific theme.
+So actually a theme is never loaded in the main menu, only in a scenario. And thus can't be selected.
+But maybe installed/deinstalled? Central repo?
+
+
+(how trigger any method on attribute change inside editor? This was answered somewhere already...)

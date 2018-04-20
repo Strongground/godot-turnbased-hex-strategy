@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=1]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://classes/unit.gd" type="Script" id=1]
 [ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
@@ -11,15 +11,15 @@ radius = 10.0
 
 [node name="Unit" type="Area2D"]
 
-input/pickable = true
+input_pickable = true
 shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Matrix32( 6.31008, 0, 0, 6.31008, 0, -2 )
+shapes/0/transform = Transform2D( 6.31008, 0, 0, 6.31008, 0, -2 )
 shapes/0/trigger = false
 gravity_vec = Vector2( 0, 1 )
 gravity = 100.0
 linear_damp = 0.1
 angular_damp = 1.0
-script/script = ExtResource( 1 )
+script = ExtResource( 1 )
 is_selectable = true
 unit_type = 0
 unit_owner = 0
@@ -30,9 +30,9 @@ unit_id = ""
 
 [node name="UnitImage" type="Sprite" parent="."]
 
-transform/scale = Vector2( 0.352323, 0.352323 )
-z/z = 2
-z/relative = false
+scale = Vector2( 0.352323, 0.352323 )
+z = 2
+z_as_relative = false
 texture = ExtResource( 2 )
 
 [node name="HexOutline" type="Sprite" parent="."]
@@ -42,19 +42,17 @@ texture = ExtResource( 3 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 
-transform/pos = Vector2( 0, -2 )
-transform/scale = Vector2( 6.31008, 6.31008 )
+position = Vector2( 0, -2 )
+scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
 trigger = false
 _update_shape_index = 0
 
 [node name="MoveTween" type="Tween" parent="."]
 
-playback/process_mode = 1
+playback_process_mode = 1
 playback/active = false
 playback/repeat = false
 playback/speed = 1.0
 
-[connection signal="tween_complete" from="MoveTween" to="." method="_on_MoveTween_tween_complete"]
-
-
+[connection signal="tween_complete"  from="MoveTween"  to="." method="_on_MoveTween_tween_complete" binds=[  ]]
