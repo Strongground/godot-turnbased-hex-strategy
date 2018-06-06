@@ -6,7 +6,11 @@ path="res://.import/river.png-36b942b718d1d2e3a14e698b82c9c7ea.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/river.png"
 source_md5="6a4c96a63519e15be3b4ea9cf399b7b8"
+
+dest_files=[ "res://.import/river.png-36b942b718d1d2e3a14e698b82c9c7ea.stex" ]
+dest_md5="d381324e8f69dd21765a5b898485c0a7"
 
 [params]
 

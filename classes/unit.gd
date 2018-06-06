@@ -109,7 +109,7 @@ var animation_step = 0
 var animation_path_array = []
 var offset = null
 
-# This function a boolean indicating if the currently active player is the owner of this unit.
+# This function returns a boolean indicating if the currently active player is the owner of this unit.
 func owned_by_active_player():
 	return root.player_active['id'] == self.unit_owner
 
@@ -136,7 +136,6 @@ func _ready():
 	type = 'unit'
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
-	set_process_input(true)
 	unit_sprite = find_node('UnitImage')
 	move_tween = find_node('MoveTween')
 
@@ -153,13 +152,11 @@ func _set_direction():
 func _get_path(target_position):
 	return root._visit_map(self.grid_location, target_position)
 	
-func _input(event):
-	pass
 
 func _process(delta):
 	pass
 
-func _on_MoveTween_tween_complete(object, key):
+func _on_MoveTween_tween_completed(object, key):
 	animation_step_active = false
 	if animation_path_array.size()-1 > animation_step:
 		# Animate next step

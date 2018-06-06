@@ -47,8 +47,6 @@ var tile_types = [
 ]
 
 func _ready():
-	# Called every time the node is added to the scene.
-	# Initialization here
 	pass
 
 # Return a object with attributes for the tile with the given tileset index.
@@ -60,7 +58,7 @@ func _get_tile_attributes_by_index(index):
 		print("Error: tilemap.gd - No tile type with that index:"+String(index))
 		return false
 
-# Return an attribute by its name for the tile with given tileset index.__keys
+# Return a single attribute by its name for the tile with given tileset index.
 # @input Int the tileset index
 # @input String attribute name
 func _get_tile_attribute_by_index(index, attribute):

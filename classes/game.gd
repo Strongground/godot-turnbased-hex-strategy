@@ -14,12 +14,12 @@ extends Node2D
 #
 # Proposed structure of the scene tree during a running mission would be like this:
 # game
-# L main camera
-# 	L GUI
 # L map
 # 	L map graphic
 #   L overlays
 # L all entities
+# L main camera
+# 	L GUI
 
 # member vars here
 var camera = null
@@ -85,13 +85,13 @@ func _ready():
     # that needs to be done when a neighbour of a hex tile has to be found.
     # The sorting is identical for odd and even, so hex_directions[0] always
     # gives the northern neighbour.
-    all_tiles = hexmap.get_used_cells()
     hex_directions = [
         # Even columns
         [[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]],
         # Odd columns
         [[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
     ]
+    all_tiles = hexmap.get_used_cells()
     neighbour_position_rotation_table = {
         'n':  -90,
         'ne': -150,
@@ -125,14 +125,14 @@ func _create_players(registered_player_array):
     return result_array
     
 # Get a player object by its id from the global array of players.
-# @returns {Object | False} If a player object with the given ID can be found,
-# it is returned. Otherwise, false is returned.
+# @returns {Object|null} If a player object with the given ID can be found,
+# it is returned. Otherwise, null is returned.
 func get_player_by_id(id):
     for player in players:
         if player['id'] == id:
             return player
         else:
-            return false
+            return null
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
@@ -292,7 +292,6 @@ func _input(event):
             
             # Show the popup with tile information
             # GUI._show_tile_info_popup(_get_hex_object_from_global_pos(click_pos))
-            # GUI._show_tile_info_popup(current_tile)
 
         ### Unit was selected
         elif self._is_unit(click_pos):
@@ -343,7 +342,7 @@ func _advance_player_rotation():
             player_active = next_player
             break
     
-func _physics_process(delta):
+func _process(delta):
     if player_active != null:
         label_player.set_text(String(player_active['id']))
     if turn_counter:
@@ -436,7 +435,7 @@ func _visit_map(start_position, target_position=null):
     # key. Sadly, Godot does not offer 'sorted' function, so we implement this 
     # manually by using 'custom_sort'
     var frontier = []
-    # Start the visitation witht the tile gotten from the click position
+    # Start the visitation with the tile gotten from the click position
     var start_tile = _get_hex_object_from_global_pos(start_position)
     frontier.push_front([tile_list[start_tile['id']], 0]) # Start tile has cost 0
     
@@ -479,7 +478,7 @@ func _visit_map(start_position, target_position=null):
                 frontier.append([next, cost])
                 visited.append(next)
                 # Show movement cost per tile
-                # self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
+                self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
         i += 1
 
 # Determine path from tile to tile, all coordinates are global

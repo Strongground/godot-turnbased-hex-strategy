@@ -6,7 +6,11 @@ path="res://.import/editor_marker_victory.png-49fb705019b52f5cb5a101015df5fad7.s
 
 [deps]
 
+source_file="res://assets/icons/editor_marker_victory.png"
 source_md5="e054e3748c0fab2666109e4cd487faec"
+
+dest_files=[ "res://.import/editor_marker_victory.png-49fb705019b52f5cb5a101015df5fad7.stex" ]
+dest_md5="e28c2aca00f054744cd07b8c30b17e7e"
 
 [params]
 

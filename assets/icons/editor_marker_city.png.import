@@ -6,7 +6,11 @@ path="res://.import/editor_marker_city.png-77ae3f7958f2672c750158ede03bb6d6.stex
 
 [deps]
 
+source_file="res://assets/icons/editor_marker_city.png"
 source_md5="3f8c95e251831e0fd24f40fc4e8c8852"
+
+dest_files=[ "res://.import/editor_marker_city.png-77ae3f7958f2672c750158ede03bb6d6.stex" ]
+dest_md5="a31bd6d4ed474ce8b3f82d0999ab3dc4"
 
 [params]
 

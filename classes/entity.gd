@@ -28,17 +28,10 @@ func _ready():
 		# Default function calls
 		self._snap_to_grid()
 		
-func _physics_process(delta):
+func _process(delta):
 	if Engine.is_editor_hint():
 		# This is only executed in editor
 		self._snap_to_grid()
-
-# # Handle input
-# func _input_event(viewport, event, shape_idx):
-# 	# if selectable, attempt to select
-# 	if event.type == InputEvent.MOUSE_BUTTON and event.button_index == BUTTON_LEFT and event.pressed:
-# 		if is_selectable() and not is_selected():
-# 			select()
 
 # Getter for selectable
 func is_selectable():

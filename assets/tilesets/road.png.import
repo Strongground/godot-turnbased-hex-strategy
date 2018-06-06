@@ -6,7 +6,11 @@ path="res://.import/road.png-0c488ee4ce1b723b0149477106702a51.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/road.png"
 source_md5="f6368d91ff9f00e08aed3046167a2ddf"
+
+dest_files=[ "res://.import/road.png-0c488ee4ce1b723b0149477106702a51.stex" ]
+dest_md5="bcd3473034e75d76edfa22fcf194cd47"
 
 [params]
 

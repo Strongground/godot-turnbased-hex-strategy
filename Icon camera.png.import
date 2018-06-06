@@ -6,7 +6,11 @@ path="res://.import/Icon camera.png-9d76839870e7e3d17c5cffe1c14947eb.stex"
 
 [deps]
 
+source_file="res://Icon camera.png"
 source_md5="8bbc17d2ee91d5077b893315ea6c4ed3"
+
+dest_files=[ "res://.import/Icon camera.png-9d76839870e7e3d17c5cffe1c14947eb.stex" ]
+dest_md5="6c23be99000c809728d24d3ae5654e79"
 
 [params]
 

@@ -6,7 +6,11 @@ path="res://.import/mandel.png-2afe9944e51fe3e746a9d94abb0a44b8.stex"
 
 [deps]
 
+source_file="res://assets/images/mandel.png"
 source_md5="fa79905555a8bf2f63335d8569b18504"
+
+dest_files=[ "res://.import/mandel.png-2afe9944e51fe3e746a9d94abb0a44b8.stex" ]
+dest_md5="bd3e7e7029714ed0bbcd8374c13f349d"
 
 [params]
 

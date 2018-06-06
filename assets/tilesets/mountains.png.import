@@ -6,7 +6,11 @@ path="res://.import/mountains.png-f743346289904ccc9c2b81f8361a1337.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/mountains.png"
 source_md5="e9d81f93ed6d03a4db36839d4e727791"
+
+dest_files=[ "res://.import/mountains.png-f743346289904ccc9c2b81f8361a1337.stex" ]
+dest_md5="e74c4dbdc3861d7b08ef5fd775cb1959"
 
 [params]
 

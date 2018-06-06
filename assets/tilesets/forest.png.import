@@ -6,7 +6,11 @@ path="res://.import/forest.png-eb5180539fd4a314897732bf066b6400.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/forest.png"
 source_md5="322a43ba566c23f126bbf5fe61d98f97"
+
+dest_files=[ "res://.import/forest.png-eb5180539fd4a314897732bf066b6400.stex" ]
+dest_md5="767773fc64f105613d66b55376e36a68"
 
 [params]
 

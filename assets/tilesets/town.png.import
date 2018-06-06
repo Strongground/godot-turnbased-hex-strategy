@@ -6,7 +6,11 @@ path="res://.import/town.png-6d248a7d8b162187b4b4afcc20e902aa.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/town.png"
 source_md5="5663608e2d991954d1d557059a025a3a"
+
+dest_files=[ "res://.import/town.png-6d248a7d8b162187b4b4afcc20e902aa.stex" ]
+dest_md5="25a5a4c49f3e4cff27bc8297fd81e23b"
 
 [params]
 

@@ -6,7 +6,11 @@ path="res://.import/flat_grassland.png-27b72c6ebf12e0edd4de830fbcaf53fc.stex"
 
 [deps]
 
+source_file="res://assets/tilesets/flat_grassland.png"
 source_md5="9c99c2d64e3980413a2f639616b8523c"
+
+dest_files=[ "res://.import/flat_grassland.png-27b72c6ebf12e0edd4de830fbcaf53fc.stex" ]
+dest_md5="8be6bf6cf67885324fe1b6339e4c2f59"
 
 [params]
 

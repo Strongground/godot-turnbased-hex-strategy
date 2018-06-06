@@ -6,7 +6,11 @@ path="res://.import/hex_fill.png-39008270375a556b3f4d03e87399a6f0.stex"
 
 [deps]
 
+source_file="res://assets/images/hex_fill.png"
 source_md5="fc52667c869ef15408a755325b7e989c"
+
+dest_files=[ "res://.import/hex_fill.png-39008270375a556b3f4d03e87399a6f0.stex" ]
+dest_md5="6ff05d679b384530a92ee3bc46ce5aea"
 
 [params]
 

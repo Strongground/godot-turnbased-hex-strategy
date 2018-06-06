@@ -6,7 +6,11 @@ path="res://.import/humvee_placeholder_shadow.png-23178f17c2e40cf5ba2b6c3083915e
 
 [deps]
 
+source_file="res://assets/images/humvee_placeholder_shadow.png"
 source_md5="8e6d85560209f08c8b80e963e4a572f4"
+
+dest_files=[ "res://.import/humvee_placeholder_shadow.png-23178f17c2e40cf5ba2b6c3083915e74.stex" ]
+dest_md5="81f7c4c5bc89efa72d15e3d0f3d78728"
 
 [params]
 

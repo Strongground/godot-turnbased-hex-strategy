@@ -6,7 +6,11 @@ path="res://.import/tiles.png-c3fe1d4721f734f636a251f0f2c55fe6.stex"
 
 [deps]
 
+source_file="res://assets/images/tiles.png"
 source_md5="40c74edebc63b0ad50f118ab3ee619f2"
+
+dest_files=[ "res://.import/tiles.png-c3fe1d4721f734f636a251f0f2c55fe6.stex" ]
+dest_md5="10254f955d9d7374454bc258dce3c2a5"
 
 [params]
 

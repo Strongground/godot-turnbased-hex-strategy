@@ -6,7 +6,11 @@ path="res://.import/end_turn.png-29734d54f3c0aadba29061c5b6780d78.stex"
 
 [deps]
 
+source_file="res://assets/buttons/end_turn.png"
 source_md5="8869660098b7c1001987c9756fb17751"
+
+dest_files=[ "res://.import/end_turn.png-29734d54f3c0aadba29061c5b6780d78.stex" ]
+dest_md5="cd2ea60fa493316de37f674aca8b3f50"
 
 [params]
 

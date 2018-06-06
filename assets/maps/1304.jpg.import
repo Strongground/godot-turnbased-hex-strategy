@@ -6,7 +6,11 @@ path="res://.import/1304.jpg-59e0856e13ef504a84f47b8c1a38487d.stex"
 
 [deps]
 
+source_file="res://assets/maps/1304.jpg"
 source_md5="dc01afb3b8df3658b154692072ee2fcb"
+
+dest_files=[ "res://.import/1304.jpg-59e0856e13ef504a84f47b8c1a38487d.stex" ]
+dest_md5="42b5c3b5f445780b26292210e7409d9c"
 
 [params]
 

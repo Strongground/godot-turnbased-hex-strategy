@@ -6,7 +6,11 @@ path="res://.import/editor_marker_reinforcement.png-16793216afab581882d1a76568fe
 
 [deps]
 
+source_file="res://assets/icons/editor_marker_reinforcement.png"
 source_md5="222501d816e3dfa9f641ada8e48c2c3a"
+
+dest_files=[ "res://.import/editor_marker_reinforcement.png-16793216afab581882d1a76568fe7e79.stex" ]
+dest_md5="6226aed86b1a37fedcf05a11f23b733b"
 
 [params]
 

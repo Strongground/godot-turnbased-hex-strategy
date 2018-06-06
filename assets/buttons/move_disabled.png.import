@@ -6,7 +6,11 @@ path="res://.import/move_disabled.png-cfe8cec801757206de0f1ed273597fb5.stex"
 
 [deps]
 
+source_file="res://assets/buttons/move_disabled.png"
 source_md5="02ed1fe887dc36adeb02cd3f98d5b279"
+
+dest_files=[ "res://.import/move_disabled.png-cfe8cec801757206de0f1ed273597fb5.stex" ]
+dest_md5="458e433d2fa509f8944d22ad4b265c7c"
 
 [params]
 

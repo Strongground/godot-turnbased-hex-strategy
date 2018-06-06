@@ -1,4 +1,4 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://classes/unit.gd" type="Script" id=1]
 [ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
@@ -12,47 +12,53 @@ radius = 10.0
 [node name="Unit" type="Area2D"]
 
 input_pickable = true
-shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Transform2D( 6.31008, 0, 0, 6.31008, 0, -2 )
-shapes/0/trigger = false
 gravity_vec = Vector2( 0, 1 )
 gravity = 100.0
 linear_damp = 0.1
 angular_damp = 1.0
+audio_bus_override = false
+audio_bus_name = "Master"
 script = ExtResource( 1 )
 is_selectable = true
-unit_type = 0
 unit_owner = 0
 unit_faction = 0
 direction = "RIGHT"
 graphical_scheme = null
 unit_id = ""
+display_name = ""
+base_defense = null
+armor = 0
+can_traverse = ""
+movement_points = 0
+main_weapon = 0
+main_ammo = 0
+attack_bonus = 0
 
-[node name="UnitImage" type="Sprite" parent="."]
+[node name="UnitImage" type="Sprite" parent="." index="0"]
 
 scale = Vector2( 0.352323, 0.352323 )
-z = 2
 z_as_relative = false
 texture = ExtResource( 2 )
 
-[node name="HexOutline" type="Sprite" parent="."]
+[node name="HexOutline" type="Sprite" parent="." index="1"]
 
-visibility/opacity = 0.0
 texture = ExtResource( 3 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]
 
 position = Vector2( 0, -2 )
 scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
-trigger = false
-_update_shape_index = 0
 
-[node name="MoveTween" type="Tween" parent="."]
+[node name="MoveTween" type="Tween" parent="." index="3"]
 
+repeat = false
 playback_process_mode = 1
+playback_speed = 1.0
 playback/active = false
 playback/repeat = false
 playback/speed = 1.0
 
-[connection signal="tween_complete"  from="MoveTween"  to="." method="_on_MoveTween_tween_complete" binds=[  ]]
+[connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
+
+

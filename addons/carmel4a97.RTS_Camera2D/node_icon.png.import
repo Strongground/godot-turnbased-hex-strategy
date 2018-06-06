@@ -6,7 +6,11 @@ path="res://.import/node_icon.png-a210030b965ef684de9f9bd1dec75374.stex"
 
 [deps]
 
+source_file="res://addons/carmel4a97.RTS_Camera2D/node_icon.png"
 source_md5="f973825acd62511a90773287011b91e0"
+
+dest_files=[ "res://.import/node_icon.png-a210030b965ef684de9f9bd1dec75374.stex" ]
+dest_md5="9711e202a8a0a257da0a4e6644ee349e"
 
 [params]
 

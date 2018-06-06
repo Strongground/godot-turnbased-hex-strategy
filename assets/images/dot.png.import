@@ -6,7 +6,11 @@ path="res://.import/dot.png-40613c6847c1d911da1c3a6a9b02f3b1.stex"
 
 [deps]
 
+source_file="res://assets/images/dot.png"
 source_md5="602065f193ecf0c1d4a5e61854ee0f1d"
+
+dest_files=[ "res://.import/dot.png-40613c6847c1d911da1c3a6a9b02f3b1.stex" ]
+dest_md5="03de398849ab8a2569a6dc2870e04c52"
 
 [params]
 

@@ -6,7 +6,11 @@ path="res://.import/toggle_grid.png-9cbc50b05badf2e13170f502316b9835.stex"
 
 [deps]
 
+source_file="res://assets/buttons/toggle_grid.png"
 source_md5="16a2b00130509b7b2a79f7a366586bf1"
+
+dest_files=[ "res://.import/toggle_grid.png-9cbc50b05badf2e13170f502316b9835.stex" ]
+dest_md5="87af2b9af9e998980042f7c9830b08c9"
 
 [params]
 

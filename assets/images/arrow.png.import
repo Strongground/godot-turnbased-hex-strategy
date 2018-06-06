@@ -6,7 +6,11 @@ path="res://.import/arrow.png-ccf0f6e5333696a58b23fb67fef55866.stex"
 
 [deps]
 
+source_file="res://assets/images/arrow.png"
 source_md5="2c8b162b2de41e2f3a03ca17d276aa7a"
+
+dest_files=[ "res://.import/arrow.png-ccf0f6e5333696a58b23fb67fef55866.stex" ]
+dest_md5="a929aba6e0f461d23df46d4c2ca252b7"
 
 [params]
 

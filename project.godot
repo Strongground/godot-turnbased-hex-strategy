@@ -10,6 +10,7 @@ config_version=3
 
 [application]
 
+config/name="Turnbased Hex Strategy Main"
 run/main_scene="res://scenes/map.scn"
 icon="res://icon.png"
 main_scene="res://scenes/map.scn"
@@ -40,4 +41,6 @@ theme/use_hidpi=true
 [input]
 
 mouse_click=[ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":1,"pressed":false,"doubleclick":false,"script":null)
+ ]
+mouse_right_click=[ Object(InputEventMouseButton,"resource_local_to_scene":false,"resource_name":"","device":0,"alt":false,"shift":false,"control":false,"meta":false,"command":false,"button_mask":0,"position":Vector2( 0, 0 ),"global_position":Vector2( 0, 0 ),"factor":1.0,"button_index":2,"pressed":false,"doubleclick":false,"script":null)
  ]

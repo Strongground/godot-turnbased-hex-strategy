@@ -6,7 +6,11 @@ path="res://.import/hex_outline_red.png-61b25bab8a06754cea0c3c3fa6d1fc8f.stex"
 
 [deps]
 
+source_file="res://assets/images/hex_outline_red.png"
 source_md5="3bfe17a8609599a01a11373b5d062788"
+
+dest_files=[ "res://.import/hex_outline_red.png-61b25bab8a06754cea0c3c3fa6d1fc8f.stex" ]
+dest_md5="45fa85f1c67729135d6f3c943e69abae"
 
 [params]
 

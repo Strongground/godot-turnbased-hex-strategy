@@ -6,7 +6,11 @@ path="res://.import/move_clicked.png-16cb47242b905cc6d3e932ad3f908211.stex"
 
 [deps]
 
+source_file="res://assets/buttons/move_clicked.png"
 source_md5="2c5ec3adb934f07ac4485933236884ad"
+
+dest_files=[ "res://.import/move_clicked.png-16cb47242b905cc6d3e932ad3f908211.stex" ]
+dest_md5="26e2b84f9514fe570b1841dd0ae4372d"
 
 [params]
 

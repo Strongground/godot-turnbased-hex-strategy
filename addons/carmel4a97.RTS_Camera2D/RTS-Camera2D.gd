@@ -96,7 +96,7 @@ func get_screen_center():
 	)
 	return vp_center
 
-func _physics_process(delta):
+func _process(delta):
 	half_viewport_x = get_viewport().size.x / scale_factor
 	half_viewport_y = get_viewport().size.y / scale_factor
 	
@@ -148,7 +148,7 @@ func _physics_process(delta):
 	_prev_mouse_pos = get_viewport().get_mouse_position()
 
 func _unhandled_input(event):
-	if event == InputEventMouseButton:
+	if event is InputEventMouseButton:
 		# Control by right mouse button.
 		if event.is_pressed() and event.button_index==2 and drag:
 			__rmbk = true
@@ -174,7 +174,7 @@ func _unhandled_input(event):
 				set_zoom(camera_zoom)
 				self._updateGUI()
 	# Control by keyboard handled by InputMap.
-	if event == InputEventKey and key:
+	if event is InputEventKey and key:
 		if event.is_action_pressed("ui_left"):
 			__keys[0] = true
 		if event.is_action_pressed("ui_up"):
