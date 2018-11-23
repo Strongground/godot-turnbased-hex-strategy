@@ -4,31 +4,22 @@ extends Area2D
 export (bool) var is_selectable = null
 
 ### internal class member variables
-var root = null
+onready var root = get_tree().get_current_scene()
+onready var hex_outline = find_node('HexOutline')
+# @TODO Maybe get active map scene later, to get correct hex? Maybe let map be generic and have member "active"?
+onready var hexmap = root.find_node('MapZones')
+onready var red_dot = root.find_node('RedDot')
 var selected = null
-var hex_outline = null
-var hexmap = null
-var red_dot = null
 var type = null
 var path = null
 var id = null
 
+
 ## Called every time the node is added to the scene.
 func _ready():
-	if Engine.is_editor_hint():
-		# This is only executed in editor
-		self._snap_to_grid()
-	else:
-		# Get necessary siblings
-		root = get_tree().get_current_scene()
-		hex_outline = find_node('HexOutline')
-		# @TODO Maybe get active map scene later, to get correct hex? Maybe let map be generic and have member "active"?
-		hexmap = root.find_node('MapZones')
-		red_dot = root.find_node('RedDot')
-		# Default function calls
-		self._snap_to_grid()
-		
-func _process(delta):
+	self._snap_to_grid()
+
+func _physics_process(delta):
 	if Engine.is_editor_hint():
 		# This is only executed in editor
 		self._snap_to_grid()
@@ -76,12 +67,12 @@ func deselect():
 # Internal helper functions
 func _show_marker(color):
 	# show hex outline, color must be string representation of common color name
-	hex_outline.set_modulate(globals.getColor(color))
-	hex_outline.show()
+	$HexOutline.set_modulate(globals.getColor(color))
+	$HexOutline.show()
 	
 # hide any visible marker
 func _hide_marker():
-	hex_outline.hide()
+	$HexOutline.hide()
 
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():

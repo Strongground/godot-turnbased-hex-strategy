@@ -19,6 +19,7 @@ angular_damp = 1.0
 audio_bus_override = false
 audio_bus_name = "Master"
 script = ExtResource( 1 )
+_sections_unfolded = [ "Transform" ]
 is_selectable = true
 unit_owner = 0
 unit_faction = 0
@@ -28,7 +29,7 @@ unit_id = ""
 display_name = ""
 base_defense = null
 armor = 0
-can_traverse = ""
+can_traverse = null
 movement_points = 0
 main_weapon = 0
 main_ammo = 0
@@ -42,6 +43,7 @@ texture = ExtResource( 2 )
 
 [node name="HexOutline" type="Sprite" parent="." index="1"]
 
+visible = false
 texture = ExtResource( 3 )
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]

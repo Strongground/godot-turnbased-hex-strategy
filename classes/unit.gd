@@ -33,7 +33,7 @@ export var unit_id = ''
 # theme bonuses which are in turn extended by scenario-specific bonuses.
 # 
 # Questions remaining to be answered: 
-# * How to describe what bonuses are active at a given unit intance?
+# * How to describe what bonuses are active at a given unit instance?
 # Easiest would be IDs in an array, which is bound to a specific purpose, like
 # containing modifiers to defense value for this unit. This allows to give as
 # many modifiers to a unit as desired.
@@ -65,9 +65,9 @@ export (int) var base_defense = null
 export (int) var armor = 0
 
 # What medium this unit can move in/on primarily.
-# @TODO What to do with amphibious units? Or units that generally
-# can traverse more than one medium?
-export (String, "LAND", "AIR", "WATER") var can_traverse = ''
+# Expectes an array with one String per traversable terrain type:
+# "LAND", "AIR", "RIVER", "WATER"
+export (Array, String) var can_traverse = []
 
 # Movement points
 # These are consumed when moving from one tile to another tile. The amount of points
@@ -91,34 +91,38 @@ export (int) var main_weapon = 0
 # Ammo for main weapon
 # Basically, how many times can this unit attack until ammo runs out, not really how
 # many shots it carries.
+# An "attack" is the abstraction of the concept of an "attack run" or "fire mission".
+# Think a fire mission for an artillery brigade, or support fire given by a vehicle
+# group, where hundreds/thousands of shots are fired.
 export (int) var main_ammo = 0
 
 # Attack bonus
-# This can be thought of as a "base_attack" value of the unit. It could be used to signify
-# better training of this unit or technical characteristics that would give this unit a
-# significant attack boost compared to another unit with the same main_weapon. It is simply
-# added to the main_weapon attack_strength value.
-# Otherwise this will be mostly used via modifiers.
+# This can be thought of as a "base_attack" bonus value to the unit. It could be used
+# to signify better training of this unit or technical characteristics that would give
+# it a significant attack boost compared to another unit with the same main_weapon. 
+# It is simply added to the "main_weapon"s "attack_strength" value.
+# Most often this will be set via modifiers.
 export (int) var attack_bonus = 0
 
 # Private class members
-var unit_sprite = null
-var move_tween = null
 var animation_step_active = false
 var animation_step = 0
 var animation_path_array = []
 var offset = null
 
-# This function returns a boolean indicating if the currently active player is the owner of this unit.
+# This function returns a boolean indicating if the currently active player
+# is the owner of this unit.
 func owned_by_active_player():
 	return root.player_active['id'] == self.unit_owner
 
-# This function should update the appearance of the unit, calculate stat changes etc.
-# ater each round. There is no need to do this in _process since its all turnbased anyway.
+# This function should update the appearance of the unit, calculate stat
+# changes etc. after each round. There is no need to do this in _process
+# since its all turnbased anyway.
 func update():
 	self._set_direction()
 
-# Animates this units movement on a given path from one tile to another over via n tiles
+# Animates this units movement on a given path from one tile to another over
+# n tiles in between
 # @input {Array} the array containing every tile in order of the path
 func animate_path(path_array):
 	animation_path_array = path_array
@@ -126,9 +130,9 @@ func animate_path(path_array):
 
 func _animate_step(current_tile, step):
 	animation_step_active = true
-	self.animation_step = step
-	move_tween.interpolate_property(self, 'transform/pos', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
-	move_tween.start()
+	animation_step = step
+	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
+	$MoveTween.start()
 
 ##### Internal methods
 func _ready():
@@ -136,22 +140,16 @@ func _ready():
 	type = 'unit'
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
-	unit_sprite = find_node('UnitImage')
-	move_tween = find_node('MoveTween')
+	set_process_input(true)
 
 # If unit should face right, flip it. Otherwise, do nothing
 # because all units should face left per default.
 func _set_direction():
 	if self.direction == "RIGHT":
-		self.unit_sprite.set_flip_h(true)
-
-# Calculate the path from a given tile to another given tile, all in grid local coordinates
-# @input {Vector2} current_position - from where to calculate the path
-# @input {Vector2} target_position
-# @returns {Array} list of tiles to visit, in order of visitation
-func _get_path(target_position):
-	return root._visit_map(self.grid_location, target_position)
+		$UnitImage.set_flip_h(true)
 	
+func _input(event):
+	pass
 
 func _process(delta):
 	pass

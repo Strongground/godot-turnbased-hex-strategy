@@ -12,33 +12,32 @@ radius = 10.0
 [node name="EditorMarker" type="Area2D"]
 
 input_pickable = true
-shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Transform2D( 6.31008, 0, 0, 6.31008, -2, 1 )
-shapes/0/trigger = false
 gravity_vec = Vector2( 0, 1 )
 gravity = 98.0
 linear_damp = 0.1
 angular_damp = 1.0
+audio_bus_override = false
+audio_bus_name = "Master"
 script = ExtResource( 1 )
 is_selectable = false
 map_text = ""
-type = null
+marker_type = null
 
-[node name="Icon" type="Sprite" parent="."]
+[node name="Icon" type="Sprite" parent="." index="0"]
 
 position = Vector2( 0, 0.999999 )
 scale = Vector2( 0.843744, 0.843744 )
 texture = ExtResource( 2 )
 
-[node name="hex_outline" type="Sprite" parent="."]
+[node name="hex_outline" type="Sprite" parent="." index="1"]
 
-visibility/opacity = 0.0
+visible = false
 texture = ExtResource( 3 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]
 
 position = Vector2( -2, 1 )
 scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
-trigger = false
-_update_shape_index = 0
+
+
