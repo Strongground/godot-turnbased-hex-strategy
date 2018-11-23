@@ -49,9 +49,19 @@ var selected_unit = null
 var movement_selection = false
 var tween = null
 var grid_visible = false
+var scale_factor = 1
 var theme_manager = false
+# TODO
+var input_manager = false
 
 func _ready():
+    # This is the factor by which the viewport and all elements are upscaled on hidpi-screens,
+	# use it as divider to get original coordinates. If no hidpi detected, it is set to 1,
+	# which should not affect anything in calculations, and thus scale_factor can be used without 
+	# explicit check for dpi
+    if OS.get_screen_dpi() >= 240:
+        scale_factor = 2
+    
     set_fixed_process(true)
     set_process_input(true)
     camera = find_node('MainCamera')

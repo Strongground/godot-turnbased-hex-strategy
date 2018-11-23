@@ -1,7 +1,7 @@
 extends Container
 
 var camera = null
-var root = null
+var game = null
 var tile_info_popup = null
 var tile_info_popup_text = null
 var move_button = null
@@ -17,9 +17,11 @@ var panel_area = null
 func is_gui_clicked():
 	var click_pos = get_viewport().get_mouse_pos()
 	var panel_top_border_begin = get_viewport().get_rect().size.y - panel_pos.y
-	print('Click inside GUI: '+String(click_pos.y > panel_top_border_begin))
+	# game._render_size_rect(panel_pos, panel_size, self)
+	print("Panel_Pos: " + str(panel_pos))
+	print("Click_Pos: " + str(click_pos))
 	return click_pos.y > panel_top_border_begin
-	
+
 # Public setter for disabled state of move button
 # @input {Boolean} true for disabled, false for enabled
 func disable_movement_button(disabled):
@@ -30,7 +32,7 @@ func _ready():
 	set_fixed_process(true)
 	set_process_input(true)
 	camera = get_parent()
-	root = get_tree().get_current_scene()
+	game = get_tree().get_current_scene()
 	tile_info_popup = camera.find_node('Tile_Info')
 	tile_info_popup_text = tile_info_popup.find_node('Tile_Text')
 	move_button = find_node('MoveButton')
@@ -43,7 +45,7 @@ func _ready():
 func _input_event(viewport, event, shape_idx):
 	if event.type == InputEvent.MOUSE_BUTTON and event.button_index == BUTTON_LEFT and event.pressed:
 		pass
-	
+
 # Show a popup window with information about the selected tile
 # @input {Object} the tile object which information should be shown
 func _show_tile_info_popup(tile_object):
@@ -63,5 +65,5 @@ func _fixed_process(delta):
 # If MoveButton in GUI pressed, and a unit is selected,
 # set movement selection
 func _on_MoveButton_pressed():
-	if root.selected_unit != null:
-		root.movement_selection = true
+	if game.selected_unit != null:
+		game.movement_selection = true

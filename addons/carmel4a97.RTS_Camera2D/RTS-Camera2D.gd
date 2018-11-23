@@ -59,8 +59,7 @@ var half_viewport_x = 0.0
 var half_viewport_y = 0.0
 
 var GUI = null
-var scale_factor = 1
-
+var game = null
 # INPUTS
 
 # Right mouse button was or is pressed.
@@ -69,12 +68,7 @@ var __rmbk = false
 var __keys = [false, false, false, false]
 
 func _ready():
-	# This is the factor by which the viewport and all elements are upscaled on hidpi-screens,
-	# use it as divider to get original coordinates. If no hidpi detected, it is set to 1,
-	# which should not affect anything in calculations, and thus scale_factpr can be used without 
-	# explicit check for dpi
-	if OS.get_screen_dpi() >= 240:
-		scale_factor = 2
+	game = get_tree().get_current_scene()
 	set_h_drag_enabled(false)
 	set_v_drag_enabled(false)
 	set_enable_follow_smoothing(false)
@@ -86,20 +80,20 @@ func _ready():
 	
 func _updateGUI():
 	# Set scale of GUI to camera_zoom level so it is visually the same scale
-	GUI.set_scale(camera_zoom * scale_factor)
+	GUI.set_scale(camera_zoom * game.scale_factor)
 
 # Get centered position relative to screen size 
 func get_screen_center():
 	var camera_position = self.get_pos()
 	var vp_center = Vector2(
-		camera_position.x / scale_factor,
-		camera_position.y / scale_factor
+		camera_position.x / game.scale_factor,
+		camera_position.y / game.scale_factor
 	)
 	return vp_center
 
 func _fixed_process(delta):
-	half_viewport_x = get_viewport().get_rect().size.x / scale_factor
-	half_viewport_y = get_viewport().get_rect().size.y / scale_factor
+	half_viewport_x = get_viewport().get_rect().size.x / game.scale_factor
+	half_viewport_y = get_viewport().get_rect().size.y / game.scale_factor
 	
 	# Move camera by keys defined in InputMap (ui_left/top/right/bottom).
 	if key:
