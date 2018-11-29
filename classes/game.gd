@@ -156,7 +156,10 @@ func _build_hex_object_database():
 		i+=1
 	return tiles
 
-# Update all unit nodes. This is necessary because of strange ready()-order in Godot
+# Update all unit nodes with their internal update-method. There is still
+# udpates going on in the main game script that handles grid-position tables
+# etc.
+# This is necessary because of inconvenient ready()-order in Godot
 func _update_units():
 	for entity in entities:
 		if entity.type == 'unit':
@@ -172,18 +175,26 @@ func _get_entity_by_id(id):
 func _create_entity_list():
 	var result = []
 	var i = 0
+	var allowed_node_types = ["unit", "editor_marker"]
 	for node in self.get_children():
-		if 'type' in node and node.type == 'unit' \
-			or 'type' in node and node.type == 'editor_marker':
+		# if node is of allowed type
+		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
 			result.append({
-				'id': i,
-				'node': node,
-				'type': node.get_type(),
-				'grid_pos': self._get_hex_object_from_global_pos(node.get_global_position()).grid_pos
+				"id": i,
+				"node": node,
+				"type": node.get_type(),
+				"grid_pos": self._get_hex_object_from_global_pos(node.get_global_position()).grid_pos
 			})
 			i += 1
 	return result
+	
+# Update an entity in the global list of entities and their grid local positions.
+# This needs to be done after a unit has changed location, since all calculations
+# that involve position, are done with help of this global list.
+func update_entity_list_entry(entity):
+	print("Updating grid pos")
+	entity.grid_pos = self._get_hex_object_from_global_pos(entity.node.get_global_position()).grid_pos
 
 # Get the neighbouring tile of a given tile, by ID and direction
 # @input {Int} ID of the hex for which the neighbour should be returned
@@ -236,6 +247,7 @@ func _input(event):
 	elif event.is_action_pressed('mouse_click'):
 		# Once set the actual global mouse position needed for conversion of the coordinates
 		var click_pos = self.get_global_mouse_position()
+#		print("Mouse click at "+str(click_pos))
 		
 		### If clicked on tilemap, not on unit or entity
 		if self._is_tilemap(click_pos) and not self._is_unit(click_pos) and not GUI.is_gui_clicked():
@@ -248,7 +260,7 @@ func _input(event):
 				var new_path = find_path(unit.node.get_global_position(), click_pos)
 				unit.node.set_path(new_path)
 				# _show_path(new_path)
-				unit.node.animate_path(new_path)
+				unit.node.animate_path(new_path, unit)
 				unit.node.deselect()
 				self.movement_selection = false
 
@@ -293,9 +305,8 @@ func _input(event):
 
 		### Unit was selected
 		elif self._is_unit(click_pos):
-			print("Should select a unit")
-			var selected_unit = self._is_unit(click_pos, true)
-			selected_unit.node.select()
+			self.selected_unit = self._is_unit(click_pos, true)
+			self.selected_unit.node.select()
 			GUI.disable_movement_button(false)
 
 # Process the current turn
@@ -364,11 +375,14 @@ func _is_tilemap(given_position):
 # or the unit instance itself
 func _is_unit(given_position, return_unit=false):
 	var grid_position = hexmap.world_to_map(given_position)
+	print(str(grid_position))
 	for entity in entities:
 		if entity.node.get_type() == 'unit':
+			print("Checking units grid position: "+str(entity.grid_pos))
 			if entity.grid_pos == grid_position:
 				if return_unit == true:
-					print(entity)
+#					print("Found unit at location "+str(entity.node.get_global_position()))
+#					print(entity)
 					return entity
 				else:
 					return true

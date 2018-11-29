@@ -109,6 +109,7 @@ var animation_step_active = false
 var animation_step = 0
 var animation_path_array = []
 var offset = null
+var entity_representation = null
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this unit.
@@ -120,13 +121,19 @@ func owned_by_active_player():
 # since its all turnbased anyway.
 func update():
 	self._set_direction()
+	
 
 # Animates this units movement on a given path from one tile to another over
 # n tiles in between
 # @input {Array} the array containing every tile in order of the path
-func animate_path(path_array):
+# @input {Object} this is the entity which represents this unit in the game.
+# It mus be passed so it can be used in a callback later.
+func animate_path(path_array, entity):
+	self.entity_representation = entity
 	animation_path_array = path_array
 	_animate_step(path_array[0], 0)
+
+##### Internal methods
 
 func _animate_step(current_tile, step):
 	animation_step_active = true
@@ -134,7 +141,6 @@ func _animate_step(current_tile, step):
 	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, Tween.TRANS_SINE, Tween.EASE_IN_OUT)
 	$MoveTween.start()
 
-##### Internal methods
 func _ready():
 	## Init ingame
 	type = 'unit'
@@ -161,5 +167,8 @@ func _on_MoveTween_tween_completed(object, key):
 		animation_step += 1
 		_animate_step(animation_path_array[animation_step], animation_step)
 	else:
-		# Done animating, update unit
+		# Done animating, update unit locally
 		self.update()
+		# ...then call global update
+		# Global update is for udpating global look-up tables with grid positions
+		root.update_entity_list_entry(entity_representation)

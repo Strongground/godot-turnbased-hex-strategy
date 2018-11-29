@@ -17,7 +17,7 @@ var tile_types = [
 	# 2
 	{
 		'name': 'River',
-		'move_cost': 10.0,
+		'move_cost': 99.0,
 		'terrain': 'river'
 	},
 	# 3

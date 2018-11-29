@@ -3,3 +3,5 @@ logs/
 .vscode/
 
 \.import/
+
+*.import
