@@ -4,13 +4,18 @@
 
 # Some attributes explained:
 # 
-# unit_sprites (path to one image file)
-# This contains one or more sprites that are shown in game to represent
-# the unit on the map. If more than one sprite is found, the one shown is selected randomly.
-# Sprites can also be selected manually in the editor.
-# If a sprite should not be included in the random selection but should still be selectable
-# in the editor (story related, special camo etc.) you must prefix the images filename with
-# the `!`-character.
+# unit_sprites
+# This contains one or more sprites that are shown in game to represent the unit in each
+# direction.
+# It can consist of different data types, signifying different meanings:
+# It can contain only a string, an image path to one sprite that will represent the unit
+# in game. This is useful for static entities, buildings etc.
+# It can contain an array with 6 image paths, for each direction starting with 'west' and
+# then going clock-wise:
+# [0] southwest, [1] northwest, [2] north, [3] northeast, [4] southeast, [5] south
+# It can finally also contain multiple arrays, each with 1 or 6 image paths. In this case
+# a random array is chosen and used. This way you can easily include variations of a units look
+# and even mix one-directional and multi-directional unit graphics, if desired.
 # --
 # base_defense (int)
 # This is factored into calculating the damage done by attacks.
@@ -41,16 +46,32 @@
 # Note that the container id / top level ID given is the id of the unit.
 # It is not explicitly named but used as "unit_id"
 
+# Test Units
+test:
+  display_name: 'Test Blob'
+  description: 'This test blob has many interesting features... but none are documented!'
+  unit_faction: 'usarmy'
+  unit_sprites: ['graphics/units/test-0.png', 'graphics/units/test-1.png', 'graphics/units/test-2.png', 'graphics/units/test-3.png', 'graphics/units/test-4.png', 'graphics/units/test-5.png']
+  # stats
+  base_defense: 2
+  armor: 0
+  can_traverse: ['LAND']
+  movement_points: 2
+  fuel: -1
+  main_weapon: 'assault_rifles'
+  main_ammo: 6
+  attack_bonus: 0
+
 # US Army
 hmmwv_tow:
   display_name: 'HMMWV/TOW'
   description: 'This is the classical "High Mobility Multipurpose Wheeled Vehicle" used by the US military since 1985. It features some protection agains small arms fire. This variant features a TOW rocket launcher against medium armored targets like APCs.'
   unit_faction: 'usarmy'
-  unit_sprites: 'units/us_humvee_tow.png'
+  unit_sprites: ['graphics/units/us_humvee_tow-0.png', 'graphics/units/us_humvee_tow-1.png', 'graphics/units/us_humvee_tow-2.png', 'graphics/units/us_humvee_tow-3.png', 'graphics/units/us_humvee_tow-4.png', 'graphics/units/us_humvee_tow-5.png']
   # stats
   base_defense: 3
   armor: 1
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 4
   fuel: 32
   main_weapon: 'tow'
@@ -61,11 +82,11 @@ us_infantry_rifles:
   display_name: 'US Army Infantry - Rifle Squad'
   description: 'The standard US Army infantry squad consists of two fireteams with each 4 soldiers. This unit has assault rifles and grenades at its disposal.'
   unit_faction: 'usarmy'
-  unit_sprites: 'units/us_infantry_rifle'
+  unit_sprites: 'graphics/units/us_infantry_rifle-0.png'
   # stats
   base_defense: 2
   armor: 0
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 2
   fuel: -1
   main_weapon: 'assault_rifles'
@@ -80,7 +101,7 @@ us_marines_javelin:
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 2
   fuel: -1
   main_weapon: 'javelin'
@@ -95,7 +116,7 @@ m2a3_bradley:
   # stats
   base_defense: 5
   armor: 2
-  can_traverse: 'LAND'
+  can_traverse: ['LAND','RIVER']
   movement_points: 3
   fuel: 28
   main_weapon: 'm242_cannon'
@@ -111,7 +132,7 @@ militia_rifles:
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 3
   fuel: -1
   main_weapon: 'irregular_rifles'
@@ -126,7 +147,7 @@ taliban_heavy_weapons:
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 2
   fuel: -1
   main_weapon: 'irregular_heavy'
@@ -142,7 +163,7 @@ refugees:
   # stats
   base_defense: 0
   armor: 0
-  can_traverse: 'LAND'
+  can_traverse: ['LAND']
   movement_points: 1
   fuel: -1
   main_weapon: 'small_arms'

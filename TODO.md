@@ -2,12 +2,12 @@
 
 ## ToDo
 
-[X] Implement turnbased game loop as described further below
-[ ] Fix that a unit can only be moved once (bug?)
+[x] Implement turnbased game loop as described further below
+[x] Fix that a unit can only be moved once (bug?)
 [ ] Implement some kind of UI lock state, where any action that is uninterruptible should lock any input from player until completion.
 Camera movement should be independent of this (or maybe just automatic camera movement?)
 [ ] A method to flood fill the tiles around a unit with a certain range/depth should be implemented/derivated from the flood fill already implemented for the pathfinding code. This method will be used for calculating the attack/movement/sight range of units
-[ ] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
+[x] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
 
 ## Themes
 Since a theme is at its core designed to represent a specific time in human history or a specific theatre of conflict, it is appropriate to think of a theme as an "era". 

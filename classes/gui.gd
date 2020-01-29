@@ -4,7 +4,6 @@ var camera = null
 var root = null
 var tile_info_popup = null
 var tile_info_popup_text = null
-var move_button = null
 var panel = null
 var panel_pos = null
 var panel_size = null
@@ -19,13 +18,18 @@ func is_gui_clicked():
 	var panel_pos_y = panel_pos.y
 	var viewport_size_y = get_viewport().size.y
 	var panel_top_border_begin = get_viewport().size.y - panel_pos.y
-	# print('Click inside GUI: '+String(click_pos.y > panel_top_border_begin))
+	print('Click inside GUI: '+String(click_pos.y > panel_top_border_begin))
 	return click_pos.y > panel_top_border_begin
 	
 # Public setter for disabled state of move button
 # @input {Boolean} true for disabled, false for enabled
 func disable_movement_button(disabled):
-	move_button.set_disabled(disabled)
+	$Panel/MoveButton.set_disabled(disabled)
+	
+# Public setter for disabled state of attack button
+# @input {Boolean} true for disabled, false for enabled
+func disable_attack_button(disabled):
+	$Panel/AttackButton.set_disabled(disabled)
 
 # Init
 func _ready():
@@ -34,7 +38,6 @@ func _ready():
 	camera = root.find_node('MainCamera')
 	tile_info_popup = root.find_node('Tile_Info')
 	tile_info_popup_text = tile_info_popup.find_node('Tile_Text')
-	move_button = find_node('MoveButton')
 	##### Panel
 	panel = find_node('Panel')
 	panel_pos = self.panel.get_transform()
@@ -51,7 +54,7 @@ func _input_event(viewport, event, shape_idx):
 func _show_tile_info_popup(tile_object):
 	var popup_pos = camera.get_screen_center()
 	popup_pos = Vector2(
-		popup_pos.x,
+		popup_pos.x - self.get_size().x,
 		popup_pos.y - self.get_size().y
 	)
 	tile_info_popup.set_position(popup_pos)
@@ -67,3 +70,25 @@ func _physics_process(delta):
 func _on_MoveButton_pressed():
 	if root.selected_unit != null:
 		root.movement_selection = true
+
+# If AttackButton in GUI pressed, and a unit is selected,
+# set attack on chosen target if eligible
+func _on_AttackButton_pressed():
+	if root.selected_unit != null:
+		root.attack_selection = true
+
+func _on_UnitInfoButton_pressed():
+	if $"/root/Game".selected_unit != null:
+		var popup_pos = camera.get_screen_center()
+		popup_pos = Vector2(
+			popup_pos.x - self.get_size().x,
+			popup_pos.y - self.get_size().y
+		)
+		$UnitInfo.set_position(popup_pos)
+		var selected_unit_id = $"/root/Game".selected_unit
+		var selected_unit = $"/root/Game"._get_entity_by_id(selected_unit_id).node
+		var movement_points = str(selected_unit.get_movement_points())
+		$UnitInfo/UnitInfoText.set_text("Movement Points: " + movement_points)
+		$UnitInfo.popup()
+	else:
+		print("ERROR: No unit selected.")

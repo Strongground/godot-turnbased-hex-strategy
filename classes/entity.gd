@@ -5,15 +5,14 @@ export (bool) var is_selectable = null
 
 ### internal class member variables
 onready var root = get_tree().get_current_scene()
-onready var hex_outline = find_node('HexOutline')
-# @TODO Maybe get active map scene later, to get correct hex? Maybe let map be generic and have member "active"?
-onready var hexmap = root.find_node('MapZones')
-onready var red_dot = root.find_node('RedDot')
+onready var game = $"/root/Game"
+onready var hex_outline = find_node("HexOutline")
+onready var hexmap = root.find_node("MapZones")
+onready var red_dot = root.find_node("RedDot")
 var selected = null
 var type = null
 var path = null
 var id = null
-
 
 ## Called every time the node is added to the scene.
 func _ready():
@@ -21,6 +20,7 @@ func _ready():
 
 func _physics_process(delta):
 	if Engine.is_editor_hint():
+		print("EDITOR!!!")
 		# This is only executed in editor
 		self._snap_to_grid()
 

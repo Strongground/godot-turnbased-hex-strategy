@@ -9,7 +9,7 @@
 custom_solver_bias = 0.0
 radius = 10.0
 
-[node name="Unit" type="Area2D" index="0"]
+[node name="Unit" type="Area2D"]
 
 input_pickable = true
 gravity_vec = Vector2( 0, 1 )
@@ -23,17 +23,20 @@ _sections_unfolded = [ "Transform" ]
 is_selectable = true
 unit_owner = 0
 unit_faction = 0
-direction = "RIGHT"
+direction = 0
 graphical_scheme = null
 unit_id = ""
 display_name = ""
+description = ""
 base_defense = null
-armor = 0
+armor = null
 can_traverse = null
-movement_points = 0
-main_weapon = 0
-main_ammo = 0
-attack_bonus = 0
+movement_points = null
+fuel = null
+main_weapon = null
+main_ammo = null
+attack_bonus = null
+unit_sprites = null
 
 [node name="UnitImage" type="Sprite" parent="." index="0"]
 
