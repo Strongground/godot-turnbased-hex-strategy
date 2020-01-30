@@ -4,7 +4,7 @@
 
 # Some attributes explained:
 # 
-# unit_sprites
+# unit_sprites (string/array)
 # This contains one or more sprites that are shown in game to represent the unit in each
 # direction.
 # It can consist of different data types, signifying different meanings:
@@ -25,15 +25,20 @@
 # armor_piercing weapons are more effective against this unit if the value is greater than zero.
 # explosive weapons are more effective against this unit if the value is smaller or equal to zero.
 # --
+# can_traverse (array)
+# This contains a list of terrain types, the unit can traverse. A hex tile always has one of 
+# these types. Must be one of: 'land', 'river', 'water', 'mountain'
+# --
 # movement_points (int)
 # The number of tiles with movement_cost = 1 this unit can cross in one turn. If the terrain
 # is rugged and has higher movement_cost, the number of tiles is reduced accordingly.
 # --
 # fuel (int)
 # The amount of movement_points a unit has in general before it needs refueling.
-# This value can be -1 if the unit consumes no fuel.
+# This value can be -1 if the unit consumes no fuel. In that case, fuel won't be
+# checked when moving.
 # --
-# main_ammo (int)
+# main_ammo (string)
 # How many times can this unit attack until ammo runs out, not really how many shots it carries.
 # --
 # attack_bonus (int)
@@ -44,7 +49,7 @@
 # This will be mostly used via modifiers.
 
 # Note that the container id / top level ID given is the id of the unit.
-# It is not explicitly named but used as "unit_id"
+# It is not explicitly named, but used as "unit_id"
 
 # Test Units
 test:
@@ -55,7 +60,7 @@ test:
   # stats
   base_defense: 2
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 2
   fuel: -1
   main_weapon: 'assault_rifles'
@@ -71,7 +76,7 @@ hmmwv_tow:
   # stats
   base_defense: 3
   armor: 1
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 4
   fuel: 32
   main_weapon: 'tow'
@@ -82,11 +87,11 @@ us_infantry_rifles:
   display_name: 'US Army Infantry - Rifle Squad'
   description: 'The standard US Army infantry squad consists of two fireteams with each 4 soldiers. This unit has assault rifles and grenades at its disposal.'
   unit_faction: 'usarmy'
-  unit_sprites: 'graphics/units/us_infantry_rifle-0.png'
+  unit_sprites: ['graphics/units/us_infantry_rifle-0.png', 'graphics/units/us_infantry_rifle-1.png', 'graphics/units/us_infantry_rifle-2.png', 'graphics/units/us_infantry_rifle-3.png', 'graphics/units/us_infantry_rifle-4.png', 'graphics/units/us_infantry_rifle-5.png', ]
   # stats
   base_defense: 2
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 2
   fuel: -1
   main_weapon: 'assault_rifles'
@@ -101,7 +106,7 @@ us_marines_javelin:
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 2
   fuel: -1
   main_weapon: 'javelin'
@@ -110,13 +115,13 @@ us_marines_javelin:
 
 m2a3_bradley:
   display_name: 'M2/A3 Bradley - IFV' 
-  description: 'The Bradley Infantry Fighting Vehicle is a vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soliders.'
+  description: 'The Bradley Infantry Fighting Vehicle is a vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soldiers.'
   unit_faction: 'usarmy'
   unit_sprites: 'units/us_m2a3_bradley'
   # stats
   base_defense: 5
   armor: 2
-  can_traverse: ['LAND','RIVER']
+  can_traverse: ['land','river']
   movement_points: 3
   fuel: 28
   main_weapon: 'm242_cannon'
@@ -126,13 +131,13 @@ m2a3_bradley:
 ## Bad guys
 militia_rifles:
   display_name: 'Village Militia Rifles Group'
-  description: 'When the local warlord decided to support the Taliban, these villagers mobilized. A group consists of about 10-15 people. Arming themselves with weapons as soviet assault rifles, hand-down WW2 relicts and home-made grenades, they have various levels of training. Some never fired a shot before. They lack tactics and equipment, being always low on ammo.'
+  description: 'When the local warlord decided to support the Taliban, these villagers mobilized. A group consists of about 10-15 people. Arming themselves with weapons such as soviet assault rifles, hand-down WW2 relicts and home-made grenades, they have various levels of training. Some never fired a shot before. They lack tactics and equipment, being always low on ammo.'
   unit_faction: 'taliban'
   unit_sprites: 'units/militia_rifles'
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land', 'mountain']
   movement_points: 3
   fuel: -1
   main_weapon: 'irregular_rifles'
@@ -147,7 +152,7 @@ taliban_heavy_weapons:
   # stats
   base_defense: 1
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 2
   fuel: -1
   main_weapon: 'irregular_heavy'
@@ -163,7 +168,7 @@ refugees:
   # stats
   base_defense: 0
   armor: 0
-  can_traverse: ['LAND']
+  can_traverse: ['land']
   movement_points: 1
   fuel: -1
   main_weapon: 'small_arms'

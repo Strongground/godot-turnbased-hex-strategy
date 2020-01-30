@@ -4,10 +4,17 @@
 
 [x] Implement turnbased game loop as described further below
 [x] Fix that a unit can only be moved once (bug?)
+[x] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
 [ ] Implement some kind of UI lock state, where any action that is uninterruptible should lock any input from player until completion.
 Camera movement should be independent of this (or maybe just automatic camera movement?)
-[ ] A method to flood fill the tiles around a unit with a certain range/depth should be implemented/derivated from the flood fill already implemented for the pathfinding code. This method will be used for calculating the attack/movement/sight range of units
-[x] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
+[ ] Implement range finder method from red blob games blog to determine firing range, movement range etc. of entities.
+[ ] Add animations to the attack-mechanic.
+[ ] Make attacks reduce movement points and ammo of attacker.
+[ ] Implement effect on attacked unit
+[ ] Show useful information in GUI at all times.
+[ ] Fix or re-implement useful popup to show information (About units, tiles, ...)
+[ ] Implement attributes and logic to allow units to supply other units with ammo and fuel.
+[ ] Implement static units that can be walked onto (trenches, bridges) and that can have modifiers affect units inside/on them
 
 ## Themes
 Since a theme is at its core designed to represent a specific time in human history or a specific theatre of conflict, it is appropriate to think of a theme as an "era". 
@@ -79,6 +86,15 @@ Following is a draft of the contained files inside a themes folder and their con
         * stat_1, modifier_1
         * (stat_2, modifier_2)
         * ...
+* `graphics/`
+    * `units/`
+        `unit_id1-0.png` // Corresponds to unit with same id described in `units.yaml`, has only one direction
+        `unit_id2-0.png` // This unit has only full 6 directions support
+        `unit_id2-1.png`
+        `unit_id2-2.png`
+        `unit_id2-3.png`
+        `unit_id2-4.png`
+        `unit_id2-5.png`
 
 ### TODO and open questions
 * Are maps, campaigns and missions somehow bound to a theme?
@@ -86,22 +102,11 @@ Following is a draft of the contained files inside a themes folder and their con
 
 ## Game core mechanics
 ### Turnbased behaviour
-Implement some kind of 'game' class (refactor current `map.gd` class?) that controls turns and players and so on. Basic idea: The game class keeps track of number of turns and Array of players. A player is a simple object that is bound to a faction and has an ID. Units in the game are "owned" by a player who exlusively can fully interact with them (e.g. issue move orders, attack orders etc.)
+[x] Implement some kind of 'game' class (refactor current `map.gd` class?) that controls turns and players and so on. Basic idea: The game class keeps track of number of turns and Array of players. A player is a simple object that is bound to a faction and has an ID. Units in the game are "owned" by a player who exlusively can fully interact with them (e.g. issue move orders, attack orders etc.)
 
-For the first few turns of the game (where 'few' is 'number of players') an Array is populated with the IDs of players. This is used to determine the order of players turns.
+In the first turn of the game, an Array is populated with the IDs of players. This is used to determine the order of players turns.
 
-The effect of actions is immediatly visible in game. An attack on another unit instantly yields the result. If an attacked unit is destroyed, it will no longer be available for commands for the owning player in his turn. However a unit with higher "initiative" value than the attacker will be able to shoot first, when attacked. Movement to another tile is irreversible.
-
-#### Fill player rotation (obsolete)
--Before each turn, there is a check if `players.count() == player_rotation.count()`. If no, the following happens:-
-
--During first turn, the player at `players[turn_counter]` is set to `active=true` and allowed to interact with units on the map where he is `unit.unit_owner`. `player.id` is added to `player_rotation` at index `turn_counter`. After the player ends the turn, the player is set to `active=false`, `turn_counter` is incremented and the player at `players[turn_counter]` is set to `active=true`, the loop continues.
-
-#### Player rotation full (obsolete)
--If the check is no longer true because all players have been added to the `player_rotation` Array, the following happens:-
-
--Enter a `while player.active` loop `for player in players[player_rotation]` where he can interact with units on the map with `unit.unit_owner == player.id`.-
--Each pass from one player to the next increments the `turn_counter` and sets the `player_active` to the next player.-
+The effect of actions is immedietly visible in game. An attack on another unit instantly yields the result. If an attacked unit is destroyed, it will no longer be available for commands for the owning player in his turn. However a unit with higher "initiative" value than the attacker will be able to shoot first, when attacked. Movement to another tile is irreversible.
 
 ##### Ideas for the game loop
 UI has a button "end turn", which sends a signal to trigger a method `end_turn()`. 
