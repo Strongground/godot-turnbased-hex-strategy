@@ -1,16 +1,18 @@
-[gd_scene load_steps=2 format=1]
+[gd_scene load_steps=2 format=2]
 
 [ext_resource path="res://classes/entity.gd" type="Script" id=1]
 
 [node name="Entity" type="Area2D"]
 
-transform/scale = Vector2( 1.51612, 1.51612 )
-input/pickable = true
+scale = Vector2( 1.51612, 1.51612 )
+input_pickable = true
 gravity_vec = Vector2( 0, 1 )
 gravity = 98.0
 linear_damp = 0.1
 angular_damp = 1.0
-script/script = ExtResource( 1 )
+audio_bus_override = false
+audio_bus_name = "Master"
+script = ExtResource( 1 )
 is_selectable = null
 
 

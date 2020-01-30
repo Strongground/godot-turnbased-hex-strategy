@@ -2,4 +2,8 @@
 logs/
 .vscode/
 
+\.import/
+
+*.import
+
 svn-opengeneral/

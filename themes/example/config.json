@@ -1,1 +1,1 @@
-{"data_files": [{"units": "units.json"}, {"weapons": "weapons.json"}, {"factions": "factions.json"}, {"modifiers": "mods.json"}], "name": "Example Theme", "description": "This serves to illustrate the basic contents of a theme package."}
+{"name": "Example Theme", "description": "This serves to illustrate the basic contents of a theme package. It is set in a generic middle eastern \"war against terror\" setting.", "data_files": [{"units": "units.json"}, {"weapons": "weapons.json"}, {"factions": "factions.json"}, {"modifiers": "mods.json"}]}

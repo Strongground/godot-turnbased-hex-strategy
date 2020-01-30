@@ -3,7 +3,7 @@
 from __future__ import print_function
 import argparse
 import os
-import simplejson
+import json as simplejson
 import yaml
 
 def yaml_to_json(yaml_file, json_file, source_dir, target_dir, verbose):
@@ -20,8 +20,8 @@ def yaml_to_json(yaml_file, json_file, source_dir, target_dir, verbose):
             print_verbose(verbose, 'Converting all YAML files found in source directory')
             for current_dir, _, sub_files in os.walk(source_dir):
                 for current_file in sub_files:
-                    print(current_file)
                     if '.yml' in current_file:
+                        print("Converting "+current_file)
                         convert(current_file, target_dir, os.path.splitext(current_file)[0], current_dir)
     else:
         print('No paths given')

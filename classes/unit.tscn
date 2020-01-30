@@ -1,4 +1,4 @@
-[gd_scene load_steps=5 format=1]
+[gd_scene load_steps=5 format=2]
 
 [ext_resource path="res://classes/unit.gd" type="Script" id=1]
 [ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
@@ -11,50 +11,59 @@ radius = 10.0
 
 [node name="Unit" type="Area2D"]
 
-input/pickable = true
-shapes/0/shape = SubResource( 1 )
-shapes/0/transform = Matrix32( 6.31008, 0, 0, 6.31008, 0, -2 )
-shapes/0/trigger = false
+input_pickable = true
 gravity_vec = Vector2( 0, 1 )
 gravity = 100.0
 linear_damp = 0.1
 angular_damp = 1.0
-script/script = ExtResource( 1 )
+audio_bus_override = false
+audio_bus_name = "Master"
+script = ExtResource( 1 )
+_sections_unfolded = [ "Transform" ]
 is_selectable = true
-unit_type = 0
 unit_owner = 0
 unit_faction = 0
-direction = "RIGHT"
+direction = 0
 graphical_scheme = null
 unit_id = ""
+display_name = ""
+description = ""
+base_defense = null
+armor = null
+can_traverse = null
+movement_points = null
+fuel = null
+main_weapon = null
+main_ammo = null
+attack_bonus = null
+unit_sprites = null
 
-[node name="UnitImage" type="Sprite" parent="."]
+[node name="UnitImage" type="Sprite" parent="." index="0"]
 
-transform/scale = Vector2( 0.352323, 0.352323 )
-z/z = 2
-z/relative = false
+scale = Vector2( 0.352323, 0.352323 )
+z_as_relative = false
 texture = ExtResource( 2 )
 
-[node name="HexOutline" type="Sprite" parent="."]
+[node name="HexOutline" type="Sprite" parent="." index="1"]
 
-visibility/opacity = 0.0
+visible = false
 texture = ExtResource( 3 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]
 
-transform/pos = Vector2( 0, -2 )
-transform/scale = Vector2( 6.31008, 6.31008 )
+position = Vector2( 0, -2 )
+scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
-trigger = false
-_update_shape_index = 0
 
-[node name="MoveTween" type="Tween" parent="."]
+[node name="MoveTween" type="Tween" parent="." index="3"]
 
-playback/process_mode = 1
+repeat = false
+playback_process_mode = 1
+playback_speed = 1.0
 playback/active = false
 playback/repeat = false
 playback/speed = 1.0
 
-[connection signal="tween_complete" from="MoveTween" to="." method="_on_MoveTween_tween_complete"]
+[connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
 
 

@@ -148,7 +148,7 @@ func _create_entity_list():
 				'id': i,
 				'node': node,
 				'type': node.get_type(),
-				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_pos()).grid_pos
+				'grid_pos': self.get_hex_object_from_global_pos(node.get_global_position()).grid_pos
 			})
 			i += 1
 	return result
@@ -201,7 +201,7 @@ func _input(event):
 			get_tree().quit()
 	elif event.is_action_pressed('mouse_click'):
 		# Once set the actual global mouse position needed for conversion of the coordinates
-		var click_pos = self.get_global_mouse_pos()
+		var click_pos = self.get_global_mouse_position()
 		
 		### If clicked on tilemap
 		if self._is_tilemap(click_pos) and not self._is_unit(click_pos) and not GUI.is_gui_clicked():
@@ -214,7 +214,7 @@ func _input(event):
 			# unit.
 			if self.movement_selection == true and self.selected_unit != null:
 				var unit = _get_entity_by_id(self.selected_unit)
-				var new_path = find_path(unit.node.get_global_pos(), click_pos)
+				var new_path = find_path(unit.node.get_global_position(), click_pos)
 				unit.node.set_path(new_path)
 				# _show_path(new_path)
 				unit.node.animate_path(new_path)
@@ -333,7 +333,7 @@ func highlight_hex(position):
 	var hex_world_pos = hexmap.map_to_world(global_hex_position)
 	# calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
 	var highlight_pos = _get_center_of_hex(hex_world_pos)
-	hex_marker.set_pos(highlight_pos)
+	hex_marker.set_position(highlight_pos)
 
 # Returns the centered position of the tile, which position is given
 # @input {Vector2} global position of hex
@@ -434,8 +434,8 @@ func _mark_grid_position(grid_position, counter):
 	var hex_world_pos = hexmap.map_to_world(grid_position)
 	var marker_pos = _get_center_of_hex(hex_world_pos)
 	counter_label.set_text(String(counter))
-	new_marker.set_pos(marker_pos)
-	counter_label.set_pos(Vector2(marker_pos.x, marker_pos.y + 15))
+	new_marker.set_position(marker_pos)
+	counter_label.set_position(Vector2(marker_pos.x, marker_pos.y + 15))
 	self.add_child(new_marker)
 	self.add_child(counter_label)
 	counter_label.set_owner(get_tree().get_edited_scene_root())
@@ -486,7 +486,7 @@ func _show_origin(tile_list):
 		var origin_dir = tile.came_from.dir
 		var arrow_rotation = neighbour_position_rotation_table[origin_dir]
 		new_arrow.set_rotd(arrow_rotation)
-		new_arrow.set_pos(arrow_pos)
+		new_arrow.set_position(arrow_pos)
 		self.add_child(new_arrow)
 		new_arrow.set_owner(get_tree().get_edited_scene_root())
 
@@ -530,7 +530,7 @@ func highlight_every_hex(position, marker_color, show_coords):
 	var new_highlight = hex_marker.duplicate()
 	new_highlight.set_modulate(marker_color)
 	# position the highlight
-	new_highlight.set_pos(highlight_pos)
+	new_highlight.set_position(highlight_pos)
 	# add the highlight to scene
 	self.add_child(new_highlight)
 	new_highlight.set_owner(get_tree().get_edited_scene_root())
@@ -540,9 +540,9 @@ func highlight_every_hex(position, marker_color, show_coords):
 		var global_pos_label = Label.new()
 		var grid_pos_label = Label.new()
 		# Position the labels
-		global_pos_label.set_pos(hex_world_pos)
+		global_pos_label.set_position(hex_world_pos)
 		var grid_pos_label_pos = Vector2(hex_world_pos.x, hex_world_pos.y+20)
-		grid_pos_label.set_pos(grid_pos_label_pos)
+		grid_pos_label.set_position(grid_pos_label_pos)
 		# Fill the labels with text
 		global_pos_label.set_text(String(hex_world_pos))
 		grid_pos_label.set_text(String(global_hex_position))
@@ -566,7 +566,7 @@ func _set_hex_fill(hex_world_pos, marker_color, opt_name=null):
 		new_hex_fill.set_name(opt_name)
 	new_hex_fill.set_modulate(globals.getColor(String(marker_color)))
 	# position the highlight
-	new_hex_fill.set_pos(highlight_pos)
+	new_hex_fill.set_position(highlight_pos)
 	# add the highlight to scene
 	self.add_child(new_hex_fill)
 	
@@ -595,7 +595,7 @@ func _export_tile_list(tilemap):
 # @input {Object} parent node of the created sprite
 func _render_dot(position, parent):
 	var new_marker = marker.duplicate()
-	new_marker.set_pos(position)
+	new_marker.set_position(position)
 	parent.add_child(new_marker)
 	new_marker.set_owner(get_tree().get_edited_scene_root())
 
@@ -606,7 +606,7 @@ func _render_dot(position, parent):
 # @input {Object} parent node of the created box
 func _render_size_rect(position, size, parent):
 	var new_rect = rect.duplicate()
-	new_rect.set_pos(position)
+	new_rect.set_position(position)
 	new_rect.set_size(size)
 	parent.add_child(new_rect)
 	new_rect.set_owner(get_tree().get_edited_scene_root())
@@ -628,16 +628,16 @@ func _mark_hex_dimensions(position):
 	# set positions of each marker
 	# set top left (0,0)
 	var pos1 = global_pos
-	marker1.set_pos(pos1)
+	marker1.set_position(pos1)
 	# set top right (0+110,0)
 	var pos2 = Vector2(global_pos.x+hex_size.x, global_pos.y)
-	marker2.set_pos(pos2)
+	marker2.set_position(pos2)
 	# set bottom left (0,0+128)
 	var pos3 = Vector2(global_pos.x, global_pos.y+hex_size.y)
-	marker3.set_pos(pos3)
+	marker3.set_position(pos3)
 	# set bottom right (0+110,0+128)
 	var pos4 = global_pos+hex_size
-	marker4.set_pos(pos4)
+	marker4.set_position(pos4)
 	# add the markers to scene
 	self.add_child(marker1)
 	self.add_child(marker2)
@@ -657,7 +657,7 @@ func _display_hex_info(input_coordinates, show_coordinates):
 	var new_label = Label.new()
 	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
 	new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
-	new_label.set_pos(tile_world_pos)
+	new_label.set_position(tile_world_pos)
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
 
@@ -668,7 +668,7 @@ func _render_on_tile(input_coordinates, info, opt_name):
 	var new_label = Label.new()
 	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
 	new_label.set_text(info)
-	new_label.set_pos(tile_world_pos)
+	new_label.set_position(tile_world_pos)
 	if opt_name != null:
 		new_label.set_name(opt_name)
 	self.add_child(new_label)
@@ -684,7 +684,7 @@ func _display_terrain_type(grid_coordinates):
 	var y_pos = grid_coordinates[1] + (hexmap.get_cell_size().y/2)
 	var x_pos = grid_coordinates[0]
 	var tile_world_pos = hexmap.map_to_world(Vector2(x_pos,y_pos))
-	new_label.set_pos(tile_world_pos)
+	new_label.set_position(tile_world_pos)
 	# Attach label
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())

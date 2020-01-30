@@ -57,15 +57,8 @@ var _prev_mouse_pos = null
 # Various internal variables used to calculate camera position against camera movement limits
 var half_viewport_x = 0.0
 var half_viewport_y = 0.0
-
 var GUI = null
-var game = null
-# INPUTS
-
-# Right mouse button was or is pressed.
-var __rmbk = false
-# Move camera by keys: left, top, right, bottom.
-var __keys = [false, false, false, false]
+var scale_factor = 1
 
 func _ready():
 	game = get_tree().get_current_scene()
@@ -73,7 +66,6 @@ func _ready():
 	set_v_drag_enabled(false)
 	set_enable_follow_smoothing(false)
 	set_follow_smoothing(4)
-	set_fixed_process(true)
 	set_process_unhandled_input(true)
 	GUI = find_node('GUI')
 	self._updateGUI()
@@ -84,76 +76,72 @@ func _updateGUI():
 
 # Get centered position relative to screen size 
 func get_screen_center():
-	var camera_position = self.get_pos()
+	var camera_position = self.get_position()
 	var vp_center = Vector2(
 		camera_position.x / game.scale_factor,
 		camera_position.y / game.scale_factor
 	)
 	return vp_center
 
-func _fixed_process(delta):
-	half_viewport_x = get_viewport().get_rect().size.x / game.scale_factor
-	half_viewport_y = get_viewport().get_rect().size.y / game.scale_factor
+func _physics_process(delta):
+	half_viewport_x = get_viewport().size.x / scale_factor
+	half_viewport_y = get_viewport().size.y / scale_factor
 	
-	# Move camera by keys defined in InputMap (ui_left/top/right/bottom).
+	# Move camera by keys defined in InputMap (ui_left/up/right/down).
+	# But only if navigation by keyboard (key) is enabled.
+	
 	if key:
 		# Left
-		if __keys[0]:
+		if Input.is_action_pressed("ui_left"):
 			camera_movement.x -= camera_speed * delta
 		# Top
-		if __keys[1]:
+		if Input.is_action_pressed("ui_up"):
 			camera_movement.y -= camera_speed * delta
 		# Right
-		if __keys[2]:
+		if Input.is_action_pressed("ui_right"):
 			camera_movement.x += camera_speed * delta
 		# Bottom
-		if __keys[3]:
+		if Input.is_action_pressed("ui_down"):
 			camera_movement.y += camera_speed * delta
 	
 	# Move camera by mouse, when it's on the margin (defined by camera_margin).
 	if edge:
 		# Left
-		if get_viewport().get_rect().size.x - get_viewport().get_mouse_pos().x <= camera_margin:
+		if get_viewport().size.x - get_viewport().get_mouse_position().x <= camera_margin:
 			camera_movement.x += camera_speed * delta
 		# Top
-		if get_viewport().get_mouse_pos().x <= camera_margin:
+		if get_viewport().get_mouse_position().x <= camera_margin:
 			camera_movement.x -= camera_speed * delta
 		# Right
-		if get_viewport().get_rect().size.y - get_viewport().get_mouse_pos().y <= camera_margin:
+		if get_viewport().size.y - get_viewport().get_mouse_position().y <= camera_margin:
 			camera_movement.y += camera_speed * delta
 		# Bottom
-		if get_viewport().get_mouse_pos().y <= camera_margin:
+		if get_viewport().get_mouse_position().y <= camera_margin:
 			camera_movement.y -= camera_speed * delta
 	
 	# When RMB is pressed, move camera by difference of mouse position
-	if drag and __rmbk:
-		camera_movement = _prev_mouse_pos - get_viewport().get_mouse_pos()
+	if drag and Input.is_action_pressed("mouse_right_click"):
+		camera_movement = _prev_mouse_pos - get_viewport().get_mouse_position()
 	
 	# Update position of the camera if future position will be within camera limits
-	var camera_new_left = get_pos().x + camera_movement.x - self.half_viewport_x
-	var camera_new_right = get_pos().x + camera_movement.x + self.half_viewport_x
-	var camera_new_top = get_pos().y + camera_movement.y - self.half_viewport_y
-	var camera_new_bottom = get_pos().y + camera_movement.y + self.half_viewport_y
+	var camera_new_left = get_position().x + camera_movement.x - self.half_viewport_x
+	var camera_new_right = get_position().x + camera_movement.x + self.half_viewport_x
+	var camera_new_top = get_position().y + camera_movement.y - self.half_viewport_y
+	var camera_new_bottom = get_position().y + camera_movement.y + self.half_viewport_y
 	
 	if camera_new_left > self.get_limit(0) and camera_new_right < self.get_limit(2) and camera_new_top > self.get_limit(1) and camera_new_bottom < self.get_limit(3):
-		self.set_pos(self.get_pos() + camera_movement * get_zoom())
+		self.set_position(self.get_position() + camera_movement * get_zoom())
 	
 	# Set camera movement to zero, update old mouse position.
 	camera_movement = Vector2(0,0)
-	_prev_mouse_pos = get_viewport().get_mouse_pos()
+	_prev_mouse_pos = get_viewport().get_mouse_position()
 
 func _unhandled_input(event):
-	if event.type == InputEvent.MOUSE_BUTTON:
-		# Control by right mouse button.
-		if event.is_pressed() and event.button_index==2 and drag:
-			__rmbk = true
-		else:
-			__rmbk = false
-
+	if event == InputEventMouseButton:
 		# Check if mouse wheel was used. Not handled by InputMap!
 		if wheel:
 			# Checking if future zoom won't be under 0 and zoom_in_limit.
-			# In that case engine will flip screen.
+			# In that case engine would flip screen.
 			if event.button_index == BUTTON_WHEEL_UP and\
 			zoom_in_limit > 0 and\
 			camera_zoom.x - camera_zoom_speed.x > zoom_in_limit and\
@@ -168,21 +156,3 @@ func _unhandled_input(event):
 				camera_zoom += camera_zoom_speed
 				set_zoom(camera_zoom)
 				self._updateGUI()
-	# Control by keyboard handled by InputMap.
-	if event.type == InputEvent.KEY and key:
-		if event.is_action_pressed("ui_left"):
-			__keys[0] = true
-		if event.is_action_pressed("ui_up"):
-			__keys[1] = true
-		if event.is_action_pressed("ui_right"):
-			__keys[2] = true
-		if event.is_action_pressed("ui_down"):
-			__keys[3] = true
-		if event.is_action_released("ui_left"):
-			__keys[0] = false
-		if event.is_action_released("ui_up"):
-			__keys[1] = false
-		if event.is_action_released("ui_right"):
-			__keys[2] = false
-		if event.is_action_released("ui_down"):
-			__keys[3] = false
