@@ -35,9 +35,7 @@ extends Node2D
 # an enemy unit is revealed or terrain changes blocks access.
 
 # TODOs
-# * Add some way of saving player affiliation to each player object
 # * Add a way of saving table of which unit type can attack which unit type
-# 
 
 # member vars here
 # unused members are commented out, but left here for later use
@@ -192,7 +190,8 @@ func _is_valid_destination(click_pos):
 	var clicked_hex_object = self._get_hex_object_from_global_pos(click_pos)
 	for entity in entities:
 		if entity.grid_pos == clicked_hex_object.grid_pos:
-			return false
+			if not entity.node.is_container(): 
+				return false
 	return true
 
 # Get entity by given id

@@ -14,12 +14,13 @@ var victory_icon = null
 
 func _ready():
 	# Initialization here
-	village_icon = load("res://assets/icons/editor_marker_city.png")
-	reinforcements_icon = load("res://assets/icons/editor_marker_reinforcement.png")
-	victory_icon = load("res://assets/icons/editor_marker_victory.png")
-	type = 'editor_marker'
-	hex_label_template = root.find_node('HexLabelTemplate')
-	icon = find_node('Icon')
+	self.village_icon = load("res://assets/icons/editor_marker_city.png")
+	self.reinforcements_icon = load("res://assets/icons/editor_marker_reinforcement.png")
+	self.victory_icon = load("res://assets/icons/editor_marker_victory.png")
+	self.type = 'editor_marker'
+	self.hex_label_template = root.find_node('HexLabelTemplate')
+	self.icon = find_node('Icon')
+	set_container(true)
 	# If map text is given and option to show it, is "true", render it on the map
 	if root.city_names_visible && map_text.length() > 0:
 		self._create_map_text(map_text)
@@ -31,11 +32,11 @@ func _ready():
 func _create_map_text(text):
 	var new_label = hex_label_template.duplicate()
 	# set text
-	new_label.set_bbcode(text)
+	new_label.set_bbcode("[center]"+String(text)+"[/center]")
 	# set position
 	new_label.set_position(Vector2(
-		self.get_position().x - ((hexmap.get_cell_size().x / 2) + 10) - (new_label.get_text().length() * 7),
-		self.get_position().y - hexmap.get_cell_size().y
+		self.get_position().x - (new_label.get_size().x / 2),
+		self.get_position().y - 60
 	))
 	# add to scene
 	root.call_deferred('add_child', new_label)
