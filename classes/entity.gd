@@ -13,6 +13,7 @@ var selected = null
 var type = null
 var path = null
 var id = null
+var is_container = null
 
 ## Called every time the node is added to the scene.
 func _ready():
@@ -27,6 +28,14 @@ func _physics_process(delta):
 # Getter for selectable
 func is_selectable():
 	return self.is_selectable
+
+# Setter to check if entity can be a container of other units (towns, markers)
+func set_container(value):
+	self.is_container = value
+
+# Getter to check if entity can be a container of other units (towns, markers)
+func is_container():
+	return self.is_container
 
 # Getter for state of selection
 func is_selected():

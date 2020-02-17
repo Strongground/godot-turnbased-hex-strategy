@@ -99,7 +99,7 @@ export (int) var movement_points = null
 # of resupply, they will certainly not sit there and wait. So in theorey, nothing
 # speaks against a mechanism that allows to tell crew to eject and continue fighting
 # on foot. Such a system is needed anway for motorized transport, siege towers, landing
-# craft, para troopers etc.
+# craft, paratroopers etc.
 # It also means, that we need at least two additional attributes to simulate this to
 # some degree of realism: 
 # - "passengers" includes a reference to the unit transported
