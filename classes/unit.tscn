@@ -6,64 +6,39 @@
 
 [sub_resource type="CircleShape2D" id=1]
 
-custom_solver_bias = 0.0
-radius = 10.0
-
 [node name="Unit" type="Area2D"]
-
-input_pickable = true
-gravity_vec = Vector2( 0, 1 )
 gravity = 100.0
-linear_damp = 0.1
-angular_damp = 1.0
-audio_bus_override = false
-audio_bus_name = "Master"
 script = ExtResource( 1 )
-_sections_unfolded = [ "Transform" ]
 is_selectable = true
-unit_owner = 0
-unit_faction = 0
-direction = 0
-graphical_scheme = null
-unit_id = ""
-display_name = ""
-description = ""
-base_defense = null
-armor = null
-can_traverse = null
-movement_points = null
-fuel = null
-main_weapon = null
-main_ammo = null
-attack_bonus = null
-unit_sprites = null
 
-[node name="UnitImage" type="Sprite" parent="." index="0"]
-
+[node name="UnitImage" type="Sprite" parent="."]
 scale = Vector2( 0.352323, 0.352323 )
 z_as_relative = false
 texture = ExtResource( 2 )
 
-[node name="HexOutline" type="Sprite" parent="." index="1"]
-
+[node name="HexOutline" type="Sprite" parent="."]
 visible = false
 texture = ExtResource( 3 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]
+[node name="FactionIcon" type="Sprite" parent="."]
+position = Vector2( 40.7488, 35.0636 )
 
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 position = Vector2( 0, -2 )
 scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
 
-[node name="MoveTween" type="Tween" parent="." index="3"]
+[node name="MoveTween" type="Tween" parent="."]
 
-repeat = false
-playback_process_mode = 1
-playback_speed = 1.0
-playback/active = false
-playback/repeat = false
-playback/speed = 1.0
-
+[node name="MovementPointsIndicator" type="RichTextLabel" parent="."]
+margin_left = -20.16
+margin_top = -72.4
+margin_right = 19.84
+margin_bottom = -32.4
+bbcode_enabled = true
+bbcode_text = "[center]0[/center]"
+text = "0"
+__meta__ = {
+"_edit_use_anchors_": false
+}
 [connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
-
-

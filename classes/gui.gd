@@ -2,6 +2,7 @@ extends Container
 
 var camera = null
 var game = null
+var root = null
 var tile_info_popup = null
 var tile_info_popup_text = null
 var panel = null

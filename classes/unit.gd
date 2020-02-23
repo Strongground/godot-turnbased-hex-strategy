@@ -6,10 +6,8 @@ extends "res://classes/entity.gd"
 # expect identifier of player
 export (int) var unit_owner = 0
 # unit faction
-# expect index of faction based on imported factions file
-# @TODO create faction manager where an array with faction objects is created 
-# based on a data file, containing detailed information about units, rules, names, etc.
-export (int) var unit_faction = 0
+# expect id of faction based on imported factions file from theme
+export var unit_faction = ''
 # direction the unit is facing visually
 # @TODO this must be changed so it can be used with 1-6 directions. Possible directions
 # and their resprective mappings would be:
@@ -179,11 +177,18 @@ func move_unit(start_point, end_point, entity):
 	self.animate_path(new_path, entity)
 	self.deselect()
 
+# Set crest icon based on faction of unit
+func _set_faction_icon():
+	var icon_texture = $"/root/Game/ThemeManager".get_faction_icon(self.unit_faction)
+	print(icon_texture)
+	$FactionIcon.set_texture(icon_texture)
+
 # This function sets the sprite of the unit according to the themes-data object
 # and the direction of the unit
 # @input {int} The direction of the unit
-func set_sprite(direction):
+func _set_sprite(direction):
 	var sprites = $"/root/Game/ThemeManager".get_unit_sprites(unit_id)
+	var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
 	var sprite_index = null
 	var texture = null
 	# If only one sprite per unit, use it regardless of direction
@@ -192,9 +197,11 @@ func set_sprite(direction):
 	elif sprites.size() == 6:
 		sprite_index = direction
 	if sprite_index >= 0:
-		texture = load("res://themes/example/" + sprites[sprite_index])
+		print("res://themes/"+theme_name+"/"+sprites[sprite_index])
+		texture = load("res://themes/"+theme_name+"/"+sprites[sprite_index])
 	else:
-		texture = load("res://themes/example/" + sprites)
+		print("res://themes/"+theme_name+"/"+sprites)
+		texture = load("res://themes/"+theme_name+"/"+sprites)
 	$UnitImage.set_texture(texture)
 
 # This function returns a boolean indicating if the currently active player
@@ -217,12 +224,22 @@ func get_unit_stance():
 # changes etc. after each round. There is no need to do this in _process
 # since its all turnbased anyway.
 func update():
-	self.set_sprite(direction)
+	self._set_sprite(direction)
+	self._set_faction_icon()
 	
 # Public getter for movement points of this unit.
 # @outputs {int} Movement points of this unit
 func get_movement_points():
 	return self.movement_points
+
+# Internal, updates movement points based on next tile movement.
+func _update_movement_points(target_tile):
+	self.movement_points -= target_tile.move_cost
+	self._update_movementpoints_indicator()
+
+# Internal, updates the indicator at the unit to show the movement points.
+func _update_movementpoints_indicator():
+	$MovementPointsIndicator.set_bbcode('[center]'+String(self.movement_points)+'[/center]')
 
 # Public getter for ammo left in this unit.
 # @outputs {int} Movement points of this unit
@@ -293,6 +310,7 @@ func fill_attributes(data_object):
 	for entry in data_object:
 		if entry in self:
 			set(entry, data_object[entry])
+	self._update_movementpoints_indicator()
 
 # Animates this units movement on a given path from one tile to another over
 # n tiles in between
@@ -308,6 +326,7 @@ func animate_path(path_array, entity):
 func _animate_step(current_tile, step, max_steps):
 	var easing = Tween.EASE_IN_OUT
 	var timing = null
+	self._update_movement_points(current_tile)
 	animation_step_active = true
 	animation_step = step
 	self.direction = self._get_direction(rad2deg(self.get_angle_to(get_centered_grid_pos(current_tile['grid_pos'], self.offset))))
@@ -320,6 +339,7 @@ func _animate_step(current_tile, step, max_steps):
 		timing = Tween.TRANS_LINEAR
 	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, timing, easing)
 	$MoveTween.start()
+	
 	
 # From the last movements angle, get the direction mapped, so it references
 # to a direction sprite from the theme.

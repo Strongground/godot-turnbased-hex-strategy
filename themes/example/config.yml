@@ -1,5 +1,6 @@
 # Theme configuration
-name: 'Example Theme'
+name: 'example'
+display_name: 'Example Theme'
 description: 'This serves to illustrate the basic contents of a theme package. It is set in a generic middle eastern "war against terror" setting.'
 data_files: [
   units: 'units.json',

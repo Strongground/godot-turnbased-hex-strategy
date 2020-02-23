@@ -89,10 +89,10 @@ func _ready():
 	# Define players, this should later be done either in the scenario
 	# or the pre-scenario settings for multiplayer matches.
 	var registered_players = [
-		{'id': 0, 'name': 'Human Tester', 'factionID': 0, 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
-		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 1, 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
-		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 1, 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
-		{'id': 3, 'name': 'Refugees', 'factionID': 2, 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
+		{'id': 0, 'name': 'Human Tester', 'factionID': 'usarmy', 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
+		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
+		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
+		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
 	]
 	players = playerMgr.create_players(registered_players)
 	# Load theme
@@ -122,7 +122,7 @@ func _ready():
 	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
 	tile_list = self._build_hex_object_database()
 	# Place the units according to their ID and fill attributes.
-	# Create a global list of all entities on the map, their type, positions and nodes
+	# Create a global list of all entities on the map, the ir type, positions and nodes
 	entities = self._create_entity_list()
 	self._place_units()
 	self._update_units()
@@ -276,7 +276,6 @@ func _get_hex_object_from_id(id):
 
 
 #### INPUT CONTROL ####
-
 func _input(event):
 	# @TODO Maybe outsource this to a click controller module, or maybe delegate all
 	# click events to appropiate nodes from here. Ask Q/A
@@ -535,7 +534,7 @@ func _visit_map(start_position, target_position=null):
 
 	# @DEBUG: Delete all debug path visualisations so there is no overlay.
 	# This can be commented out if the path visualisation is commented out as well.
-	self._delete_all_nodes_with('path_vis')
+	# self._delete_all_nodes_with('path_vis')
 	
 	while not frontier.empty():
 		frontier.sort_custom(self, "_sort_by_second_attr") # First sort frontier by cost attribute in each tuple
@@ -567,7 +566,7 @@ func _visit_map(start_position, target_position=null):
 				frontier.append([next, cost])
 				visited.append(next)
 				# @DEBUG: Show movement cost per tile.
-				self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
+				# self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
 		i += 1
 
 # Determine path from tile to tile, all coordinates are global

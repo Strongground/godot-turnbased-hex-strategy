@@ -58,6 +58,7 @@ var _prev_mouse_pos = null
 var half_viewport_x = 0.0
 var half_viewport_y = 0.0
 var GUI = null
+var game = null
 var scale_factor = 1
 
 func _ready():
@@ -72,14 +73,14 @@ func _ready():
 	
 func _updateGUI():
 	# Set scale of GUI to camera_zoom level so it is visually the same scale
-	GUI.set_scale(camera_zoom * game.scale_factor)
+	GUI.set_scale(camera_zoom * scale_factor)
 
 # Get centered position relative to screen size 
 func get_screen_center():
 	var camera_position = self.get_position()
 	var vp_center = Vector2(
-		camera_position.x / game.scale_factor,
-		camera_position.y / game.scale_factor
+		camera_position.x / scale_factor,
+		camera_position.y / scale_factor
 	)
 	return vp_center
 

@@ -7,14 +7,14 @@
 usarmy:
   display_name: 'US Army'
   description: "We're the good guys!"
-  icon: 'factions/usarmy.jpg'
+  icon: 'graphics/faction_icons/us.png'
 
 taliban:
   display_name: 'Taliban'
   description: 'These are the real bad guys...'
-  icon: 'factions/taliban.jpg'
+  icon: 'graphics/faction_icons/afgh_3.png'
 
 civilians:
   display_name: 'Innocent Civilians'
   description: 'Protect us, we are unarmed.'
-  icon: 'factions/civies.jpg'
+  icon: 'graphics/faction_icons/civ.png'

@@ -10,6 +10,8 @@ extends Node2D
 
 # member vars here
 var standard_themes_path = 'res://themes'
+var standard_sprite_path = 'graphics'
+var standard_unit_sprites_path = 'units'
 var theme_object = {}
 
 func _ready():
@@ -26,27 +28,61 @@ func load_theme(theme_name):
 	var config_file = theme_path + '/config.json'
 	var file_content = _read_json(config_file)
 	var data_files = _get_data_files(file_content)
+	theme_object['base_path'] = theme_path
+	theme_object['display_name'] = file_content['display_name']
 	theme_object['name'] = file_content['name']
+	# Take sprite path from config, or else standard path
+	if 'sprites' in file_content:
+		theme_object['sprites'] = file_content['sprites']
+	else:
+		theme_object['sprites'] = self.standard_sprite_path
+	# Take unit sprites path from config, or else standard path
+	if 'unit_sprites' in file_content:
+		theme_object['unit_sprites'] = file_content['unit_sprites']
+	else:
+		theme_object['unit_sprites'] = self.standard_unit_sprites_path
+	# Load content of rest of files into theme object
 	for data_filename in data_files:
 		var data_file = data_files[data_filename]
 		var file_path = theme_path + '/' + String(data_file)
 		theme_object[data_filename] = _read_json(file_path)
+	self.theme_object = theme_object
 	return theme_object
 
+# Public getter for theme name string
+# @returns {String} The internal name of the theme
+func get_current_theme_name():
+	return self.theme_object.name
+
+# Public getter for sprite path
+# @returns {String} Path where sprites of the theme are found
+func get_sprite_path():
+	return self.theme_object.sprite_path
+
 # Public getter for factions
+# @returns {Dictionary} Dict containing all factions and their attributes
 func get_factions():
 	if _is_theme_loaded():
 		return theme_object['factions']
 
+# Public getter for faction icon
+# @input {String} The if of the faction, whose icon should be returned
+# @returns {Texture} A texture containing the icon
+func get_faction_icon(faction_id):
+	if _is_theme_loaded():
+		if faction_id in theme_object['factions']:
+			var icon = load(theme_object['base_path']+'/'+theme_object.factions[faction_id].icon)
+			return icon
+
 # Public getter for unit object
-# @outputs {Dictionary} Dict containing all units and their attributes.
+# @returns {Dictionary} Dict containing all units and their attributes.
 func get_units():
 	if _is_theme_loaded():
 		return theme_object['units']
 
 # Public getter for specific unit object
 # @input {String} id of the unit to get
-# @outputs {Array} Attributes of the unit
+# @returns {Array} Attributes of the unit
 func get_unit(unit_id):
 	if _is_theme_loaded():
 		var units = theme_object['units']

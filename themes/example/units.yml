@@ -87,7 +87,7 @@ us_infantry_rifles:
   display_name: 'US Army Infantry - Rifle Squad'
   description: 'The standard US Army infantry squad consists of two fireteams with each 4 soldiers. This unit has assault rifles and grenades at its disposal.'
   unit_faction: 'usarmy'
-  unit_sprites: ['graphics/units/us_infantry_rifle-0.png', 'graphics/units/us_infantry_rifle-1.png', 'graphics/units/us_infantry_rifle-2.png', 'graphics/units/us_infantry_rifle-3.png', 'graphics/units/us_infantry_rifle-4.png', 'graphics/units/us_infantry_rifle-5.png', ]
+  unit_sprites: 'graphics/units/us_infantry_rifle.png'
   # stats
   base_defense: 2
   armor: 0
@@ -102,7 +102,7 @@ us_marines_javelin:
   display_name: 'US Navy Marines - Antiarmor Team'
   description: 'A Marines Javelin Missile squad consisting of eight marines with two antiarmor Javelin Missile systems. They can take out even heavy armored tanks but need shielding against infantry threats.'
   unit_faction: 'usarmy'
-  unit_sprites: 'units/us_marines_javelin'
+  unit_sprites: 'graphics/units/us_marines_javelin.png'
   # stats
   base_defense: 1
   armor: 0
@@ -117,7 +117,7 @@ m2a3_bradley:
   display_name: 'M2/A3 Bradley - IFV' 
   description: 'The Bradley Infantry Fighting Vehicle is a vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soldiers.'
   unit_faction: 'usarmy'
-  unit_sprites: 'units/us_m2a3_bradley'
+  unit_sprites: 'graphics/units/us_m2a3_bradley.png'
   # stats
   base_defense: 5
   armor: 2
@@ -133,7 +133,8 @@ militia_rifles:
   display_name: 'Village Militia Rifles Group'
   description: 'When the local warlord decided to support the Taliban, these villagers mobilized. A group consists of about 10-15 people. Arming themselves with weapons such as soviet assault rifles, hand-down WW2 relicts and home-made grenades, they have various levels of training. Some never fired a shot before. They lack tactics and equipment, being always low on ammo.'
   unit_faction: 'taliban'
-  unit_sprites: 'units/militia_rifles'
+  unit_sprites: 'graphics/units/militia_rifles.png'
+  sprite_scale: 0.75
   # stats
   base_defense: 1
   armor: 0
@@ -148,7 +149,22 @@ taliban_heavy_weapons:
   display_name: 'Taliban Heavy Weapons Squad'
   description: 'Having received some formal training at a secret camp in the mountains, these 9 men lack the drill and tactics, but else pass as soldiers. They have some standard equipment, soviet-era RPG missiles and launcher as well as at least one machinegunner.'
   unit_faction: 'taliban'
-  unit_sprites: 'units/taliban_heavy'
+  unit_sprites: 'graphics/units/taliban_heavy.png'
+  # stats
+  base_defense: 1
+  armor: 0
+  can_traverse: ['land']
+  movement_points: 2
+  fuel: -1
+  main_weapon: 'irregular_heavy'
+  main_ammo: 5
+  attack_bonus: 0
+
+taliban_heavy_tank:
+  display_name: 'Taliban Heavy Tank'
+  description: 'For the rare case of an open asault, if heavy resistance is encountered or a show of force necessary, this monstrosity from WW2 is '
+  unit_faction: 'taliban'
+  unit_sprites: 'graphics/units/taliban_heavy.png'
   # stats
   base_defense: 1
   armor: 0
@@ -164,7 +180,7 @@ refugees:
   display_name: 'Civilians/Refugees'
   description: "A civilian treck of women, men and children who have just been able to flee from the battles and bring some of their belongings with them. Some brought small arms for hunting or self defense, but they can't hope to do more than deter wild dogs or a lone criminal on the road."
   unit_faction: 'civilians'
-  unit_sprites: 'units/civilians_refugees'
+  unit_sprites: 'graphics/units/civilians_refugees.png'
   # stats
   base_defense: 0
   armor: 0
