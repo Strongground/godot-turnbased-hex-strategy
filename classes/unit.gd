@@ -155,6 +155,7 @@ var animation_path_array = []
 var offset = null
 var entity_representation = null
 var last_movement_angle = null
+var max_movement_points = 0
 
 # This function simply is a getter for the unit_id string, corresponding to
 # one entry in the theme files.
@@ -191,18 +192,22 @@ func _set_sprite(direction):
 	var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
 	var sprite_index = null
 	var texture = null
-	# If only one sprite per unit, use it regardless of direction
-	if typeof(sprites) == TYPE_STRING:
-		sprite_index = -1
+	# If only one sprite per unit, use it (or the automatically generated 
+	# flipped version to match general direction of unit),
+	# else, use the apropriate oriented sprite out of the six possible ones.
+	if sprites.size() == 2:
+		sprite_index = 0
+		if direction <= 2:
+			sprite_index = 1
 	elif sprites.size() == 6:
 		sprite_index = direction
-	if sprite_index >= 0:
-		print("res://themes/"+theme_name+"/"+sprites[sprite_index])
-		texture = load("res://themes/"+theme_name+"/"+sprites[sprite_index])
-	else:
-		print("res://themes/"+theme_name+"/"+sprites)
-		texture = load("res://themes/"+theme_name+"/"+sprites)
+	# Load texture based on above information
+	texture = load("res://themes/"+theme_name+"/"+sprites[sprite_index])
 	$UnitImage.set_texture(texture)
+
+# This resets movement points to original value (e.g. when turn ends)
+func reset_movement_points():
+	self.movement_points = self.max_movement_points
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this unit.
@@ -376,6 +381,7 @@ func _ready():
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
 	set_process_input(true)
+	self.max_movement_points = self.movement_points
 
 func _input(event):
 	pass

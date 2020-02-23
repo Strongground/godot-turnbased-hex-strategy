@@ -12,6 +12,7 @@ extends Node2D
 var standard_themes_path = 'res://themes'
 var standard_sprite_path = 'graphics'
 var standard_unit_sprites_path = 'units'
+var standard_sprite_format = 'png'
 var theme_object = {}
 
 func _ready():
@@ -89,22 +90,39 @@ func get_unit(unit_id):
 		if unit_id in units:
 			return units[String(unit_id)]
 
-# Public getter for sprites of a unit
+# Public getter for sprites of a unit.
+# If a unit has only one sprite, automatically generate a flipped copy of this
+# sprite to allow for some variation in movement animation.
 # @input {String} id of the unit to get
-# @outputs {Array|String} An array or a string containing image paths or arrays
-# with image paths.
+# @outputs {Array} An array containing 2 or 6 image paths
 func get_unit_sprites(unit_id):
 	if _is_theme_loaded():
 		var units = theme_object['units']
-		if unit_id in units:
+		if String(unit_id) in units:
 			var unit_sprites_content = units[String(unit_id)].unit_sprites
 			if typeof(unit_sprites_content) == TYPE_STRING:
-				return unit_sprites_content
+				# Explain
+				var flipped_sprite_path = String(unit_sprites_content.rsplit('.png')[0]+'-1.'+standard_sprite_format)
+				if not Directory.new().file_exists(theme_object['base_path']+'/'+flipped_sprite_path):
+					_generate_flipped_version(unit_sprites_content, flipped_sprite_path)
+				return [unit_sprites_content, flipped_sprite_path]
 			elif typeof(unit_sprites_content) == TYPE_ARRAY:
+				# If there is more than one array for unit sprites, pick a
+				# random one.
 				if typeof(unit_sprites_content[0]) == TYPE_ARRAY:
 					return unit_sprites_content[randi() % unit_sprites_content.size()-1]
+				# else, just return the one existing array.
 				else:
 					return unit_sprites_content
+
+func _generate_flipped_version(sprite_path, target_path):
+	if _is_theme_loaded():
+		var texture = load(theme_object['base_path']+'/'+sprite_path)
+		var image = texture.get_data()
+		image.lock()
+		image.flip_x()
+		image.unlock()
+		image.save_png(theme_object['base_path']+'/'+target_path)
 
 # This reads a JSON file and returns a dictionary containing all information from it.
 # @input {String} the path to a file, relative to res://

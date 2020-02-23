@@ -74,6 +74,7 @@ export var city_names_visible = true
 ## Loop vars
 var turn_counter = 0
 var active_player = null
+var active_player_rot_index = null
 var player_rotation = []
 var players = {}
 ## Game Ressource Managers
@@ -368,38 +369,43 @@ func _input(event):
 # Process the current turn
 func _end_turn():
 	_advance_player_rotation()
+	_reset_movement_points()
 	turn_counter += 1
+
+func _reset_movement_points():
+	for entity in self.entities:
+		if entity.type == 'unit':
+			entity.node.reset_movement_points()
 
 func _advance_player_rotation():
 	var player_active = false
 	var next_player = ''
 	# first call of this function
-	if players.size() != player_rotation.size():
+	if players.size() != self.player_rotation.size():
 		# set first human player as active
-		for player in players:
+		for i in range(players.size()):
+			var player = players[i]
 			if player.node.is_human() and self.active_player == null:
 				player.node.set_active(true)
 				self.active_player = player.node
+				self.active_player_rot_index = i
 			# fill player rotation once
-			player_rotation.append(player.node.get_id())
+			self.player_rotation.append(player.node.get_id())
 		# for the initial call of this function, nothing more needs to
 		# be done, exit here.
 		return true
 	# if this is not the initial call of this function, determine next player
-	var counter = 0
-	for player_id in player_rotation:
-		var player = playerMgr.get_player_by_id(player_id)
-		# found active player, set it to inactive and determine id of next one
-		if player.is_active():
-			# Set player entry in player_rotation to 'not active'
-			player.set_active(false)
-			# Set next player as active
-			if (counter + 1) > players.size():
-				counter = 0
-			next_player = player_rotation[counter].node
-			next_player.set_active(true)
-			self.active_player = next_player
-		counter += 1
+	else:
+		var next_player_id = null
+		if self.active_player_rot_index == self.player_rotation.size()-1:
+			self.active_player_rot_index = 0
+		else:
+			self.active_player_rot_index += 1
+		self.active_player.set_active(false)
+		self.active_player = playerMgr.get_player_by_id(self.player_rotation[self.active_player_rot_index]).node
+		self.active_player.set_active(true)
+		print('Round ended. Current player is now '+String(self.active_player.get_name()))
+		return true
 
 func _physics_process(delta):
 	if active_player != null:

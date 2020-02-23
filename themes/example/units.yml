@@ -162,17 +162,17 @@ taliban_heavy_weapons:
 
 taliban_heavy_tank:
   display_name: 'Taliban Heavy Tank'
-  description: 'For the rare case of an open asault, if heavy resistance is encountered or a show of force necessary, this monstrosity from WW2 is '
+  description: 'For the rare case of an open asault, if heavy resistance is encountered or a show of force seems necessary, this monstrosity from WW2 is rolled out its hiding place. It often breaks down, the armor is no match for modern AT weaponry, but it sure makes a lot of noise!'
   unit_faction: 'taliban'
-  unit_sprites: 'graphics/units/taliban_heavy.png'
+  unit_sprites: ['graphics/units/ww2_tank-0.png', 'graphics/units/ww2_tank-1.png', 'graphics/units/ww2_tank-2.png', 'graphics/units/ww2_tank-3.png', 'graphics/units/ww2_tank-4.png', 'graphics/units/ww2_tank-5.png']
   # stats
-  base_defense: 1
-  armor: 0
+  base_defense: 7
+  armor: 3
   can_traverse: ['land']
-  movement_points: 2
-  fuel: -1
-  main_weapon: 'irregular_heavy'
-  main_ammo: 5
+  movement_points: 1
+  fuel: 18
+  main_weapon: 'irregular_tank_cannon'
+  main_ammo: 3
   attack_bonus: 0
 
 # Civilians
@@ -185,8 +185,8 @@ refugees:
   base_defense: 0
   armor: 0
   can_traverse: ['land']
-  movement_points: 1
+  movement_points: 2
   fuel: -1
   main_weapon: 'small_arms'
-  main_ammo: 1
+  main_ammo: 2
   attack_bonus: 0

@@ -25,7 +25,6 @@ func _ready():
 	if root.city_names_visible && map_text.length() > 0:
 		self._create_map_text(map_text)
 	
-	### Icon handling
 	# Finally hide the marker in-game
 	self.icon.hide()
 

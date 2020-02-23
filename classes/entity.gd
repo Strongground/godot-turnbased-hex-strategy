@@ -86,15 +86,15 @@ func _hide_marker():
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():
 	var grid_coords = hexmap.world_to_map(self.get_global_position())
-	var world_coords = get_centered_grid_pos(grid_coords, Vector2(-6,0))
+	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(-6,0))
 	self.set_position(world_coords)
 
-# Helper function that returns the centered coordinates corrected
+# Internal helper function that returns the centered coordinates corrected
 # by given offset
 # @input {Vector2} offset, this can depend on entity type
 # @input {Vector2} grid coordinates of a hex
 # @returns {Vector2} global coordinates that represent the center of a hex
-func get_centered_grid_pos(grid_coords, offset):
+func _get_centered_grid_pos(grid_coords, offset):
 	var world_coords = hexmap.map_to_world(grid_coords)
 	world_coords.x += ((hexmap.get_cell_size().x/2) + offset.x)
 	world_coords.y += ((hexmap.get_cell_size().y/2) + offset.y)
