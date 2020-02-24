@@ -1,6 +1,8 @@
 # Turn Based Hexagonal Strategy Game
 ###### Title may change later
 
+![Screenshot showing very early stage of the game, yet already somewhat playable](https://github.com/Strongground/godot-turnbased-hex-strategy/blob/master/screen.jpg)
+
 ## Made with Godot
 This is my first attempt at a compelete Godot game and also the fulfillment of one of my dreams - a hex-based turn-based strategy game/engine that is versatile enough to represent any setting/period with ease.
 
