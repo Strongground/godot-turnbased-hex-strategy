@@ -115,6 +115,15 @@ func get_unit_sprites(unit_id):
 				else:
 					return unit_sprites_content
 
+# Public getter for scale information on sprites for specific unit.
+func get_sprite_scale(unit_id):
+	if _is_theme_loaded():
+		var units = theme_object['units']
+		if String(unit_id) in units:
+			var unit = units[String(unit_id)]
+			if 'sprite_scale' in unit:
+				return unit.sprite_scale
+
 func _generate_flipped_version(sprite_path, target_path):
 	if _is_theme_loaded():
 		var texture = load(theme_object['base_path']+'/'+sprite_path)

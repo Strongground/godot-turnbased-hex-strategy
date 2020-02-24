@@ -181,18 +181,20 @@ func _update_units():
 		if entity.type == 'unit':
 			entity.node.update() 
 
-# Check if the given position is a valid move-destination for the given
-# unit. @TODO Extend this method to take into account the type of unit
-# that is given, because air units, amphibious units or sea units behave
-# different than ground units on the same terrain.
+# Check if the given position is a valid move-to destination for the given
+# unit.
 # @input {Vector2} Position to be checked
 # @input {Object} The unit for which the validity of the destination is checked
+# @returns {Boolean}
 func _is_valid_destination(click_pos):
 	var clicked_hex_object = self._get_hex_object_from_global_pos(click_pos)
 	for entity in entities:
-		if entity.grid_pos == clicked_hex_object.grid_pos:
-			if not entity.node.is_container(): 
-				return false
+		if entity.grid_pos == clicked_hex_object.grid_pos and not entity.node.is_container():
+			return false
+	var target_terrain = clicked_hex_object.terrain
+	var unit_can_traverse = _get_entity_by_id(self.selected_unit).node.can_traverse
+	if not target_terrain in unit_can_traverse:
+		return false
 	return true
 
 # Get entity by given id
@@ -369,10 +371,10 @@ func _input(event):
 # Process the current turn
 func _end_turn():
 	_advance_player_rotation()
-	_reset_movement_points()
+	_update_all_entities()
 	turn_counter += 1
 
-func _reset_movement_points():
+func _update_all_entities():
 	for entity in self.entities:
 		if entity.type == 'unit':
 			entity.node.reset_movement_points()
@@ -595,7 +597,7 @@ func find_path(start_position, target_position):
 		path.append(current)
 	
 	# finally add start to path array
-	path.append(start_tile)
+	#path.append(start_tile)
 	# invert path array so it goes from start to target and return
 	path.invert()
 	return path
@@ -876,14 +878,14 @@ func _display_terrain_type(grid_coordinates):
 func _on_ToggleGridButton_pressed():
 	var from_opacity = null
 	var to_opacity = null
-	if grid_visible:
+	if self.grid_visible:
 		from_opacity = Color(1, 1, 1, 0.3)
 		to_opacity = Color(1, 1, 1, 0)
-		grid_visible = false
+		self.grid_visible = false
 	else:
 		from_opacity = Color(1, 1, 1, 0)
 		to_opacity = Color(1, 1, 1, 0.3)
-		grid_visible = true
+		self.grid_visible = true
 	tween.interpolate_property(hex_grid, 'modulate', from_opacity, to_opacity, 2.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
 	tween.start()
 

@@ -28,16 +28,7 @@ export var unit_id = ''
 # Due to the nature of the current approach, the unit class currently needs to
 # know of the existence of each and every attribute that exists. They are 
 # exported here, so that a unit may be edited to be special via editor.
-# ---
-# To make it possible to have a complex system of bonuses and maluses for units
-# values, that can be dynamically given to units based on location on the map
-#  e.g. "entrenched, giving a bonus to defense against explosive weapons" or 
-# "retreat"/"wounded" that are given by the scenario, and may wear off after a given
-# number of rounds, there needs to be an external list of generic bonuses. These 
-# will not be part of a base game but theme- or even scenario-specific.
-# A hierarchy system will be used, where game-global bonuses are extended by game-
-# theme bonuses which are in turn extended by scenario-specific bonuses.
-# 
+#
 # Questions remaining to be answered: 
 # * How to describe what bonuses are active at a given unit instance?
 # Easiest would be IDs in an array, which is bound to a specific purpose, like
@@ -46,11 +37,6 @@ export var unit_id = ''
 # Downside of this approach: Either a lot of Arrays will exist, or modifiers
 # can only be added to some base values. Which probably will be the smallest
 # tradeoff.
-# 
-# * How are weapons and their generic effects on target types described?
-# Since weapons are theme-bound - just like units - it makes sense to describe them
-# in the same manner: via YAML files containing structured information about weapons
-# and their respective effects.
 
 #################################################################################
 # Display name. This is a short string shown in-game.
@@ -76,7 +62,7 @@ export (int) var armor = null
 
 # What medium this unit can move in/on primarily.
 # Expects an array with one string per traversable terrain type:
-# "LAND", "AIR", "RIVER", "WATER"
+# "land", "river", "water", "mountain"
 export (Array, String) var can_traverse = []
 
 # Movement points
@@ -172,8 +158,16 @@ func get_unit_id():
 # this unit and is needed to be passed back to a callback.
 func move_unit(start_point, end_point, entity):
 	var new_path = game.find_path(start_point, end_point)
+	var path_cost = 0
+	for i in range(new_path.size()):
+		var tile = new_path[i]
+		if i > 0:
+			if path_cost + tile.move_cost > self.movement_points:
+				print("This movement would be too expensive: "+String(path_cost + tile.move_cost))
+				return false
+			path_cost += tile.move_cost
 	self.set_path(new_path)
-	# This is a debug method to visualize the path found by the wayfinding
+	# This is a debug method to visualize the path found by the pathfinding
 #	game._show_path(new_path)
 	self.animate_path(new_path, entity)
 	self.deselect()
@@ -181,7 +175,6 @@ func move_unit(start_point, end_point, entity):
 # Set crest icon based on faction of unit
 func _set_faction_icon():
 	var icon_texture = $"/root/Game/ThemeManager".get_faction_icon(self.unit_faction)
-	print(icon_texture)
 	$FactionIcon.set_texture(icon_texture)
 
 # This function sets the sprite of the unit according to the themes-data object
@@ -190,6 +183,7 @@ func _set_faction_icon():
 func _set_sprite(direction):
 	var sprites = $"/root/Game/ThemeManager".get_unit_sprites(unit_id)
 	var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
+	var sprite_scale = $"/root/Game/ThemeManager".get_sprite_scale(unit_id)
 	var sprite_index = null
 	var texture = null
 	# If only one sprite per unit, use it (or the automatically generated 
@@ -204,10 +198,13 @@ func _set_sprite(direction):
 	# Load texture based on above information
 	texture = load("res://themes/"+theme_name+"/"+sprites[sprite_index])
 	$UnitImage.set_texture(texture)
+	if sprite_scale:
+		$UnitImage.set_scale(Vector2(sprite_scale, sprite_scale))
 
 # This resets movement points to original value (e.g. when turn ends)
 func reset_movement_points():
 	self.movement_points = self.max_movement_points
+	self._update_movementpoints_indicator()
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this unit.
@@ -305,6 +302,7 @@ func is_valid_attack_target(grid_pos):
 # Attack a unit/entity
 func attack(entity):
 	print('ATTACKING!')
+	self.main_ammo -= 1
 	return true
 
 # Function to fill the attributes of the unit from the themes data object
@@ -316,6 +314,7 @@ func fill_attributes(data_object):
 		if entry in self:
 			set(entry, data_object[entry])
 	self._update_movementpoints_indicator()
+	self.max_movement_points = self.movement_points
 
 # Animates this units movement on a given path from one tile to another over
 # n tiles in between
@@ -331,10 +330,11 @@ func animate_path(path_array, entity):
 func _animate_step(current_tile, step, max_steps):
 	var easing = Tween.EASE_IN_OUT
 	var timing = null
-	self._update_movement_points(current_tile)
+	if step > 0:
+		self._update_movement_points(current_tile)
 	animation_step_active = true
 	animation_step = step
-	self.direction = self._get_direction(rad2deg(self.get_angle_to(get_centered_grid_pos(current_tile['grid_pos'], self.offset))))
+	self.direction = self._get_direction(rad2deg(self.get_angle_to(_get_centered_grid_pos(current_tile['grid_pos'], self.offset))))
 	if step == 0:
 		timing = Tween.TRANS_SINE
 	elif step == max_steps-1:
@@ -342,7 +342,7 @@ func _animate_step(current_tile, step, max_steps):
 		easing = Tween.EASE_OUT
 	else:
 		timing = Tween.TRANS_LINEAR
-	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, timing, easing)
+	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), _get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, timing, easing)
 	$MoveTween.start()
 	
 	
@@ -381,7 +381,6 @@ func _ready():
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
 	set_process_input(true)
-	self.max_movement_points = self.movement_points
 
 func _input(event):
 	pass
