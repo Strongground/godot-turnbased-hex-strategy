@@ -25,7 +25,7 @@ func _physics_process(delta):
 		# This is only executed in editor
 		self._snap_to_grid()
 
-# Getter for selectable
+# Getter for if this entity is selectable
 func is_selectable():
 	return self.is_selectable
 

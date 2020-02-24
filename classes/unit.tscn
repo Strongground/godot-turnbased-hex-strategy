@@ -1,10 +1,17 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=7 format=2]
 
 [ext_resource path="res://classes/unit.gd" type="Script" id=1]
 [ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
 [ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
 
 [sub_resource type="CircleShape2D" id=1]
+
+[sub_resource type="DynamicFontData" id=2]
+font_path = "res://assets/fonts/typewriter.ttf"
+
+[sub_resource type="DynamicFont" id=3]
+size = 13
+font_data = SubResource( 2 )
 
 [node name="Unit" type="Area2D"]
 gravity = 100.0
@@ -31,10 +38,11 @@ shape = SubResource( 1 )
 [node name="MoveTween" type="Tween" parent="."]
 
 [node name="MovementPointsIndicator" type="RichTextLabel" parent="."]
-margin_left = -20.16
-margin_top = -72.4
-margin_right = 19.84
-margin_bottom = -32.4
+margin_left = -41.0
+margin_top = -72.0
+margin_right = 41.0
+margin_bottom = -32.0
+custom_fonts/normal_font = SubResource( 3 )
 bbcode_enabled = true
 bbcode_text = "[center]0[/center]"
 text = "0"

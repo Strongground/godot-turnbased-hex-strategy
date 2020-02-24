@@ -11,13 +11,13 @@ var tile_types = [
 	# 1
 	{
 		'name': 'Forest',
-		'move_cost': 5.0,
+		'move_cost': 2.0,
 		'terrain': 'land'
 	},
 	# 2
 	{
 		'name': 'River',
-		'move_cost': 99.0,
+		'move_cost': 2.0,
 		'terrain': 'river'
 	},
 	# 3
@@ -29,7 +29,7 @@ var tile_types = [
 	# 4
 	{
 		'name': 'Mountains',
-		'move_cost': 12.0,
+		'move_cost': 5.0,
 		'terrain': 'land'
 	},
 	# 5
