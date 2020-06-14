@@ -124,6 +124,8 @@ func get_sprite_scale(unit_id):
 			if 'sprite_scale' in unit:
 				return unit.sprite_scale
 
+# For one-directional unit sprites only, generate a simple flipped version, so at least
+# two directions can be shown.
 func _generate_flipped_version(sprite_path, target_path):
 	if _is_theme_loaded():
 		var texture = load(theme_object['base_path']+'/'+sprite_path)

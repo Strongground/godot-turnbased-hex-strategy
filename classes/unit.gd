@@ -12,8 +12,8 @@ export var unit_faction = ''
 # @TODO this must be changed so it can be used with 1-6 directions. Possible directions
 # and their resprective mappings would be:
 # * "none" (For static entites like buildings)
-# * "left/right" = 0/1 (Done in software by mirroring?)
-# * "northwest/north/northeast/southeast/south/southwest" = 0,1,2,3,4,5,6
+# * "left/right" = 0/1 (Done in software by mirroring)
+# * "northwest/north/northeast/southeast/south/southwest" = 0,1,2,3,4,5
 export (int) var direction = 0
 # if a unit has e.g. various camo schemes (desert, woodland) or randomized appearance.
 # the detailed documentation for these go into the faction object
@@ -27,7 +27,7 @@ export var unit_id = ''
 # 
 # Due to the nature of the current approach, the unit class currently needs to
 # know of the existence of each and every attribute that exists. They are 
-# exported here, so that a unit may be edited to be special via editor.
+# exported here, so that a unit may be edited to be special, via the editor.
 #
 # Questions remaining to be answered: 
 # * How to describe what bonuses are active at a given unit instance?
@@ -38,6 +38,20 @@ export var unit_id = ''
 # can only be added to some base values. Which probably will be the smallest
 # tradeoff.
 
+# More questions and implementation thoughts:
+# * How does experience works?
+# * Can units be used in multiple connected scenarios? What info is tracked for
+# the unit in this case? Killcount? Experience?
+# * We need at least two additional attributes to simulate transportation and 
+# the nature of vehicles to some degree of realism: 
+# - "passengers" includes a reference to the unit transported
+# - "capturable_by" a list of 0-n unit IDs, describing which units are able to make
+# use of this equipment. If 0, it is not capturable. If -1 it is usable by all (think
+# simple wooden siege ram, only requires muscle, no special skills, whereas you require
+# a trained tank crew or pilot to commandeer a tank or plane.
+# This system also would also allow for some fun stuff like a building (scenario goal?)
+# that is only capturable by a spy etc. (Stealing blueprints or something like that).
+
 #################################################################################
 # Display name. This is a short string shown in-game.
 export var display_name = ''
@@ -45,6 +59,44 @@ export var display_name = ''
 # Description of the unit, possibly shown in a ingame encyclopedia or on the
 # extended info-screen for this unit.
 export var description = ''
+
+# If this unit has the ability to hold supplies and also resupply allied units nearby.
+export (bool) var is_supplier = null
+
+# The amount of supplies this unit can hold, if it is a supplier.
+export (int) var max_supply_storage = null
+
+# How much fuel supplies can this unit hold? This amount, added with all other supply types,
+# can never exceed "this.max_supply_storage".
+export (int) var supply_storage_fuel = null
+
+# How much ammo supplies can this unit hold? This amount, added with all other supply types,
+# can never exceed "this.max_supply_storage".
+export (int) var supply_storage_ammo = null
+
+# How much support supplies can this unit hold? This amount, added with all other supply types,
+# can never exceed "this.max_supply_storage".
+# 'Support' can refer to both medical equipment and food, so depending on the situation, the unit
+# type and the scenario, this may be used with some flexibility.
+export (int) var supply_storage_support = null
+
+# How much construction supplies can this unit hold? This amount, added with all other supply types,
+# can never exceed "this.max_supply_storage".
+export (int) var supply_storage_construction = null
+
+# The Unit's strength defines, depending on the nature of the unit, its technical
+# or medical status.
+# For example, a standard squad consists of 8 men. This translates
+# directly to unit strength of "8". A successful hit against this unit may remove
+# 1-2 points, making 1-2 men unable to fight (killing or wounding is threated equally
+# here).
+# For another example, a light vehicle group may consist of 3 vehicles, being able
+# to function with some damage sustained, it could translate into 4 strength points.
+# If the unit's strength drops to 0, the unit is considered lost, either destroyed or
+# combat-ineffective. It is not shown any more on the game map.
+# The attack value of this unit is also factored by the unit's strength. The less
+# of a unit remains, the less damage it is able to inflict.
+export (int) var unit_strength = null
 
 # Base defense value, this is used as a base to calculate how well this unit can
 # defend from an attack. Based on the kind of attack, additional values are added
@@ -57,7 +109,6 @@ export (int) var base_defense = null
 # that armored troops generally have more chance to not sustain a lot of damage when
 # hit by certain weapons, while non-armored units do (e.g. classical roman era, where arrows
 # against velites would do more damage than against heavily armored triarii).
-# @TODO How is this calculated, together with base_defense and AT/HE weapons?
 export (int) var armor = null
 
 # What medium this unit can move in/on primarily.
@@ -84,15 +135,6 @@ export (int) var movement_points = null
 # speaks against a mechanism that allows to tell crew to eject and continue fighting
 # on foot. Such a system is needed anway for motorized transport, siege towers, landing
 # craft, paratroopers etc.
-# It also means, that we need at least two additional attributes to simulate this to
-# some degree of realism: 
-# - "passengers" includes a reference to the unit transported
-# - "capturable_by" a list of 0-n unit IDs, describing which units are able to make
-# use of this equipment. If 0, it is not capturable. If -1 it is usable by all (think
-# simple wooden siege ram, only requires muscle, no special skills, whereas you require
-# a trained tank crew or pilot to commandeer a tank or plane.
-# This system also would also allow for some fun stuff like a building (scenario goal?)
-# that is only capturable by a spy etc. (Stealing blueprints or something like that).
 export (int) var fuel = null
 
 # Weapon
@@ -123,6 +165,9 @@ export (int) var main_ammo = null
 # it a significant attack boost compared to another unit with the same main_weapon. 
 # It is simply added to the "main_weapon"s "attack_strength" value.
 # Most often this will be set via modifiers.
+# Usage example: Standard infantry with assault rifles vs. elite commando units,
+# using the same assault rifles but having much more skill, experience and training,
+# thus doing more damage with the same weapon.
 export (int) var attack_bonus = null
 
 # Unit sprites
@@ -168,7 +213,7 @@ func move_unit(start_point, end_point, entity):
 			path_cost += tile.move_cost
 	self.set_path(new_path)
 	# This is a debug method to visualize the path found by the pathfinding
-#	game._show_path(new_path)
+	# game._show_path(new_path)
 	self.animate_path(new_path, entity)
 	self.deselect()
 
@@ -180,7 +225,7 @@ func _set_faction_icon():
 # This function sets the sprite of the unit according to the themes-data object
 # and the direction of the unit
 # @input {int} The direction of the unit
-func _set_sprite(direction):
+func _set_sprite(dir):
 	var sprites = $"/root/Game/ThemeManager".get_unit_sprites(unit_id)
 	var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
 	var sprite_scale = $"/root/Game/ThemeManager".get_sprite_scale(unit_id)
@@ -191,10 +236,10 @@ func _set_sprite(direction):
 	# else, use the apropriate oriented sprite out of the six possible ones.
 	if sprites.size() == 2:
 		sprite_index = 0
-		if direction <= 2:
+		if dir <= 2:
 			sprite_index = 1
 	elif sprites.size() == 6:
-		sprite_index = direction
+		sprite_index = dir
 	# Load texture based on above information
 	texture = load("res://themes/"+theme_name+"/"+sprites[sprite_index])
 	$UnitImage.set_texture(texture)
@@ -345,30 +390,29 @@ func _animate_step(current_tile, step, max_steps):
 	$MoveTween.interpolate_property(self, 'position', self.get_global_position(), _get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1, timing, easing)
 	$MoveTween.start()
 	
-	
 # From the last movements angle, get the direction mapped, so it references
 # to a direction sprite from the theme.
 func _get_direction(angle):
-	var direction = 0
+	var dir = 0
 	if angle > 145 && angle < 155:
-		direction = 0
+		dir = 0
 		# print("Moving southwest")
 	elif angle > -155 && angle < -145:
-		direction = 1
+		dir = 1
 		# print("Moving northwest")
 	elif angle > -95 && angle < -85:
-		direction = 2
+		dir = 2
 		# print("Moving north")
 	elif angle > -35 && angle < -25:
-		direction = 3
+		dir = 3
 		# print("Moving northeast")
 	elif angle > 25 && angle < 35:
-		direction = 4
+		dir = 4
 		# print("Moving southeast")
 	elif angle > 85 && angle < 95:
-		direction = 5
+		dir = 5
 		# print("Moving south")
-	return direction
+	return dir
 	
 # @TODO Find out how to calc distance between two points, read up on
 # red blob games blog about it.

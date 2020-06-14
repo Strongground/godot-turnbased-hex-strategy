@@ -6,138 +6,167 @@
 ### in weapons than units - but this may depend on the specifity of
 ### the theme.
 ###
-### The name of the container for each weapon in this file is never
-### used, therefore doesn't matter.
+### The name of the container for each weapon in this file is used
+### to reference the weapon in a units definition.
 
 ### Some attributes explained:
-### attack_strength
+### attack_strength (int)
 ### Main attack value that is set against base_defense and other attribute
 ### bonuses and modifiers
 ### --
-### armor_piercing
-### If zero, weapon has reduced effect against armored targets
-### If 1, @TODO What then?
-### If greater than zero, @TODO What then?
+### armor_piercing (int)
+### If smaller or equal to zero, weapon has reduced effect on a target with armor 
+### value greater or equal 1.
+### If greater or equal to 1, this weapon is considered armor piercing and its
+### effect on a target with armor value greater or equal 1 is multiplied by factor 0.5,
+### then reduced by the factorized sum of armor value of the target unit.
 ### --
-### area_of_effect
+### explosive (int)
+### If smaller or equal to zero, weapon has normal effect against soft targets 
+### (targets where armor less or equal to zero)
+### If greater or equal to 1, this weapon is considered explosive, and its effect
+### on a soft target (armor value smaller or equal to zero) is multiplied by factor 2
+### then reduced by the factorized sum of base_defense value of the target unit.
+### --
+### area_of_effect (int)
 ### how many tiles surrounding the impacting tile are hit?
 ### --
-### aoe_falloff
+### aoe_falloff (int)
 ### Values in percentage of fallof from center to outer tiles.
 ### Explanation:
 ### If area_of_effect is 3 and this is set to 0, all tiles that are hit share
-### the same amount of damage dealt. This is useful for artillery where multiple
-### warheads are hitting a broader area.
+### the same amount of damage dealt. This is useful for artillery or units with bows,
+### were spread is a major factor, intentional or not.
 ### If area_of_effect is 3 and this is set to a value greater than 0, the center
-### tile will have 100% damage effect, the tiles immediatly surrounding it only 50% and
-### the outer ring of tiles only 25% of the damage effect.
+### tile will have 100% damage effect, the tiles immediatly surrounding it only 66% and
+### the outer ring of tiles only 33% of the damage effect (linear falloff)
+### --
+### attacks_units (array|string)
+### An array containing strings or single string describing, what units can be hit by this
+### weapon effectively. While almost all weapons can be fired at all targets, most have a 
+### clearly defined target definition. It is next to impossible to hit a passing fighter jet 
+### or a battleship in coastal firing position, with an assault rifle. A battleships main 
+### cannon, in turn, cannot hope to hit a fighter jet.
+### This is in part assumption, but should always be self-explanatory and/or common knowledge.
+### Scenarios like attacking an armored tank with a sword is not covered by this, as this is
+### handled implicitely by the battle/damage system and weapon definitions.
 ### --
 ### range
 ### how far away can the target be, so that attacking with this weapon is possible?
-### 1 means units have to be adjacent.
+### 1 means units have to be on adjacent tiles.
 ### --
 ### effect
-### references a spritesheet for an animation.
+### references a external spritesheet file from the theme for an animation or the name 
+### of an existing standard animation from the core game.
 ### --
 ### sound
 ### references a soundfile that is played, whenever this weapon fires. The sound should
 ### include the firing as well as the 'hit' sound (explosion, impact of bullets, impact
 ### of blade etc.)
 ### @TODO Maybe think about having hit sound and firing sound separated later. Hit sound
-### could indicate wether target is armored or not and even if hit or miss.
+### could be played conditionally based on target, thus indicating wether target is armored
+### or not (effect on target) and even if the attack was a hit or miss.
 
 mg50cal:
   display_name: 'Mk2 Heavy Machinegun (Cal 50)'
   description: 'Description for this weapon comes here.'
   attack_strength: 3
   armor_piercing: 1
-  attacks_units: 'LAND' # @TODO Check for Array or single value!
+  explosive: 0
+  attacks_units: ['LAND', 'SLOW_AIR', 'RIVER']
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'fx/mg_fire.png'
-  sound: 'fx/50cal.wav'
+  effect: 'graphics/sfx/weapons/mg_fire.png'
+  sound: 'sound/sfx/weapons/50cal.wav'
 
 tow:
   display_name: 'BGM-71 TOW Missile System'
-  description: 'The BGM-71 is an American anti-tank missile, first produced in 1970. It is one of the most widely used anti-tank guided missiles worldwide.'
-  attack_strength: 4
-  armor_piercing: 3
-  attacks_units: 'LAND'
+  description: 'The BGM-71 is an American wire-guided anti-tank missile, first produced in 1970. It is one of the most widely used anti-tank guided missiles worldwide.'
+  attack_strength: 3
+  armor_piercing: 4
+  explosive: 0
+  attacks_units: ['LAND', 'RIVER', 'SLOW_AIR']
   area_of_effect: 0
   aoe_falloff: 0
-  range: 2
-  effect: 'fx/missile_fire.png'
-  sound: 'fx/missile.wav'
+  range: 3
+  effect: 'graphics/sfx/weapons/missile_fire.png'
+  sound: 'sound/sfx/weapons/missile.wav'
 
 assault_rifles:
   display_name: 'Assault Rifles'
-  description: 'Assault rifles are the mainstay of a modern infantry fighting force. They can be extended by various modules and modern assault rifles are versatile weapon platforms that can fill many roles. Still, most assault rifles in use are soviet era/cold war era rifles with simple mechanics.'
+  description: 'Assault rifles are the mainstay of a modern infantry fighting force. They can be extended by various modules and modern assault rifles are versatile weapon platforms that can fill many roles. Still, most assault rifles in use worldwide are soviet era/cold war era rifles with simple mechanics.'
   attack_strength: 2
   armor_piercing: 0
-  attacks_units: 'LAND'
+  explosive: 0
+  attacks_units: ['LAND', 'RIVER', 'SLOW_AIR']
   area_of_effect: 0
   aoe_falloff: 0
-  range: 1
-  effect: 'fx/mg_fire.png'
-  sound: 'fx/assault_rifles.wav'
+  range: 2
+  effect: 'graphics/sfx/weapons/mg_fire.png'
+  sound: 'sound/sfx/weapons/assault_rifles.wav'
 
 javelin:
-  display_name: 'Javelin Medium Antiarmor Missile'
+  display_name: 'FGM-148 Javelin Medium Antiarmor Missile'
   description: 'The Javelin Antiarmor Weapon System was introduced in the 1990s and offers a bigger warhead and better guiding, which results in higher survivability of the soldiers employing it. However, its range is lower than that of the TOW missile system.'
   attack_strength: 5
-  armor_piercing: 3
-  attacks_units: 'LAND'
+  armor_piercing: 5
+  explosive: 0
+  attacks_units: ['LAND', 'RIVER']
   area_of_effect: 0
   aoe_falloff: 0
-  range: 1
-  effect: 'fx/missile_fire.png'
-  sound: 'fx/missile.wav'
+  range: 2
+  effect: 'graphics/sfx/weapons/missile_fire.png'
+  sound: 'sound/sfx/weapons/missile.wav'
 
 m242_cannon:
   display_name: 'M242 Bushmaster Cannon'
   description: 'The M242 Bushmaster is a 25mm chain-driven autocannon. It has a good medium range of 3km and is one of the most successful modern autocannons.'
   attack_strength: 4
-  armor_piercing: 2
-  attacks_units: 'LAND'
+  armor_piercing: 3
+  explosive: 2
+  attacks_units: ['LAND', 'RIVER', 'SLOW_AIR']
   area_of_effect: 0
   aoe_falloff: 0
-  range: 2
-  effect: 'fx/cannon_fire.png'
-  sound: 'fx/cannon.wav'
+  range: 3
+  effect: 'graphics/sfx/weapons/cannon_fire.png'
+  sound: 'sound/sfx/weapons/cannon.wav'
 
 irregular_rifles:
   display_name: 'Assorted Irregular Rifles'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rifles, even WW2 weapons that where handed down the generations, but also weapons meant for game hunting or improvised devices.'
   attack_strength: 2
   armor_piercing: 0
-  attacks_units: 'LAND'
+  explosive: 0
+  attacks_units: ['LAND', 'RIVER', 'SLOW_AIR']
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'fx/mg_fire.png'
-  sound: 'fx/assault_rifles.wav'
+  effect: 'graphics/sfx/weapons/mg_fire.png'
+  sound: 'sound/sfx/weapons/assault_rifles.wav'
 
 irregular_heavy:
   display_name: 'Irregular Heavy Weapons'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rocket propelled grenade launchers (RPG) and machineguns like the famous PK family, RPD or RPK weapons and others. Explosives are either improvised or soviet surplus.'
-  attack_strength: 3
+  attack_strength: 2
   armor_piercing: 2
-  attacks_units: 'LAND'
+  explosive: 1
+  attacks_units: ['LAND', 'RIVER', 'SLOW_AIR']
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'fx/missile_fire.png'
-  sound: 'fx/heavy_weapons_mixed.wav'
+  effect: 'graphics/sfx/weapons/heavy_weapons_fire.png'
+  sound: 'sound/sfx/weapons/heavy_weapons_mixed.wav'
 
 small_arms:
   display_name: 'Small Arms/Civilian Weapons'
   description: 'This includes hunting rifles, pistols or handed down weapon trophies from previous World Wars that are now used in times of emergency to provide a basic level of self defense.'
   attack_strength: 1
   armor_piercing: 0
+  explosive: 0
   attacks_units: 'LAND'
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'fx/mg_fire.png'
-  sound: 'fx/small_arms.wav'
+  effect: 'graphics/sfx/weapons/mg_fire.png'
+  sound: 'sound/sfx/weapons/small_arms.wav'
