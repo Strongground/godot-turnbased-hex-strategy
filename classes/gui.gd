@@ -32,6 +32,11 @@ func disable_movement_button(disabled):
 func disable_attack_button(disabled):
 	$Panel/AttackButton.set_disabled(disabled)
 
+# Public setter for disabled state of supply button
+# @input {Boolean} true for disabled, false for enabled
+func disable_supply_button(disabled):
+	$Panel/SupplyButton.set_disabled(disabled)
+
 # Init
 func _ready():
 	set_process_input(true)
@@ -73,10 +78,16 @@ func _on_MoveButton_pressed():
 		root.movement_selection = true
 
 # If AttackButton in GUI pressed, and a unit is selected,
-# set attack on chosen target if eligible
+# set attack selection
 func _on_AttackButton_pressed():
 	if root.selected_unit != null:
 		root.attack_selection = true
+
+# If SupplyButton in GUI pressed, and a capable unit is selected,
+# set resupply selection
+func _on_SupplyButton_pressed():
+	if root.selected_unit != null:
+		root.resupply_selection = true
 
 func _on_UnitInfoButton_pressed():
 	if $"/root/Game".selected_unit != null:

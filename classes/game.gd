@@ -68,6 +68,7 @@ var theme = null
 var factions = null
 var movement_selection = false
 var attack_selection = false
+var resupply_selection = false
 # Options
 export var grid_visible = false
 export var city_names_visible = true
@@ -130,6 +131,7 @@ func _ready():
 	# GUI ready functions
 	GUI.disable_movement_button(true)
 	GUI.disable_attack_button(true)
+	GUI.disable_supply_button(true)
 	# Start first turn
 	self._advance_player_rotation()
 	
@@ -309,31 +311,51 @@ func _input(event):
 					var unit = _get_entity_by_id(self.selected_unit)
 					unit.node.move_unit(unit.node.get_global_position(), click_pos, unit)
 					self.movement_selection = false
-		# if clicked on unit not belonging to player
-		elif self.attack_selection == true and unit_click and not gui_click:
+		# if clicked on unit
+		elif unit_click and not gui_click:
 			print('Click was on a unit, was not on gui.')
-			# Get own selected unit
-			var player_unit = _get_entity_by_id(self.selected_unit).node
-			# @TODO This is not triggered at the moment, fix
-			# If the selected unit can attack and the player clicks on a valid target, initiate
-			# an attack.
-			if player_unit.is_valid_attack_target(click_pos):
-				print('Attack command issued. Target is valid attack target.')
-				var enemy_unit = self._is_unit(click_pos, true).node
-				player_unit.attack(enemy_unit)
-				self.attack_selection = false
-				# Deselect all selectable entities
-				self.deselect_all_entities()
-		# Clicked on player unit
-		elif unit_click:
 			var unit = self._is_unit(click_pos, true).node
+			# if clicked unit is owned by player, select it and evaluate its possibilities
 			if unit.owned_by_active_player():
-				self.selected_unit = unit
-				self.selected_unit.select()
-				if unit.can_move():
-					GUI.disable_movement_button(false)
-				if unit.combat_ready():
-					GUI.disable_attack_button(false)
+				print('Unit is owned by active player')
+				if self.resupply_selection == true:
+					print('Resupply action to own unit from already selected unit')
+					var player_unit = _get_entity_by_id(self.selected_unit).node
+					# Check if, for the player unit, resupplying the click pos is possible, and if yes, do it.
+					player_unit.resupply(click_pos)
+					self.resupply_selection = false
+				elif self.attack_selection == true:
+					print('Invalid choice, no intentional friendly fire!')
+					self.attack_selection = false
+					# Do something here, some sort of "Nah ah!", visually or via audio cue, to indicate
+					# this action is not possible.
+				else:
+					print('Mark clicked unit as selected')
+					self.selected_unit = unit
+					self.selected_unit.select()
+					if unit.can_move():
+						GUI.disable_movement_button(false)
+					if unit.combat_ready():
+						GUI.disable_attack_button(false)
+					if unit.can_resupply():
+						GUI.disable_supply_button(false)
+			else:
+				# if clicked unit is not owned by player, see if a player-owned unit is selected...
+				print('Clicked unit is not owned by active player')
+				if self.selected_unit != null:
+					print('A own unit is selected')
+					var player_unit = _get_entity_by_id(self.selected_unit).node
+					# If in attack mode
+					if self.attack_selection == true:
+						print('Entered attack mode')
+						# Check if, for the player unit the click pos is a valid attack target
+						if player_unit.is_valid_attack_target(click_pos):
+							print('Attack command issued. Target is valid attack target.')
+							var enemy_unit = self._is_unit(click_pos, true).node
+							player_unit.attack(enemy_unit)
+							self.attack_selection = false
+							# Deselect all selectable entities
+							self.deselect_all_entities()
 
 			##### On click on two tiles, flood fill the map and get path from first to second click
 #			if click_counter < 1:
@@ -468,11 +490,13 @@ func _is_unit(given_position, return_unit=false):
 func deselect_all_entities():
 	for entity in entities:
 		if entity.node.has_method('is_selected') and entity.node.is_selected():
-			# If a unit is deselected, deactivate the move button in GUI
+			# If a unit is deselected, deactivate the action buttons in GUI
 			if entity.type == 'unit':
 				GUI.disable_movement_button(true)
 				GUI.disable_attack_button(true)
+				GUI.disable_supply_button(true)
 			entity.node.deselect()
+			self.selected_unit = null
 
 # Getter for unit_selected. This is faster than iterating over all
 # units and check each for its 'selected' states

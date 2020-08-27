@@ -68,21 +68,21 @@ export (int) var max_supply_storage = null
 
 # How much fuel supplies can this unit hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-export (int) var supply_storage_fuel = null
+export (int) var supply_storage_fuel = 0
 
 # How much ammo supplies can this unit hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-export (int) var supply_storage_ammo = null
+export (int) var supply_storage_ammo = 0
 
 # How much support supplies can this unit hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
 # 'Support' can refer to both medical equipment and food, so depending on the situation, the unit
 # type and the scenario, this may be used with some flexibility.
-export (int) var supply_storage_support = null
+export (int) var supply_storage_support = 0
 
 # How much construction supplies can this unit hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-export (int) var supply_storage_construction = null
+export (int) var supply_storage_construction = 0
 
 # The Unit's strength defines, depending on the nature of the unit, its technical
 # or medical status.
@@ -267,15 +267,37 @@ func get_unit_stance():
 	var stance = owner_player.get_stance_to(game.active_player)
 	return stance
 
+# Public getter for determining the state and capabilites of the unit
+# @returns {Boolean}
+func can_resupply():
+	if self.is_supplier && (supply_storage_fuel > 0 || supply_storage_ammo > 0 || supply_storage_support > 0 || supply_storage_construction > 0):
+		return true
+	return false
+
+# Resupplies a unit at a given grid position if it is one of the players
+# units or allied to the player.
+# All supplies that are used by the target unit and that can be resupplied
+# by this unit, will be resupplied.
+# @input {Vector2} Grid pos to check for unit
+func resupply(grid_pos):
+	# Check if unit exists at position
+	var is_unit = game._is_unit(grid_pos, true)
+	if is_unit != null:
+		var unit = is_unit.node
+		if unit.owned_by_active_player() || unit.get_unit_stance() == 'ally':
+			print('Valid target for resupply. Resupplying now!')
+
 # This function should update the appearance of the unit, calculate stat
 # changes etc. after each round. There is no need to do this in _process
 # since its all turnbased anyway.
 func update():
 	self._set_sprite(direction)
 	self._set_faction_icon()
+	self._apply_mods()
+	self._update_unitstrength_indicator()
 	
 # Public getter for movement points of this unit.
-# @outputs {int} Movement points of this unit
+# @returns {int} Movement points of this unit
 func get_movement_points():
 	return self.movement_points
 
