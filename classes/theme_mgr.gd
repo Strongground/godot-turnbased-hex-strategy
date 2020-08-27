@@ -55,6 +55,9 @@ func load_theme(theme_name):
 func get_current_theme_name():
 	return self.theme_object.name
 
+func get_music_list():
+	return self.theme_object.music
+
 # Public getter for sprite path
 # @returns {String} Path where sprites of the theme are found
 func get_sprite_path():

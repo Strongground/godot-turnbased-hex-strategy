@@ -82,6 +82,7 @@ var players = {}
 onready var playerMgr = $PlayerManager
 onready var factionMgr = $FactionManager
 onready var themeMgr = $ThemeManager
+onready var musicMgr = $MusicManager
 ## debug labels
 onready var label_player = find_node('CurrentPlayer')
 onready var label_turn = find_node('CurrentTurn')
@@ -101,6 +102,8 @@ func _ready():
 	themeMgr.load_theme('example')
 	# Create factions
 	factionMgr.load_factions()
+	# Load list of music titles to play
+	#musicMgr.play()
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
@@ -278,7 +281,6 @@ func _get_hex_object_from_id(id):
 	for tile in tile_list:
 		if tile['id'] == id:
 			return tile
-
 
 #### INPUT CONTROL ####
 func _input(event):
