@@ -12,8 +12,11 @@ extends Node2D
 var standard_themes_path = 'res://themes'
 var standard_sprite_path = 'graphics'
 var standard_unit_sprites_path = 'units'
+var standard_sounds_path = 'sounds'
 var standard_sprite_format = 'png'
 var theme_object = {}
+var theme_path = ''
+onready var default_sounds = {} 
 
 func _ready():
 	pass
@@ -25,7 +28,7 @@ func _ready():
 # @input {String} name of the theme folder
 # @returns {Object} theme object
 func load_theme(theme_name):
-	var theme_path = standard_themes_path + '/' + theme_name
+	theme_path = standard_themes_path + '/' + theme_name
 	var config_file = theme_path + '/config.json'
 	var file_content = _read_json(config_file)
 	var data_files = _get_data_files(file_content)
@@ -48,6 +51,13 @@ func load_theme(theme_name):
 		var file_path = theme_path + '/' + String(data_file)
 		theme_object[data_filename] = _read_json(file_path)
 	self.theme_object = theme_object
+	# Fill default sounds
+	print(theme_path+'/'+standard_sounds_path+'/default_wheel_drive.wav')
+	default_sounds = {
+		'car': load(theme_path+'/'+standard_sounds_path+'/default_wheel_drive.wav'),
+		'tank': load(theme_path+'/'+standard_sounds_path+'/default_tank_drive.wav'),
+		'infantry': load(theme_path+'/'+standard_sounds_path+'/default_marching.wav')
+	}
 	return theme_object
 
 # Public getter for theme name string
@@ -92,6 +102,53 @@ func get_unit(unit_id):
 		var units = theme_object['units']
 		if unit_id in units:
 			return units[String(unit_id)]
+
+# Public getter for table of experience levels 
+# for this faction, with according display names, 
+# ranges and multipliers
+# @input {String} faction ID
+# @returns {Array} Object with all experience levels and accompanying data for the given faction
+func get_faction_experience_definitions(faction_id):
+	if _is_theme_loaded():
+		if faction_id in theme_object['factions']:
+			return theme_object['factions'][faction_id]['experience']
+
+# Public getter for a units weapon object
+# @input {String} Id of the unit
+# @returns {Array} An object containing all the units weapons properties
+# NOTE: In future, this needs to change to accomodate multi-weapon units
+func get_weapon(weapon_id):
+	if _is_theme_loaded():
+		var weapons = theme_object['weapons']
+		if weapon_id in weapons:
+			return weapons[weapon_id]
+
+# Public getter for a modifier.
+# @input {String} modifier_id
+func get_modifier(modifier_id):
+	if _is_theme_loaded():
+		var mods = theme_object['modifiers']
+		if modifier_id in mods:
+			return mods[modifier_id]
+
+# Public getter for sounds of a unit based on a keyword.
+# @input {String} unit_id, the ID of the unit which should play the sound.
+# @input {String} keyword, describes the event, for which a sound should be played.
+# @input {String} Additional info, optional. E.g. ID of the weapon for which to get the sound, since
+# units can have multiple weapons.
+func get_sound(unit_id, keyword, info=null):
+	if _is_theme_loaded():
+		var units = theme_object['units']
+		if unit_id in units:
+			if keyword == 'move':
+				if 'move_sound' in units[unit_id]:
+					if units[unit_id]['move_sound'] in self.default_sounds:
+						return self.default_sounds[units[unit_id]['move_sound']]
+			if keyword == 'attack' and info != null:
+				var attack_sound = load(theme_path+'/'+info['sound'])
+				print(theme_path+'/'+info['sound'])
+				print(attack_sound)
+				return attack_sound
 
 # Public getter for sprites of a unit.
 # If a unit has only one sprite, automatically generate a flipped copy of this

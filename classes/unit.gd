@@ -131,53 +131,73 @@ export (int) var movement_points = null
 # units that do not rely on motorization, like infantry).
 # 
 # @TODO In real life, if a armored unit would run out of fuel with no chance
-# of resupply, they will certainly not sit there and wait. So in theorey, nothing
+# of resupply, they will certainly not sit there and wait. So in theory, nothing
 # speaks against a mechanism that allows to tell crew to eject and continue fighting
 # on foot. Such a system is needed anway for motorized transport, siege towers, landing
 # craft, paratroopers etc.
 export (int) var fuel = null
 
-# Weapon
-# What kind of main attack the unit has. Contains the ID of a weapon which is
-# in detail described in the weapons.yaml that comes with the game theme.
-# @TODO At the moment this only allows for one type of weapon per unit.
-# In theory nothing speaks against multiple weapons per unit as would be the case
+# Weapons
+# What kind of attacks the unit has. Contains an array of the IDs of the weapons 
+# which are in detail described in the weapons.yaml that comes with the game theme.
+# This allows for multiple weapons per unit as would be the case
 # in almost all real life examples (main weapon & sidearm like sword & dagger, rifle
 # & grenades, vehicle cannon & machinegun etc.)
-# It could be narrowed down to min 0 weapons, max x weapons for a unit. This way
-# there can be unarmed units as well as units with secondary attacks. Think 
+# Its rule can be narrowed down to "min 0 weapons, max x weapons for a unit". This way
+# there can be unarmed units as well as units with secondary, tertiary... attacks. Think 
 # fighter aircraft with a multitude of cannons, bombs, rockets etc.
-# Since this warrants additional logic back- and frontend, this will be an after-
-# thought for now.
-export (int) var main_weapon = null
+# Since fully utilizing this and creating a system with matching ammo for each weapon
+# warrants additional logic back- and frontend, this will be an after-thought for now.
+export (Array) var weapons = null
 
-# Ammo for main weapon
+# Ammunition for its own weapons
 # Basically, how many times can this unit attack until ammo runs out, not really how
 # many shots it carries.
 # An "attack" is the abstraction of the concept of an "attack run" or "fire mission".
 # Think a fire mission for an artillery brigade, or support fire given by a vehicle
 # group, where dozens/hundreds/thousands of shots may be fired.
-export (int) var main_ammo = null
+# @TODO At the moment this is only a int, in future it needs to be converted to array or
+# similar, to represent ammunition for each type of weapon, but also to allow for shared
+# ammo for similar weapons (same caliber e.g.)
+export (int) var ammo = null
 
 # Attack bonus
 # This can be thought of as a "base_attack" bonus value to the unit. It could be used
 # to signify better training of this unit or technical characteristics that would give
-# it a significant attack boost compared to another unit with the same main_weapon. 
-# It is simply added to the "main_weapon"s "attack_strength" value.
+# it a significant attack boost compared to another unit with the same weapons. 
+# It is simply added to the "weapons"[0]s "attack_strength" value.
 # Most often this will be set via modifiers.
 # Usage example: Standard infantry with assault rifles vs. elite commando units,
 # using the same assault rifles but having much more skill, experience and training,
 # thus doing more damage with the same weapon.
 export (int) var attack_bonus = null
 
+# Experience
+# This is mostly a mechanic to gratify players for keeping their units alive for a long time.
+# The gameplay effect is minor, experience level is mapped to one of n ranges. Each range 
+# gives a multiplier. The multiplier negates (according to its value, higher == more) the
+# inherent randomness in a lot of actions, e.g. getting hit, chance of hitting another unit,
+# the order of single combat actions etc.
+# It tries to portrait the increased routine and its effect in cancelling out the random influence
+# in actions during combat.
+export (float) var experience = 0
+
 # Unit sprites
 # This array is for the representation of the unit in the game. It is responsible
 # for the rendering of a unit on the game map itself.
-# This will probably change some times in the future to allow for a maximum of
-# flexibility in how much effort one want to put into unit graphics.
-# So this should be able to accomododate everything between 1 static graphic (no
-# direction specific graphics) up to 6 images for each possible direction.
+# This accomododates everything between 1 static graphic (no direction specific graphics,
+# in which case the game automatically creates a mirrored version to have at least two
+# directional graphics) up to 6 images for each possible direction.
 export (Array) var unit_sprites = []
+
+# Modifiers
+# This array contains the IDs of all modifiers that should be applied to the unit.
+# When the game starts, the corresponding modifier objects are pulled from the theme
+# and their effects applied to the units base stats.
+# Also, a 'has modifier/s' icon is shown at the unit in-game which, on hover, reveals the
+# name and effects of the modifiers. Details can be found in the units detail screen (description
+# and maybe icon of each modifier, mostly)
+export (Array) var modifiers
 
 # Private class members
 var animation_step_active = false
@@ -187,6 +207,11 @@ var offset = null
 var entity_representation = null
 var last_movement_angle = null
 var max_movement_points = 0
+var experience_definitions = null
+var active_modifiers = {}
+var state_save = {}
+onready var sound_emitter = $'SoundEmitter'
+onready var attack_delay_timer = $'AttackEffectDelay'
 
 # This function simply is a getter for the unit_id string, corresponding to
 # one entry in the theme files.
@@ -214,6 +239,7 @@ func move_unit(start_point, end_point, entity):
 	self.set_path(new_path)
 	# This is a debug method to visualize the path found by the pathfinding
 	# game._show_path(new_path)
+	self._play_sound('move')
 	self.animate_path(new_path, entity)
 	self.deselect()
 
@@ -251,8 +277,23 @@ func reset_movement_points():
 	self.movement_points = self.max_movement_points
 	self._update_movementpoints_indicator()
 
+# Public getter for the experience value. Returns an dictionary with all information
+# about the current level of experience, like display_name of rank, multiplier (maybe
+# icon in the future?)
+# @returns {Dictionary}
+func get_experience():
+	for exp_level in self.experience_definitions:
+		if self.experience >= self.experience_definitions[exp_level]['range'][0] or self.experience < self.experience_definitions[exp_level]['range'][1]:
+			return self.experience_definitions[exp_level]
+
+# Public getter for the simple raw experience value. It just returns a float.
+# @returns {Float}
+func get_experience_points():
+	return self.experience
+
 # This function returns a boolean indicating if the currently active player
 # is the owner of this unit.
+# @returns {Boolean}
 func owned_by_active_player():
 	print("ID of clicked unit:")
 	print(game.active_player.get_id())
@@ -310,19 +351,31 @@ func _update_movement_points(target_tile):
 func _update_movementpoints_indicator():
 	$MovementPointsIndicator.set_bbcode('[center]'+String(self.movement_points)+'[/center]')
 
+# Internal, updates the visual unit_strength indicator, e.g. after attack.
+func _update_unitstrength_indicator():
+	$UnitStrengthIndicator.set_bbcode('[center]'+String(self.unit_strength)+'[/center]')
+
 # Public getter for ammo left in this unit.
-# @outputs {int} Movement points of this unit
+# @outputs {int} Ammo of this unit
 func get_ammo():
-	return self.main_ammo
+	return self.ammo
 
 # Public getter that checks if this unit is able to move.
 # If it is a non-motorized unit, or fuel AND movement points are positive,
-# return "true", else if fuel AND movement points are depleted, return false.
+# @returns {Boolean} if fuel AND movement points are depleted, return false, otherwise true.
 func can_move():
 	if self.fuel == -1 or (self.fuel > 0 and self.movement_points > 0):
 		return true
 	elif self.fuel == 0 or self.movement_points == 0:
 		return false
+
+# Public function to kill this unit. This is mostly called by successful attack
+# function calls from another unit.
+func kill():
+	# play animation
+	# on animation finished, call queue_free()
+	# for now, just remove node to show attack worked
+	self.queue_free()
 
 # This function returns a Boolean indicating if it can attack a given unit,
 # or if no target is given, general combat readiness.
@@ -330,23 +383,27 @@ func can_move():
 # type and position of the given enemy unit.
 # If nothing definitive can be determined, return false per default.
 # @input {Object} The enemy unit
-# @outputs {Boolean} 
+# @returns {Boolean} 
+# @TODO Test if chosen weapon exists, has ammo / needs ammo, is in range
 func can_attack_unit(enemy_unit):
 	if enemy_unit != null:
 		var is_in_range = self._is_in_range(enemy_unit.get_global_position())
-		var has_weapon = self.main_weapon != null
-		var has_ammo = self.main_ammo > 0
+		var has_weapon = !self.weapons.empty()
+		var has_ammo = self.ammo > 0
 		if has_weapon and has_ammo and self.can_move() and is_in_range == true:
 			return true
+	else:
+		return self.combat_ready()
 	return false
 
 # Public getter for general combat readiness. This definition will likely
 # change later, as this can be different for different types of units as
-# well as may change due to design changes. Requires a unit fuel and movement-
-# points to attack? At the moment, I say "yes".
+# well as may change due to design changes. Does attacking requires fuel 
+# and movement points to attack? At the moment, I say "yes".
+# @returns {Boolean}
 func combat_ready():
-	var has_weapon = self.main_weapon != null
-	var has_ammo = self.main_ammo > 0
+	var has_weapon = !self.weapons.empty()
+	var has_ammo = self.ammo > 0
 	if has_weapon and has_ammo and self.can_move():
 		return true
 	return false
@@ -366,11 +423,147 @@ func is_valid_attack_target(grid_pos):
 				print("Can attack unit")
 				return true
 
+# Simple public getter to return the first weapon found, if no weapon exists, 
+# return null.
+# @returns {Dictionary, Null}
+func get_main_weapon():
+	if self.weapons.size() > 0:
+		for weapon in self.weapons:
+			return self.weapons[weapon]
+	return null
+
+# Public getter to get specific weapon by id
+# @input {String} id of the weapon to retreive
+# @returns {Dictionary} of all weapon attributes
+func get_weapon(id):
+	if id in weapons:
+		return self.weapons[id]
+
 # Attack a unit/entity
-func attack(entity):
-	print('ATTACKING!')
-	self.main_ammo -= 1
-	return true
+func attack(entity, weapon=null):
+	if weapon == null:
+		weapon = self.get_main_weapon()
+		if weapon == null:
+			print('Cannot comply, unit has no weapon!')
+			return false
+	# Play sound
+	self._play_sound('attack', weapon)
+	
+	# Set some environmental parameters
+	var defending_unit = entity
+	var defender_effective_strength
+	print('Defending unit is ',defending_unit['display_name'],' (',defending_unit.get_experience()['display_name'],')')
+	var attacking_unit = self
+	var attacker_effective_attack
+	var attacking_unit_weapon = weapon
+	print('Attacking unit is ',attacking_unit['display_name'],' (',attacking_unit.get_experience()['display_name'],')')
+	
+	# find out basic attributes
+	defender_effective_strength = defending_unit['unit_strength'] + (defending_unit['unit_strength'] * (defending_unit['base_defense']/10))
+	print('Defending unit has strength of ',defending_unit['unit_strength'],', effective strength of ',defender_effective_strength,' (',defending_unit['unit_strength'],'+',defending_unit['unit_strength'] * (defending_unit['base_defense']/10),')')
+	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10)
+	print('Attacking unit has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10),')')
+	
+	# adding attack_bonus
+	if attacking_unit['attack_bonus'] != 0:
+		attacker_effective_attack += attacking_unit['attack_bonus']
+		print('Attacker has attack modifier of ',attacking_unit['attack_bonus'],' resulting in effective attack value change to: ',attacker_effective_attack)
+
+	## Armor Piercing ammo & armor effects
+	if defending_unit['armor'] > 0:
+		print('Defender has armor value of ',defending_unit['armor'])
+		if attacking_unit_weapon['armor_piercing'] <= 0:
+			attacker_effective_attack = attacker_effective_attack * 0.1
+			print('Thus, the attacker is ineffective, will only deal ',attacker_effective_attack,' damage.')
+		elif attacking_unit_weapon['armor_piercing'] >= 0:
+			var at_factor = defending_unit['armor'] / attacking_unit_weapon['armor_piercing']
+			attacker_effective_attack = attacker_effective_attack + at_factor
+			print('But attackers weapons are armor piercing, dealing additional damage of ',at_factor,' totalling ',attacker_effective_attack,' attack value.')
+
+	## High Explosive ammo
+	if defending_unit['armor'] <= 0 and attacking_unit_weapon['explosive'] > 0:
+		attacker_effective_attack = attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)
+		var he_factor = (attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)) - attacker_effective_attack
+		attacker_effective_attack -= defending_unit['base_defense']
+		print('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack, 'attack value.')
+
+	# #### Finally, battling it out
+	prints('Attacker attempts attack with',attacker_effective_attack,'effective attack, while defender has',defender_effective_strength,'effective strength.')
+
+	#### Good or bad luck
+	# value_proximity = attacking_unit['effective_attack'] - defending_unit['effective_strength']
+	# max_luck = random.randint(1,3)
+	# luck = round(abs(1/(value_proximity*((max_luck-0.9)/(max_luck*1.8))+1/max_luck)), 2)
+	# print('Luck:',luck)
+
+	# # The events show from the perspective of the defender, so "good" means "good for the defender"
+	# random_events = {
+	# 	'pro_def': [
+	# 		"A sudden gust of stormy wind alters the course of a projectile, altering it's angle ever so slightly, leading to a dramatically reduced impact on the target and next to no damage.",
+	# 		'The projectile was a dud. It impacts without any effect, besides a few startled combatants.',
+	# 		'A critter flowing into ones eyes is always unpleasant, much more if one is trying to fire at the same time. The shots go way too high, even leaving the battlefield.',
+	# 		'A unexpectedly soft spot on the ground leads to a sudden drop of the defending unit, which in turn leads to a missed hit on part of the attacker.'
+	# 		'At the end of the day, all combatants are humans, with a conscience. A few moments of hesitation, a missed shot.',
+	# 	],
+	# 	'pro_att': [
+	# 		'Trick shot! While not planned, the shot manages to penetrate perfectly, hitting vital parts of the defending unit.',
+	# 		'Having suffered heavy losses, the defending units cohesion is lost and the remaining wounded combatants give up or flee.',
+	# 		'A sudden gust of stormy wind alters the course of a projectile, altering its angle ever so slightly, leading to a dramatically increased effect on the target.',
+	# 		'The long extra hours of training have paid off! Every free hour that comrades spent sleeping, gambling or drinking, this lone combatant has used for training. Now the result is a perfect kill shot.'
+	# 	]
+	# }
+
+	# Determine if hit or miss, based on experience of unit
+	var rand = randf()
+	var hit = false
+	if rand >= (0.35 - get_experience()['multiplier']):
+		print("It's a hit!")
+		hit = true
+	else:
+		print('Attacking unit misses!')
+
+	if hit:
+		state_save = {
+			'defending_unit': defending_unit,
+			'defender_effective_strength': defender_effective_strength,
+			'attacking_unit_weapon': attacking_unit_weapon,
+			'attacker_effective_attack': attacker_effective_attack,
+		}
+		self.attack_delay_timer.start()
+		# Hit
+		# All this stuff about luck and random events and chance feels still way too uncontrollable. Not in a good way.
+		# I am leaving this commented out until I can work on it.
+		# if luck > 1.28:
+		# 	if random.random() > 0.5:
+		# 		attack_bonus = round(attacking_unit['effective_attack'] * luck,2)
+		# 		print(random_events['pro_att'][random.randint(0, len(random_events['pro_att'])-1)],'// Attack increased by',attack_bonus,'adding up to effective attack of',attacking_unit['effective_attack'] + attack_bonus)
+		# 		attacking_unit['effective_attack'] += attack_bonus
+		# 	else:
+		# 		print(random_events['pro_def'][random.randint(0, len(random_events['pro_def'])-1)], '// Attack decreased by',round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2))
+		# 		attacking_unit['effective_attack'] -= round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2)
+
+# Finish attack, because how Godot works (or rather, how I not work)
+func _process_attack_finish():
+	var defending_unit = state_save['defending_unit']
+	var defender_effective_strength = state_save['defender_effective_strength']
+	var attacking_unit_weapon = state_save['attacking_unit_weapon']
+	var attacker_effective_attack = state_save['attacker_effective_attack']
+
+	defending_unit._play_sound('hit', attacking_unit_weapon)
+	if attacker_effective_attack > 0:
+		prints('Defending unit strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))
+		var new_defender_strength = "%.1f" % ((defender_effective_strength - attacker_effective_attack))
+		if state_save['defending_unit']['armor'] > 0:
+			new_defender_strength += new_defender_strength / state_save['defending_unit']['armor']
+		if float(new_defender_strength) <= 0:
+			state_save['defending_unit'].kill()
+		else:
+			state_save['defending_unit']['unit_strength'] = new_defender_strength
+			state_save['defending_unit']._update_unitstrength_indicator()
+	# Update base stats
+	if attacking_unit_weapon['use_ammo']:
+		self.ammo -= 1
+	self.movement_points -= 1
 
 # Function to fill the attributes of the unit from the themes data object
 # corresponding to it. If a value was filled by the level editor with a non-
@@ -382,6 +575,30 @@ func fill_attributes(data_object):
 			set(entry, data_object[entry])
 	self._update_movementpoints_indicator()
 	self.max_movement_points = self.movement_points
+	self._populate_weapons()
+	self._fill_mods()
+	self.experience_definitions = $"/root/Game/ThemeManager".get_faction_experience_definitions(self.unit_faction)
+
+# Fill modifiers from theme
+func _fill_mods():
+	for index in range(0, self.modifiers.size()):
+		var modifier_id = modifiers[index]
+		self.active_modifiers[modifier_id] = $"/root/Game/ThemeManager".get_modifier(modifier_id)
+
+# Apply modifier changes to unit stats, also deletes mods if their max duration is reached.
+func _apply_mods():
+	var delete_mods = []
+	for mod in self.active_modifiers:
+		var active_mod = active_modifiers[mod]
+		if active_mod['duration'] > 0 or active_mod['duration'] == -1:
+			for attribute in active_mod['modifiers']:
+				self[attribute] += active_mod['modifiers'][attribute]
+		else:
+			delete_mods.append(mod)
+	# Do some housekeeping, mods whose duration has expired should be cleaned from unit
+	if delete_mods.size() > 0:
+		for index in range(0,delete_mods.size()):
+			self.active_modifiers.erase(delete_mods[index])
 
 # Animates this units movement on a given path from one tile to another over
 # n tiles in between
@@ -435,11 +652,33 @@ func _get_direction(angle):
 		dir = 5
 		# print("Moving south")
 	return dir
-	
+
+# internal function to play sounds
+# @input {String} The reason for sound emitting, one of a given list of keywords: 
+# - move
+# - attack
+# - hit
+# - death
+# - resupply
+# - ...
+# These keywords reference either a sound given in the unit definition in the theme, or
+# a fallback default sound is used, that either the theme supplies or the base game.
+# @input {String} info, optional additional info
+func _play_sound(keyword, info=null):
+	self.sound_emitter.stream = $"/root/Game/ThemeManager".get_sound(self.unit_id, keyword, info)
+	self.sound_emitter.play()
+
 # @TODO Find out how to calc distance between two points, read up on
 # red blob games blog about it.
 func _is_in_range(target):
 	return true
+
+# Internal function to populate weapon list with actual theme objects
+func _populate_weapons():
+	var weapon_ids = self.weapons
+	self.weapons = {}
+	for weapon_id in weapon_ids:
+		self.weapons[weapon_id] = $"/root/Game/ThemeManager".get_weapon(weapon_id)
 
 func _ready():
 	## Init ingame
@@ -467,3 +706,7 @@ func _on_MoveTween_tween_completed(object, key):
 		# ...then call global update
 		# Global update is for udpating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)
+
+func _on_AttackEffectDelay_timeout():
+	attack_delay_timer.stop()
+	self._process_attack_finish()

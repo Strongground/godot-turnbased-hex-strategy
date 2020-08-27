@@ -41,15 +41,16 @@
 ### tile will have 100% damage effect, the tiles immediatly surrounding it only 66% and
 ### the outer ring of tiles only 33% of the damage effect (linear falloff)
 ### --
-### attacks_units (array|string)
-### An array containing strings or single string describing, what units can be hit by this
+### attacks_units (array)
+### An array containing at least one or ore strings describing, what units can be hit by this
 ### weapon effectively. While almost all weapons can be fired at all targets, most have a 
 ### clearly defined target definition. It is next to impossible to hit a passing fighter jet 
 ### or a battleship in coastal firing position, with an assault rifle. A battleships main 
 ### cannon, in turn, cannot hope to hit a fighter jet.
 ### This is in part assumption, but should always be self-explanatory and/or common knowledge.
-### Scenarios like attacking an armored tank with a sword is not covered by this, as this is
-### handled implicitely by the battle/damage system and weapon definitions.
+### This is not intended as "it makes sense to attack that unit with this weapon" but more as
+### "technically it is possible to attack that unit with this weapon and have a realistic
+### chance to hit".
 ### --
 ### range
 ### how far away can the target be, so that attacking with this weapon is possible?
@@ -58,18 +59,25 @@
 ### effect
 ### references a external spritesheet file from the theme for an animation or the name 
 ### of an existing standard animation from the core game.
+### This portraits the firing/execution of the weapon.
+### --
+### effect_impact
+### references a external spritesheet file from the theme for an animation or the name 
+### of an existing standard animation from the core game.
+### This portraits the impact of the weapon.
 ### --
 ### sound
 ### references a soundfile that is played, whenever this weapon fires. The sound should
-### include the firing as well as the 'hit' sound (explosion, impact of bullets, impact
-### of blade etc.)
-### @TODO Maybe think about having hit sound and firing sound separated later. Hit sound
-### could be played conditionally based on target, thus indicating wether target is armored
-### or not (effect on target) and even if the attack was a hit or miss.
+### include only the firing, in case an attack is missed, no "impact" should be audible.
+### --
+### sound_impact
+### references a soundfile that is playd, when the attack hits the target. If no hit,
+### this will not be played.
 
 mg50cal:
   display_name: 'Mk2 Heavy Machinegun (Cal 50)'
   description: 'Description for this weapon comes here.'
+  use_ammo: true
   attack_strength: 3
   armor_piercing: 1
   explosive: 0
@@ -78,11 +86,14 @@ mg50cal:
   aoe_falloff: 0
   range: 1
   effect: 'graphics/sfx/weapons/mg_fire.png'
-  sound: 'sound/sfx/weapons/50cal.wav'
+  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  sound: 'sounds/sfx/weapons/machinegun.wav'
+  sound_impact: 'sounds/sfx/weapons/machinegun_impact.wav'
 
 tow:
   display_name: 'BGM-71 TOW Missile System'
   description: 'The BGM-71 is an American wire-guided anti-tank missile, first produced in 1970. It is one of the most widely used anti-tank guided missiles worldwide.'
+  use_ammo: true
   attack_strength: 3
   armor_piercing: 4
   explosive: 0
@@ -91,11 +102,14 @@ tow:
   aoe_falloff: 0
   range: 3
   effect: 'graphics/sfx/weapons/missile_fire.png'
-  sound: 'sound/sfx/weapons/missile.wav'
+  effect_impact: 'graphics/sfx/weapons/missile_impact.png'
+  sound: 'sounds/sfx/weapons/missile.wav'
+  sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
 
 assault_rifles:
   display_name: 'Assault Rifles'
   description: 'Assault rifles are the mainstay of a modern infantry fighting force. They can be extended by various modules and modern assault rifles are versatile weapon platforms that can fill many roles. Still, most assault rifles in use worldwide are soviet era/cold war era rifles with simple mechanics.'
+  use_ammo: true
   attack_strength: 2
   armor_piercing: 0
   explosive: 0
@@ -104,11 +118,14 @@ assault_rifles:
   aoe_falloff: 0
   range: 2
   effect: 'graphics/sfx/weapons/mg_fire.png'
-  sound: 'sound/sfx/weapons/assault_rifles.wav'
+  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  sound: 'sounds/sfx/weapons/assault_rifles.wav'
+  sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
 
 javelin:
   display_name: 'FGM-148 Javelin Medium Antiarmor Missile'
   description: 'The Javelin Antiarmor Weapon System was introduced in the 1990s and offers a bigger warhead and better guiding, which results in higher survivability of the soldiers employing it. However, its range is lower than that of the TOW missile system.'
+  use_ammo: true
   attack_strength: 5
   armor_piercing: 5
   explosive: 0
@@ -117,11 +134,14 @@ javelin:
   aoe_falloff: 0
   range: 2
   effect: 'graphics/sfx/weapons/missile_fire.png'
-  sound: 'sound/sfx/weapons/missile.wav'
+  effect_impact: 'graphics/sfx/weapons/missile_impact.png'
+  sound: 'sounds/sfx/weapons/missile.wav'
+  sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
 
 m242_cannon:
   display_name: 'M242 Bushmaster Cannon'
   description: 'The M242 Bushmaster is a 25mm chain-driven autocannon. It has a good medium range of 3km and is one of the most successful modern autocannons.'
+  use_ammo: true
   attack_strength: 4
   armor_piercing: 3
   explosive: 2
@@ -130,11 +150,14 @@ m242_cannon:
   aoe_falloff: 0
   range: 3
   effect: 'graphics/sfx/weapons/cannon_fire.png'
-  sound: 'sound/sfx/weapons/cannon.wav'
+  effect_impact: 'graphics/sfx/weapons/cannon_impact.png'
+  sound: 'sounds/sfx/weapons/cannon.wav'
+  sound_impact: 'sounds/sfx/weapons/cannon_impact.wav'
 
 irregular_rifles:
   display_name: 'Assorted Irregular Rifles'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rifles, even WW2 weapons that where handed down the generations, but also weapons meant for game hunting or improvised devices.'
+  use_ammo: true
   attack_strength: 2
   armor_piercing: 0
   explosive: 0
@@ -143,11 +166,14 @@ irregular_rifles:
   aoe_falloff: 0
   range: 1
   effect: 'graphics/sfx/weapons/mg_fire.png'
-  sound: 'sound/sfx/weapons/assault_rifles.wav'
+  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  sound: 'sounds/sfx/weapons/assault_rifles.wav'
+  sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
 
 irregular_heavy:
   display_name: 'Irregular Heavy Weapons'
   description: 'Non-regular and non-state fighting forces, often waging assymetric war, resort to use all weapons they can. This can include soviet era rocket propelled grenade launchers (RPG) and machineguns like the famous PK family, RPD or RPK weapons and others. Explosives are either improvised or soviet surplus.'
+  use_ammo: true
   attack_strength: 2
   armor_piercing: 2
   explosive: 1
@@ -156,11 +182,14 @@ irregular_heavy:
   aoe_falloff: 0
   range: 1
   effect: 'graphics/sfx/weapons/heavy_weapons_fire.png'
-  sound: 'sound/sfx/weapons/heavy_weapons_mixed.wav'
+  effect_impact: 'graphics/sfx/weapons/heavy_weapons_impact.png'
+  sound: 'sounds/sfx/weapons/heavy_weapons_mixed.wav'
+  sound_impact: 'sounds/sfx/weapons/heavy_weapons_mixed_impact.wav'
 
 small_arms:
   display_name: 'Small Arms/Civilian Weapons'
   description: 'This includes hunting rifles, pistols or handed down weapon trophies from previous World Wars that are now used in times of emergency to provide a basic level of self defense.'
+  use_ammo: true
   attack_strength: 1
   armor_piercing: 0
   explosive: 0
@@ -169,4 +198,6 @@ small_arms:
   aoe_falloff: 0
   range: 1
   effect: 'graphics/sfx/weapons/mg_fire.png'
-  sound: 'sound/sfx/weapons/small_arms.wav'
+  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  sound: 'sounds/sfx/weapons/small_arms.wav'
+  sound_impact: 'sounds/sfx/weapons/small_arms_impact.wav'

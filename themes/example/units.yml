@@ -54,14 +54,14 @@
 # This value can be -1 if the unit consumes no fuel. In that case, fuel won't be
 # checked when moving.
 # --
-# main_ammo (int)
+# ammo (int)
 # How many times can this unit attack until ammo runs out, not really how many shots it carries.
 # --
 # attack_bonus (int)
 # This can be thought of as a "base_attack" value of the unit. It is simply added to the 
-# main_weapon attack_strength value. It could be used to signify better training of this 
+# weapons a[ttack_strength value. It could be used to signify better training of this ]
 # unit or technical characteristics that would give it a significant attack boost compared 
-# to another unit with the same main_weapon.
+# to another unit with the same weapons.
 # This will be mostly used via modifiers.
 # -- 
 # is_supplier (bool)
@@ -82,6 +82,8 @@ hmmwv_tow:
   description: 'This is the classical "High Mobility Multipurpose Wheeled Vehicle" used by the US military since 1985. It features some protection agains small arms fire. This variant features a TOW rocket launcher against medium armored targets like APCs.'
   unit_faction: 'usarmy'
   unit_sprites: ['graphics/units/us_humvee_tow-0.png', 'graphics/units/us_humvee_tow-1.png', 'graphics/units/us_humvee_tow-2.png', 'graphics/units/us_humvee_tow-3.png', 'graphics/units/us_humvee_tow-4.png', 'graphics/units/us_humvee_tow-5.png']
+  # sounds
+  move_sound: 'car'
   # stats
   unit_strength: 3
   base_defense: 3
@@ -89,8 +91,8 @@ hmmwv_tow:
   can_traverse: ['land']
   movement_points: 5
   fuel: 32
-  main_weapon: 'tow'
-  main_ammo: 4
+  weapons: ['tow']
+  ammo: 4
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -100,6 +102,8 @@ us_infantry_rifles:
   description: 'The standard US Army infantry squad consists of two fireteams with each 4 soldiers. This unit has modern assault rifles and grenades at its disposal and relies on tactics refined trough hundreds of hours of both real combat and training.'
   unit_faction: 'usarmy'
   unit_sprites: 'graphics/units/us_infantry_rifle.png'
+  # sounds
+  move_sound: 'infantry'
   # stats
   unit_strength: 8
   base_defense: 2
@@ -107,8 +111,8 @@ us_infantry_rifles:
   can_traverse: ['land']
   movement_points: 3
   fuel: -1
-  main_weapon: 'assault_rifles'
-  main_ammo: 6
+  weapons: ['assault_rifles']
+  ammo: 6
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -118,6 +122,8 @@ us_marines_javelin:
   description: 'A Marines Javelin Missile squad consisting of eight marines with two antiarmor Javelin Missile systems. They can take out even heavy armored tanks but need shielding against infantry threats.'
   unit_faction: 'usarmy'
   unit_sprites: 'graphics/units/us_marines_javelin.png'
+  # sounds
+  move_sound: 'infantry'
   # stats
   unit_strength: 4
   base_defense: 1
@@ -125,17 +131,19 @@ us_marines_javelin:
   can_traverse: ['land']
   movement_points: 2
   fuel: -1
-  main_weapon: 'javelin'
-  main_ammo: 4
+  weapons: ['javelin']
+  ammo: 4
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
 
 m2a3_bradley:
   display_name: 'M2/A3 Bradley - IFV' 
-  description: 'The Bradley Infantry Fighting Vehicle is a vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soldiers across the battlefield, even crossing rivers.'
+  description: 'The Bradley Infantry Fighting Vehicle is a light armored vehicle that supports armored units and infantry. It features a M242 Bushmaster 25mm cannon and TOW missiles against armored targets. It can transport six soldiers across the battlefield, even crossing rivers.'
   unit_faction: 'usarmy'
   unit_sprites: 'graphics/units/us_m2a3_bradley.png'
+  # sounds
+  move_sound: 'tank'
   # stats
   unit_strength: 4
   base_defense: 10
@@ -143,8 +151,8 @@ m2a3_bradley:
   can_traverse: ['land','river']
   movement_points: 4
   fuel: 28
-  main_weapon: 'm242_cannon'
-  main_ammo: 8
+  weapons: ['m242_cannon']
+  ammo: 8
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -155,6 +163,8 @@ us_truck_cargo_general:
   unit_faction: 'usarmy'
   unit_sprites: ['graphics/units/us_truck-0.png', 'graphics/units/us_truck-1.png', 'graphics/units/us_truck-2.png', 'graphics/units/us_truck-3.png', 'graphics/units/us_truck-4.png', 'graphics/units/us_truck-5.png']
   sprite_scale: 0.15
+  # sounds
+  move_sound: 'car'
   # stats
   unit_strength: 3
   base_defense: 3
@@ -162,8 +172,8 @@ us_truck_cargo_general:
   can_traverse: ['land']
   movement_points: 5
   fuel: 30
-  main_weapon: null
-  main_ammo: 0
+  weapons: [null]
+  ammo: 0
   attack_bonus: 0
   is_supplier: true
   max_supply_storage: 50
@@ -175,6 +185,8 @@ militia_rifles:
   unit_faction: 'taliban'
   unit_sprites: 'graphics/units/militia_rifles.png'
   sprite_scale: 0.2
+  # sounds
+  move_sound: 'infantry'
   # stats
   unit_strength: 5
   base_defense: 0
@@ -182,8 +194,8 @@ militia_rifles:
   can_traverse: ['land', 'mountain']
   movement_points: 3
   fuel: -1
-  main_weapon: 'irregular_rifles'
-  main_ammo: 3
+  weapons: ['irregular_rifles']
+  ammo: 3
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -193,6 +205,8 @@ taliban_heavy_weapons:
   description: 'Having received some formal training at a secret camp in the mountains, these 9 men lack the drill and tactics, but else pass as soldiers. They have some standard equipment, soviet-era RPG missiles and launcher as well as at least one machinegunner.'
   unit_faction: 'taliban'
   unit_sprites: 'graphics/units/taliban_heavy.png'
+  # sounds
+  move_sound: 'infantry'
   # stats
   unit_strength: 4
   base_defense: 1
@@ -200,8 +214,8 @@ taliban_heavy_weapons:
   can_traverse: ['land']
   movement_points: 2
   fuel: -1
-  main_weapon: 'irregular_heavy'
-  main_ammo: 5
+  weapons: ['irregular_heavy']
+  ammo: 5
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -212,6 +226,8 @@ taliban_heavy_tank:
   unit_faction: 'taliban'
   unit_sprites: ['graphics/units/ww2_tank-0.png', 'graphics/units/ww2_tank-1.png', 'graphics/units/ww2_tank-2.png', 'graphics/units/ww2_tank-3.png', 'graphics/units/ww2_tank-4.png', 'graphics/units/ww2_tank-5.png']
   sprite_scale: 2
+  # sounds
+  move_sound: 'tank'
   # stats
   unit_strength: 6
   base_defense: 4
@@ -219,8 +235,8 @@ taliban_heavy_tank:
   can_traverse: ['land']
   movement_points: 3
   fuel: 18
-  main_weapon: 'irregular_tank_cannon'
-  main_ammo: 3
+  weapons: ['irregular_tank_cannon']
+  ammo: 3
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0
@@ -231,6 +247,8 @@ refugees:
   description: "A civilian treck of women, men and children who have just been able to flee from the battles, bringing some of their belongings with them. Some also brought small arms for hunting and self defense, but they can't realistically hope to do more than deter wild dogs or a lone criminal on the road."
   unit_faction: 'civilians'
   unit_sprites: [['graphics/units/civilians_refugees.png'], ['graphics/units/civilians_refugees-2.png'], ['graphics/units/civilians_refugees-3.png']]
+  # sounds
+  move_sound: 'infantry'
   # stats
   unit_strength: 2
   base_defense: 0
@@ -238,8 +256,8 @@ refugees:
   can_traverse: ['land']
   movement_points: 2
   fuel: -1
-  main_weapon: 'small_arms'
-  main_ammo: 2
+  weapons: ['small_arms']
+  ammo: 2
   attack_bonus: 0
   is_supplier: false
   max_supply_storage: 0

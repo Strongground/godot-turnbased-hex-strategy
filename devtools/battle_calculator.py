@@ -14,13 +14,6 @@ hmmwv_tow = {
     }
 }
 
-# Experience:
-#   0.25  0.5   0.75
-# [     |     |     ]
-# Untrained
-# Regular
-# Elite
-
 taliban_tank = {
     'display_name': 'Soviet Early Cold War Era MBT',
     'unit_strength': 6,
@@ -34,9 +27,11 @@ taliban_tank = {
         'explosive': 2,
     },
     'modifier': {
-        'name': 'In a really bad state',
-        'attack_bonus': -2,
-        'base_defense': -1
+        'mod1': {
+            'name': 'In a really bad state',
+            'attack_bonus': -2,
+            'base_defense': -1
+        }
     }
 }
 
@@ -51,7 +46,19 @@ m2a3_bradley = {
         'attack_strength': 4,
         'armor_piercing': 3,
         'explosive': 2
-    }
+    },
+    'modifier': {
+        'mod1': {
+            'name': 'Doesn\'t want to be here',
+            'attack_bonus': -2,
+            'base_defense': -2
+        },
+        'mod2': {
+            'name': 'TUSK II',
+            'attack_bonus': 2,
+            'base_defense': 3
+        }
+    },
 }
 
 us_infantry_rifles = {
@@ -109,8 +116,10 @@ taliban_rifles = {
         'explosive': 0
     },
     'modifier': {
-        'name': 'Bad morale',
-        'attack_bonus': -1,
+        'mod1': {
+            'name': 'Bad morale',
+            'base_defense': -2
+        }
     }
 }
 
@@ -127,16 +136,26 @@ taliban_heavy_weapons = {
         'explosive': 1
     },
     'modifier': {
-        'name': 'Good knowledge of terrain',
-        'attack_bonus': 1,
-        'base_defense': 2
+        'mod1': {
+            'name': 'Good knowledge of terrain',
+            'attack_bonus': 1,
+            'base_defense': 2
+        }
     }
 }
 
+# Experience is a bit weird atm:
+# Each unit has an attribute "experience", which is a floating point value.
+# Here are defined ranges. The experience is checked, and depending on in which range it is, 
+# a different multipler is chosen. That multiplier is then used, and the higher it gets, 
+# the more it cancels out the randomness of certain things, like who shoots first, chance of 
+# hitting, getting hit etc. to portrait the high level of skill. 
+# However, randomness is never completely cancelled out.
 experience_levels = {
-    'untrained': 0.25,
-    'regular': 0.5,
-    'elite': 0.75
+    'untrained': [0, 0.35, 0],
+    'regular': [0.35, 0.65, 0.15],
+    'veteran': [0.65, 0.90, 0.35],
+    'elite': [0.90, 1, 0.5]
 }
 
 print('=================================')
@@ -162,10 +181,26 @@ print('Attacking unit has effective attack of',attacking_unit['effective_attack'
 
 #### Factoring in Modifiers
 if 'modifier' in defending_unit and len(defending_unit['modifier']) > 0:
-    print('Defender has modifier: "',defending_unit['modifier']['name'],'" resulting in:',)
-    for index in range(1,len(defending_unit['modifier'])):
-        print(list(defending_unit['modifier'])[index],':',defending_unit['modifier'] [ list(defending_unit['modifier']) [index] ] )
-        defending_unit[list(defending_unit['modifier'])[index]] += defending_unit['modifier'][list(defending_unit['modifier'])[index]]
+    print('Defender has modifiers:')
+    for modifier_name in defending_unit['modifier']:
+        modifier = defending_unit['modifier'][modifier_name]
+        print('"'+modifier['name']+'" resulting in:')
+        for attribute in modifier:
+            if attribute != 'name':
+                print(attribute+': '+str(modifier[attribute]))
+                print('Leading to defending units',attribute,'changing from',defending_unit[attribute],'to',defending_unit[attribute]+modifier[attribute])
+                defending_unit[attribute] += modifier[attribute]
+
+if 'modifier' in attacking_unit and len(attacking_unit['modifier']) > 0:
+    print('Defender has modifiers:')
+    for modifier_name in attacking_unit['modifier']:
+        modifier = attacking_unit['modifier'][modifier_name]
+        print('"'+modifier['name']+'" resulting in:')
+        for attribute in modifier:
+            if attribute != 'name':
+                print(attribute+': '+str(modifier[attribute]))
+                print('Leading to attacking units',attribute,'changing from',attacking_unit[attribute],'to',attacking_unit[attribute]+modifier[attribute])
+                attacking_unit[attribute] += modifier[attribute]
 
 ## Attack bonus
 if attacking_unit['attack_bonus'] != 0:
@@ -203,23 +238,24 @@ print('Attacker attempts attack with',attacking_unit['effective_attack'],'effect
 
 # The events show from the perspective of the defender, so "good" means "good for the defender"
 random_events = {
-    'good': [
+    'pro_def': [
         'A sudden gust of stormy wind alters the course of a projectile, altering its angle ever so slightly, leading to a dramatically reduced impact on the target and next to no damage.',
-        'The projectile was a dud. It impacts without any effect, besides a few startled soldiers.',
+        'The projectile was a dud. It impacts without any effect, besides a few startled combatants.',
         'A critter flowing into ones eyes is always unpleasant, much more if one is trying to fire at the same time. The shots go way too high, even leaving the battlefield.',
         'A unexpectedly soft spot on the ground leads to a sudden drop of the defending unit, which in turn leads to a missed hit on part of the attacker.'
-        'At the end of the day, all soldiers are humans, with a conscience. A few moments of hesitation, a missed shot.',
+        'At the end of the day, all combatants are humans, with a conscience. A few moments of hesitation, a missed shot.',
     ],
-    'bad': [
+    'pro_att': [
         'Trick shot! While not planned, the shot manages to penetrate perfectly, hitting vital parts of the defending unit.',
-        'Having suffered heavy losses, the defending units cohesion is lost and the remaining wounded soldiers give up or flee.',
+        'Having suffered heavy losses, the defending units cohesion is lost and the remaining wounded combatants give up or flee.',
         'A sudden gust of stormy wind alters the course of a projectile, altering its angle ever so slightly, leading to a dramatically increased effect on the target.',
-        'The long extra hours of training have paid off! Every free hour that comrades spent sleeping, gambling or drinking, this lone soldier has used for training. Now the result is a perfect kill shot.'
+        'The long extra hours of training have paid off! Every free hour that comrades spent sleeping, gambling or drinking, this lone combatant has used for training. Now the result is a perfect kill shot.'
     ]
 }
 
 # Determine if hit or miss, based on experience of unit
-if random.random() <= experience_levels[attacking_unit['experience']]:
+rand = random.random()
+if rand >= (0.35 - experience_levels[attacking_unit['experience']][2]):
     print('It\'s a hit!')
     hit = True
 else:
@@ -227,20 +263,22 @@ else:
     hit = False
 
 # Random events influenced by chance
-if hit and luck > 0.75:
-    if random.random() > 0.5:
-        attack_bonus = round(attacking_unit['effective_attack'] * luck,2)
-        print(random_events['bad'][random.randint(0, len(random_events['bad'])-1)],'// Attack increased by',attack_bonus,'adding up to effective attack of',attacking_unit['effective_attack'] + attack_bonus)
-        attacking_unit['effective_attack'] += attack_bonus
-    else:
-        print(random_events['good'][random.randint(0, len(random_events['good'])-1)], '// Attack decreased by',round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2))
-        attacking_unit['effective_attack'] -= round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2)
+if hit:
+    if luck > 1.28:
+        if random.random() > 0.5:
+            attack_bonus = round(attacking_unit['effective_attack'] * luck,2)
+            print(random_events['pro_att'][random.randint(0, len(random_events['pro_att'])-1)],'// Attack increased by',attack_bonus,'adding up to effective attack of',attacking_unit['effective_attack'] + attack_bonus)
+            attacking_unit['effective_attack'] += attack_bonus
+        else:
+            print(random_events['pro_def'][random.randint(0, len(random_events['pro_def'])-1)], '// Attack decreased by',round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2))
+            attacking_unit['effective_attack'] -= round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2)
 
-if hit and attacking_unit['effective_attack'] > 0:
-    defending_unit['unit_strength'] = round(defending_unit['effective_strength'] - attacking_unit['effective_attack'],2)
-    if defending_unit['unit_strength'] <= 0:
-        print('Boom! Defending unit destroyed!')
-    else:
-        print('Defending unit survived attack with',defending_unit['unit_strength'],'strength.')
+    if attacking_unit['effective_attack'] > 0:
+        print('Defending unit strength is calculated by',defending_unit['effective_strength'],'-',attacking_unit['effective_attack'],'rounded, which is',round(defending_unit['effective_strength'] - attacking_unit['effective_attack'],2))
+        defending_unit['unit_strength'] = round((defending_unit['effective_strength'] - attacking_unit['effective_attack'])/1.5,2)
+        if defending_unit['unit_strength'] <= 0:
+            print('Boom! Defending unit destroyed!')
+        else:
+            print('Defending unit survived attack with',defending_unit['unit_strength'],'strength.')
 else:
     print('Defending unit survived attack with',defending_unit['unit_strength'],'strength.')
