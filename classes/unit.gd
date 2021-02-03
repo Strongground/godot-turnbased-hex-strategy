@@ -336,6 +336,7 @@ func update():
 	self._set_faction_icon()
 	self._apply_mods()
 	self._update_unitstrength_indicator()
+	self._update_movementpoints_indicator()
 	
 # Public getter for movement points of this unit.
 # @returns {int} Movement points of this unit
@@ -370,31 +371,29 @@ func can_move():
 		return false
 
 # Public function to kill this unit. This is mostly called by successful attack
-# function calls from another unit.
+# function calls from another unit. It removes this node from the games entities list,
+# so after this it will not be considered by the game.
 func kill():
 	# play animation
-	# on animation finished, call queue_free()
+	# on animation finished, call free() deferred
 	# for now, just remove node to show attack worked
-	self.queue_free()
+	game.remove_entity_from_list(self)
+	call_deferred('free')
 
 # This function returns a Boolean indicating if it can attack a given unit,
 # or if no target is given, general combat readiness.
 # It takes into consideration both the state of this unit as well as the
 # type and position of the given enemy unit.
 # If nothing definitive can be determined, return false per default.
-# @input {Object} The enemy unit
+# @input {Object} -optional- The enemy unit, if not given, return basic combat readiness
 # @returns {Boolean} 
 # @TODO Test if chosen weapon exists, has ammo / needs ammo, is in range
 func can_attack_unit(enemy_unit):
 	if enemy_unit != null:
-		var is_in_range = self._is_in_range(enemy_unit.get_global_position())
-		var has_weapon = !self.weapons.empty()
-		var has_ammo = self.ammo > 0
-		if has_weapon and has_ammo and self.can_move() and is_in_range == true:
+		if self.combat_ready() and self._is_in_range(enemy_unit.get_global_position()):
 			return true
 	else:
 		return self.combat_ready()
-	return false
 
 # Public getter for general combat readiness. This definition will likely
 # change later, as this can be different for different types of units as
@@ -420,7 +419,6 @@ func is_valid_attack_target(grid_pos):
 			# Check if valid attack target for currently selected units weapons
 			var enemy_unit = unit
 			if self.can_attack_unit(enemy_unit) == true:
-				print("Can attack unit")
 				return true
 
 # Simple public getter to return the first weapon found, if no weapon exists, 
@@ -438,6 +436,18 @@ func get_main_weapon():
 func get_weapon(id):
 	if id in weapons:
 		return self.weapons[id]
+
+# Public function to control the direction the unit grapic
+# is rotated. This is only cosmetic at the moment, but may
+# be extended to allow for "attack from behind" bonus etc.
+func turn_towards(grid_pos):
+	# get direction of target grid_pos relative to this unit
+	if self.unit_sprites.size() == 2:
+		# determine how we should rotate, just towards x axis if only two sprites exist?
+		pass
+	elif self.unit_sprites.size() == 6:
+		# ...or fully featured rotation if all six directional sprites exist
+		pass
 
 # Attack a unit/entity
 func attack(entity, weapon=null):
@@ -483,9 +493,9 @@ func attack(entity, weapon=null):
 	## High Explosive ammo
 	if defending_unit['armor'] <= 0 and attacking_unit_weapon['explosive'] > 0:
 		attacker_effective_attack = attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)
-		var he_factor = (attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)) - attacker_effective_attack
+		var he_factor = ((attacker_effective_attack * (attacking_unit_weapon['explosive'])) - attacker_effective_attack) / 0.75
 		attacker_effective_attack -= defending_unit['base_defense']
-		print('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack, 'attack value.')
+		print('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack,' attack value.')
 
 	# #### Finally, battling it out
 	prints('Attacker attempts attack with',attacker_effective_attack,'effective attack, while defender has',defender_effective_strength,'effective strength.')
@@ -549,21 +559,31 @@ func _process_attack_finish():
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 
+	# $"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact)
+
 	defending_unit._play_sound('hit', attacking_unit_weapon)
+	# If attacker has attack value greater zero...
 	if attacker_effective_attack > 0:
 		prints('Defending unit strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))
-		var new_defender_strength = "%.1f" % ((defender_effective_strength - attacker_effective_attack))
-		if state_save['defending_unit']['armor'] > 0:
-			new_defender_strength += new_defender_strength / state_save['defending_unit']['armor']
-		if float(new_defender_strength) <= 0:
-			state_save['defending_unit'].kill()
+		# Calculate how much strength is left after attack
+		var new_defender_strength = float("%.1f" % ((defender_effective_strength - attacker_effective_attack)))
+		# Has attack managed to overcome effective defense boost?
+		if new_defender_strength < defender_effective_strength:
+			# What does this even do? Diminish defender strength if it has armor? WTF?
+			# if state_save['defending_unit']['armor'] > 0:
+			# 	new_defender_strength += float(new_defender_strength / state_save['defending_unit']['armor'])
+			if float(new_defender_strength) <= 0:
+				state_save['defending_unit'].kill()
+			else:
+				state_save['defending_unit']['unit_strength'] = new_defender_strength
+				state_save['defending_unit']._update_unitstrength_indicator()
 		else:
-			state_save['defending_unit']['unit_strength'] = new_defender_strength
-			state_save['defending_unit']._update_unitstrength_indicator()
+			prints('Attack did not manage to get trough to defenders base strength.')
 	# Update base stats
 	if attacking_unit_weapon['use_ammo']:
 		self.ammo -= 1
 	self.movement_points -= 1
+	self.update()
 
 # Function to fill the attributes of the unit from the themes data object
 # corresponding to it. If a value was filled by the level editor with a non-
@@ -584,21 +604,31 @@ func _fill_mods():
 	for index in range(0, self.modifiers.size()):
 		var modifier_id = modifiers[index]
 		self.active_modifiers[modifier_id] = $"/root/Game/ThemeManager".get_modifier(modifier_id)
+		self.active_modifiers[modifier_id]['applied'] = false
 
 # Apply modifier changes to unit stats, also deletes mods if their max duration is reached.
 func _apply_mods():
 	var delete_mods = []
 	for mod in self.active_modifiers:
 		var active_mod = active_modifiers[mod]
-		if active_mod['duration'] > 0 or active_mod['duration'] == -1:
+		if (active_mod['duration'] > 0 or active_mod['duration'] == -1) and not active_mod['applied']:
 			for attribute in active_mod['modifiers']:
 				self[attribute] += active_mod['modifiers'][attribute]
+			active_mod['applied'] = true
 		else:
 			delete_mods.append(mod)
 	# Do some housekeeping, mods whose duration has expired should be cleaned from unit
 	if delete_mods.size() > 0:
 		for index in range(0,delete_mods.size()):
 			self.active_modifiers.erase(delete_mods[index])
+
+# Public function to count down all active mods with duration. This is to be called
+# every time a turn ends.
+func update_timed_modifiers():
+	for mod in self.active_modifiers:
+		var active_mod = active_modifiers[mod]
+		if active_mod['duration'] > 0:
+			active_mod['duration'] -= 1
 
 # Animates this units movement on a given path from one tile to another over
 # n tiles in between
@@ -703,6 +733,7 @@ func _on_MoveTween_tween_completed(object, key):
 	else:
 		# Done animating, update unit locally
 		self.update()
+		$"/root/Game"._delete_all_nodes_with('path_vis')
 		# ...then call global update
 		# Global update is for udpating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)

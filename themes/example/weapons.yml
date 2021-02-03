@@ -75,7 +75,7 @@
 ### this will not be played.
 
 mg50cal:
-  display_name: 'Mk2 Heavy Machinegun (Cal 50)'
+  display_name: 'Mk2 Heavy Machinegun (Cal .50)'
   description: 'Description for this weapon comes here.'
   use_ammo: true
   attack_strength: 3
@@ -85,8 +85,8 @@ mg50cal:
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'graphics/sfx/weapons/mg_fire.png'
-  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  effect: 'mg_fire'
+  effect_impact: 'mg_impact'
   sound: 'sounds/sfx/weapons/machinegun.wav'
   sound_impact: 'sounds/sfx/weapons/machinegun_impact.wav'
 
@@ -101,8 +101,8 @@ tow:
   area_of_effect: 0
   aoe_falloff: 0
   range: 3
-  effect: 'graphics/sfx/weapons/missile_fire.png'
-  effect_impact: 'graphics/sfx/weapons/missile_impact.png'
+  effect: 'missile_fire'
+  effect_impact: 'missile_impact'
   sound: 'sounds/sfx/weapons/missile.wav'
   sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
 
@@ -117,8 +117,8 @@ assault_rifles:
   area_of_effect: 0
   aoe_falloff: 0
   range: 2
-  effect: 'graphics/sfx/weapons/mg_fire.png'
-  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  effect: 'mg_fire'
+  effect_impact: 'mg_impact'
   sound: 'sounds/sfx/weapons/assault_rifles.wav'
   sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
 
@@ -133,8 +133,8 @@ javelin:
   area_of_effect: 0
   aoe_falloff: 0
   range: 2
-  effect: 'graphics/sfx/weapons/missile_fire.png'
-  effect_impact: 'graphics/sfx/weapons/missile_impact.png'
+  effect: 'missile_fire'
+  effect_impact: 'missile_impact'
   sound: 'sounds/sfx/weapons/missile.wav'
   sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
 
@@ -149,8 +149,8 @@ m242_cannon:
   area_of_effect: 0
   aoe_falloff: 0
   range: 3
-  effect: 'graphics/sfx/weapons/cannon_fire.png'
-  effect_impact: 'graphics/sfx/weapons/cannon_impact.png'
+  effect: 'cannon_fire'
+  effect_impact: 'cannon_impact'
   sound: 'sounds/sfx/weapons/cannon.wav'
   sound_impact: 'sounds/sfx/weapons/cannon_impact.wav'
 
@@ -165,8 +165,8 @@ irregular_rifles:
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'graphics/sfx/weapons/mg_fire.png'
-  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  effect: 'mg_fire'
+  effect_impact: 'mg_impact'
   sound: 'sounds/sfx/weapons/assault_rifles.wav'
   sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
 
@@ -181,8 +181,8 @@ irregular_heavy:
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'graphics/sfx/weapons/heavy_weapons_fire.png'
-  effect_impact: 'graphics/sfx/weapons/heavy_weapons_impact.png'
+  effect: 'heavy_weapons_fire'
+  effect_impact: 'heavy_weapons_impact'
   sound: 'sounds/sfx/weapons/heavy_weapons_mixed.wav'
   sound_impact: 'sounds/sfx/weapons/heavy_weapons_mixed_impact.wav'
 
@@ -197,7 +197,39 @@ small_arms:
   area_of_effect: 0
   aoe_falloff: 0
   range: 1
-  effect: 'graphics/sfx/weapons/mg_fire.png'
-  effect_impact: 'graphics/sfx/weapons/mg_impact.png'
+  effect: 'mg_fire'
+  effect_impact: 'mg_impact'
   sound: 'sounds/sfx/weapons/small_arms.wav'
   sound_impact: 'sounds/sfx/weapons/small_arms_impact.wav'
+
+irregular_tank_cannon_he:
+  display_name: 'Taliban Heavy Tank Cannon - High Explosive'
+  description: 'Depending on what model of cold war or WW2 era tank the insurgents could get their hands on, this is most likely shooting something between 75mm and 125mm projectile.'
+  use_ammo: true
+  attack_strength: 3
+  armor_piercing: 0
+  explosive: 2
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 3
+  effect: 'tank-cannon_fire'
+  effect_impact: 'tank-cannon_impact'
+  sound: 'sounds/sfx/weapons/tank_cannon.wav'
+  sound_impact: 'sounds/sfx/weapons/tank_cannon_impact.wav'
+
+irregular_tank_cannon_at:
+  display_name: 'Taliban Heavy Tank Cannon - Armor Piercing'
+  description: 'Depending on what model of cold war or WW2 era tank the insurgents could get their hands on, this is most likely shooting something between 75mm and 125mm projectile.'
+  use_ammo: true
+  attack_strength: 2
+  armor_piercing: 4
+  explosive: 0
+  attacks_units: 'LAND'
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 3
+  effect: 'tank-cannon_fire'
+  effect_impact: 'tank-cannon_impact'
+  sound: 'sounds/sfx/weapons/tank_cannon.wav'
+  sound_impact: 'sounds/sfx/weapons/tank_cannon_impact.wav'

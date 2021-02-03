@@ -15,10 +15,11 @@ var panel_area = null
 # the main menu bar/panel
 # @returns {Boolean} true if the mouse position is over a GUI element 
 func is_gui_clicked():
+
 	var click_pos = get_viewport().get_mouse_position()
 	var panel_pos_y = panel_pos.y
 	var viewport_size_y = get_viewport().size.y
-	var panel_top_border_begin = get_viewport().size.y - panel_pos.y
+	var panel_top_border_begin = viewport_size_y - panel_pos_y
 	print('Click inside GUI: '+String(click_pos.y > panel_top_border_begin))
 	return click_pos.y > panel_top_border_begin
 
@@ -46,7 +47,6 @@ func _ready():
 	tile_info_popup_text = tile_info_popup.find_node('Tile_Text')
 	##### Panel
 	panel = find_node('Panel')
-	panel_pos = self.panel.get_transform()
 	panel_pos = self.panel.rect_position
 	panel_size = self.panel.get_size()
 
@@ -92,10 +92,10 @@ func _on_SupplyButton_pressed():
 func _on_UnitInfoButton_pressed():
 	if $"/root/Game".selected_unit != null:
 		var popup_pos = camera.get_screen_center()
-		popup_pos = Vector2(
-			popup_pos.x - self.get_size().x,
-			popup_pos.y - self.get_size().y
-		)
+		# popup_pos = Vector2(
+		# 	popup_pos.x - $UnitInfo.get_size().x,
+		# 	popup_pos.y - $UnitInfo.get_size().y
+		# )
 		$UnitInfo.set_position(popup_pos)
 		var selected_unit_id = $"/root/Game".selected_unit
 		var selected_unit = $"/root/Game"._get_entity_by_id(selected_unit_id).node

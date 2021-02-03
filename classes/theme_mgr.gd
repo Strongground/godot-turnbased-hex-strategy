@@ -52,7 +52,6 @@ func load_theme(theme_name):
 		theme_object[data_filename] = _read_json(file_path)
 	self.theme_object = theme_object
 	# Fill default sounds
-	print(theme_path+'/'+standard_sounds_path+'/default_wheel_drive.wav')
 	default_sounds = {
 		'car': load(theme_path+'/'+standard_sounds_path+'/default_wheel_drive.wav'),
 		'tank': load(theme_path+'/'+standard_sounds_path+'/default_tank_drive.wav'),
@@ -71,7 +70,7 @@ func get_music_list():
 # Public getter for sprite path
 # @returns {String} Path where sprites of the theme are found
 func get_sprite_path():
-	return self.theme_object.sprite_path
+	return self.theme_path + '/' + self.standard_sprite_path
 
 # Public getter for factions
 # @returns {Dictionary} Dict containing all factions and their attributes
@@ -112,6 +111,21 @@ func get_faction_experience_definitions(faction_id):
 	if _is_theme_loaded():
 		if faction_id in theme_object['factions']:
 			return theme_object['factions'][faction_id]['experience']
+
+# Public getter for the sprites/frames of an effect defined in the theme.
+# @input {String} Effect ID
+# @returns {Array} Object with all effect sprite names
+func get_effect_sprites(effect_id):
+	if _is_theme_loaded():
+		if effect_id in theme_object['effects']:
+			var sprite_array = theme_object['effects'][effect_id]['sprites']
+			var i = 0
+			# Add full res: path to frame image for SpriteFrames object to consume
+			for element in sprite_array:
+				sprite_array[i] = self.get_sprite_path() + '/' + effect_id + '/' + sprite_array[i]
+				i += 1
+			return Array(sprite_array)
+		return false
 
 # Public getter for a units weapon object
 # @input {String} Id of the unit
@@ -161,7 +175,8 @@ func get_unit_sprites(unit_id):
 		if String(unit_id) in units:
 			var unit_sprites_content = units[String(unit_id)].unit_sprites
 			if typeof(unit_sprites_content) == TYPE_STRING:
-				# Explain
+				# If only a single image is given as unit sprite, flip it and save it as asset. If this asset
+				# already exists next time the game starts, it is used.
 				var flipped_sprite_path = String(unit_sprites_content.rsplit('.png')[0]+'-1.'+standard_sprite_format)
 				if not Directory.new().file_exists(theme_object['base_path']+'/'+flipped_sprite_path):
 					_generate_flipped_version(unit_sprites_content, flipped_sprite_path)

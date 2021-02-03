@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=2]
+
+[ext_resource path="res://classes/sfx.gd" type="Script" id=2]
+
+[sub_resource type="SpriteFrames" id=1]
+animations = [  ]
+
+[node name="effect" type="Node2D"]
+script = ExtResource( 2 )
+
+[node name="AnimatedSprite" type="AnimatedSprite" parent="."]
+frames = SubResource( 1 )
+animation = "explosion"
+
+[node name="lifetimer" type="Timer" parent="."]
+[connection signal="timeout" from="lifetimer" to="." method="_on_lifetimer_timeout"]

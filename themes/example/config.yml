@@ -7,5 +7,6 @@ data_files: [
   weapons: 'weapons.json',
   factions: 'factions.json',
   modifiers: 'mods.json',
-  music: 'music.json'
+  music: 'music.json',
+  effects: 'effects.json'
 ]

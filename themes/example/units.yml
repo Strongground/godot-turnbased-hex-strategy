@@ -235,7 +235,7 @@ taliban_heavy_tank:
   can_traverse: ['land']
   movement_points: 3
   fuel: 18
-  weapons: ['irregular_tank_cannon']
+  weapons: ['irregular_tank_cannon_he', 'irregular_tank_cannon_at']
   ammo: 3
   attack_bonus: 0
   is_supplier: false

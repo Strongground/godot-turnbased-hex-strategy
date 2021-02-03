@@ -103,7 +103,7 @@ func _ready():
 	# Create factions
 	factionMgr.load_factions()
 	# Load list of music titles to play
-	#musicMgr.play()
+	# musicMgr.play()
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
@@ -127,7 +127,7 @@ func _ready():
 	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
 	tile_list = self._build_hex_object_database()
 	# Place the units according to their ID and fill attributes.
-	# Create a global list of all entities on the map, the ir type, positions and nodes
+	# Create a global list of all entities on the map, their type, positions and nodes
 	entities = self._create_entity_list()
 	self._place_units()
 	self._update_units()
@@ -210,6 +210,14 @@ func _get_entity_by_id(id):
 			return entity
 	return false
 
+# Get entities array index from node ID
+# return the index of the entity corresponding to a node in the
+# global entities array.
+func _get_entity_index_from_node(node):
+	for entity in entities:
+		if entity.node.get_instance_id() == node.get_instance_id():
+			return entity.id
+
 # Get entity by grid position
 # Either returns an entity object or 'false'
 func _get_entity_by_pos(pos):
@@ -235,7 +243,16 @@ func _create_entity_list():
 			})
 			i += 1
 	return result
-	
+
+# Public function to remove an entity entry that has been freed from the game
+func remove_entity_from_list(node):
+	var id = self._get_entity_index_from_node(node)
+	var i = 0
+	for entity in self.entities:
+		if entity.id == id:
+			self.entities.remove(i)
+		i += 1
+
 # Update an entity in the global list of entities and their grid local positions.
 # This needs to be done after a unit has changed location, since all calculations
 # that involve position, are done with help of this global list.
@@ -398,11 +415,16 @@ func _end_turn():
 	_update_all_entities()
 	turn_counter += 1
 
+# Internal function to update all entities, based on type or other criteria.
+# Should ideally only be done, so use this function for alle updates that should
+# occur globally.
 func _update_all_entities():
 	for entity in self.entities:
 		if entity.type == 'unit':
 			entity.node.reset_movement_points()
+			entity.node.update_timed_modifiers()
 
+# Internal function to advance player rotation, normally when turn ends.
 func _advance_player_rotation():
 	var player_active = false
 	var next_player = ''
@@ -576,7 +598,6 @@ func _visit_map(start_position, target_position=null):
 
 		# if target_position is already found, stop visitation to speed up overall calculation
 		if target_position != null and current[0]['grid_pos'] == self._get_hex_object_from_global_pos(target_position)['grid_pos']:
-			print('Found target tile, breaking now!')
 			break
 		
 		frontier.pop_front()
@@ -626,6 +647,7 @@ func find_path(start_position, target_position):
 	#path.append(start_tile)
 	# invert path array so it goes from start to target and return
 	path.invert()
+	# _show_path(path, true)
 	return path
 
 # Helper function to help visualize the working of the flood fill
