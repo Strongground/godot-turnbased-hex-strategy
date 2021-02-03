@@ -114,15 +114,16 @@ func get_faction_experience_definitions(faction_id):
 
 # Public getter for the sprites/frames of an effect defined in the theme.
 # @input {String} Effect ID
+# @input {String} Effect Type, used to specify the folder
 # @returns {Array} Object with all effect sprite names
-func get_effect_sprites(effect_id):
+func get_effect_sprites(effect_id, effect_type):
 	if _is_theme_loaded():
 		if effect_id in theme_object['effects']:
 			var sprite_array = theme_object['effects'][effect_id]['sprites']
 			var i = 0
 			# Add full res: path to frame image for SpriteFrames object to consume
 			for element in sprite_array:
-				sprite_array[i] = self.get_sprite_path() + '/' + effect_id + '/' + sprite_array[i]
+				sprite_array[i] = self.get_sprite_path() + '/sfx/' + effect_type + '/' + effect_id + '/' + sprite_array[i]
 				i += 1
 			return Array(sprite_array)
 		return false

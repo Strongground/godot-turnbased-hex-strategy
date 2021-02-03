@@ -559,7 +559,7 @@ func _process_attack_finish():
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 
-	# $"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact)
+	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons')
 
 	defending_unit._play_sound('hit', attacking_unit_weapon)
 	# If attacker has attack value greater zero...
@@ -569,9 +569,6 @@ func _process_attack_finish():
 		var new_defender_strength = float("%.1f" % ((defender_effective_strength - attacker_effective_attack)))
 		# Has attack managed to overcome effective defense boost?
 		if new_defender_strength < defender_effective_strength:
-			# What does this even do? Diminish defender strength if it has armor? WTF?
-			# if state_save['defending_unit']['armor'] > 0:
-			# 	new_defender_strength += float(new_defender_strength / state_save['defending_unit']['armor'])
 			if float(new_defender_strength) <= 0:
 				state_save['defending_unit'].kill()
 			else:
