@@ -559,7 +559,7 @@ func _process_attack_finish():
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 
-	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons')
+	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
 
 	defending_unit._play_sound('hit', attacking_unit_weapon)
 	# If attacker has attack value greater zero...
