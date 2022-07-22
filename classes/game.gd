@@ -51,6 +51,7 @@ onready var hex_fill = find_node('Hex_Fill')
 onready var arrow_marker = find_node('Arrow')
 onready var tween = find_node('Tween')
 onready var GUI = find_node('GUI')
+onready var hex_highlight = $HexOutline
 # var tiles = null
 var tile_list = null
 var hex_offset = null
@@ -89,6 +90,8 @@ onready var label_turn = find_node('CurrentTurn')
 
 func _ready():
 	set_process_input(true)
+	# Set hex grid to not visible
+	hex_grid.modulate.a = 0
 	# Define players, this should later be done either in the scenario
 	# or the pre-scenario settings for multiplayer matches.
 	var registered_players = [
@@ -103,11 +106,11 @@ func _ready():
 	# Create factions
 	factionMgr.load_factions()
 	# Load list of music titles to play
-	# musicMgr.play()
+	musicMgr.play()
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
-	# The sorting is identical for odd and even, so hex_directions[0] always
+	# The mapping is identical for odd and even, so hex_directions[0] always
 	# gives the northern neighbour.
 	all_tiles = hexmap.get_used_cells()
 	hex_directions = [
@@ -303,13 +306,25 @@ func _get_hex_object_from_id(id):
 func _input(event):
 	# @TODO Maybe outsource this to a click controller module, or maybe delegate all
 	# click events to appropiate nodes from here. Ask Q/A
+
+	# 
+	if event is InputEventMouseMotion:
+		var mouse_pos = self.get_global_mouse_position()
+		var tile = self._get_hex_object_from_global_pos(mouse_pos)
+		hex_highlight.set_position(self._get_center_of_hex(hexmap.map_to_world(tile['grid_pos'])))
+		# var grid_pos = tile['grid_pos']
+		# var entity = _get_entity_by_pos(grid_pos)
+		# if (entity): 
+		# 	if (entity.node.get_type() == 'unit'):
+		# 		entity.node.show_panel(true)
+		
 	if event is InputEventKey:
 		if event.scancode == KEY_ESCAPE:
 			get_tree().quit()
 	elif event.is_action_pressed('mouse_click'):
 		# Once set the actual global mouse position needed for conversion of the coordinates
 		var click_pos = self.get_global_mouse_position()
-		print('Click registered at '+String(click_pos))
+		#print('Click registered at '+String(click_pos))
 		
 		### If clicked on empty spot on map, not on a unit or GUI
 		var gui_click = GUI.is_gui_clicked()
@@ -318,58 +333,58 @@ func _input(event):
 		if not unit_click and not gui_click and map_click:
 			# Save tile information in local variable for easy access
 			self.current_tile = self.get_tile(click_pos)
-			print('Click was not on unit, was not on gui, but on map, on tile '+String(current_tile))
+			#print('Click was not on unit, was not on gui, but on map, on tile '+String(current_tile))
 			# If a unit was previously selected
 			if self.selected_unit != null:
-				print('A unit is still selected...')
+				#print('A unit is still selected...')
 				# If the selected unit can move and the player clicks on a valid target destination, 
 				# the click sets the movement destination and triggers pathfinding to it, saving
 				# the resulting path array at the selected unit.
 				if self.movement_selection == true and self._is_valid_destination(click_pos) == true:
-					print('Move command issued. Click Pos is valid destination and unit can move.')
+					#print('Move command issued. Click Pos is valid destination and unit can move.')
 					var unit = _get_entity_by_id(self.selected_unit)
 					unit.node.move_unit(unit.node.get_global_position(), click_pos, unit)
 					self.movement_selection = false
 		# if clicked on unit
 		elif unit_click and not gui_click:
-			print('Click was on a unit, was not on gui.')
+			#print('Click was on a unit, was not on gui.')
 			var unit = self._is_unit(click_pos, true).node
 			# if clicked unit is owned by player, select it and evaluate its possibilities
 			if unit.owned_by_active_player():
-				print('Unit is owned by active player')
+				#print('Unit is owned by active player')
 				if self.resupply_selection == true:
-					print('Resupply action to own unit from already selected unit')
+					#print('Resupply action to own unit from already selected unit')
 					var player_unit = _get_entity_by_id(self.selected_unit).node
 					# Check if, for the player unit, resupplying the click pos is possible, and if yes, do it.
 					player_unit.resupply(click_pos)
 					self.resupply_selection = false
 				elif self.attack_selection == true:
-					print('Invalid choice, no intentional friendly fire!')
+					#print('Invalid choice, no intentional friendly fire!')
 					self.attack_selection = false
 					# Do something here, some sort of "Nah ah!", visually or via audio cue, to indicate
 					# this action is not possible.
 				else:
-					print('Mark clicked unit as selected')
+					#print('Mark clicked unit as selected')
 					self.selected_unit = unit
 					self.selected_unit.select()
-					if unit.can_move():
-						GUI.disable_movement_button(false)
-					if unit.combat_ready():
-						GUI.disable_attack_button(false)
-					if unit.can_resupply():
-						GUI.disable_supply_button(false)
+					# Update unit stats in GUI
+					GUI.update_unit_info(unit.get_unit_name(), unit.get_strength_points(), unit.get_movement_points(), unit.get_ammo())
+					# Enable or disable action buttons based on units attributes
+					GUI.disable_movement_button(not unit.can_move())
+					GUI.disable_attack_button((not unit.combat_ready() or not unit.can_move()))
+					GUI.disable_supply_button(not unit.can_resupply())
 			else:
 				# if clicked unit is not owned by player, see if a player-owned unit is selected...
-				print('Clicked unit is not owned by active player')
+				#print('Clicked unit is not owned by active player')
 				if self.selected_unit != null:
-					print('A own unit is selected')
+					#print('A own unit is selected')
 					var player_unit = _get_entity_by_id(self.selected_unit).node
 					# If in attack mode
 					if self.attack_selection == true:
-						print('Entered attack mode')
+						#print('Entered attack mode')
 						# Check if, for the player unit the click pos is a valid attack target
 						if player_unit.is_valid_attack_target(click_pos):
-							print('Attack command issued. Target is valid attack target.')
+							#print('Attack command issued. Target is valid attack target.')
 							var enemy_unit = self._is_unit(click_pos, true).node
 							player_unit.attack(enemy_unit)
 							self.attack_selection = false
@@ -411,18 +426,22 @@ func _input(event):
 
 # Process the current turn
 func _end_turn():
-	_advance_player_rotation()
 	_update_all_entities()
+	_advance_player_rotation()
 	turn_counter += 1
 
 # Internal function to update all entities, based on type or other criteria.
-# Should ideally only be done, so use this function for alle updates that should
-# occur globally.
+# Should ideally only be done once, so use this function for alle updates that should
+# occur globally once in a turn.
 func _update_all_entities():
 	for entity in self.entities:
+		print('Check entity: ',entity)
 		if entity.type == 'unit':
 			entity.node.reset_movement_points()
 			entity.node.update_timed_modifiers()
+		elif entity.type == 'editor_marker':
+			if entity.node.get_marker_type() == 'VICTORY':
+				entity.node.check_ownership()
 
 # Internal function to advance player rotation, normally when turn ends.
 func _advance_player_rotation():
@@ -464,12 +483,13 @@ func _physics_process(delta):
 # Check if there is a tilemap at the given position.
 # Use this to wrap up input loop, to avoid NPE when clicked outside tilemap.
 # Offers strict mode (check if no entity at given coords) or standard
-# mode, which just checks that no entity of type unit is a the given coords. 
-# Background: The move
-# logic allows moving onto certain types of entities (e.g. map logic entities 
-# like cities), but not others (units, mainly). In this case it is necessary to
-# check if there is a unit at the given coords or "something else", which qualifies
-# as "tilemap" in this case.
+# mode, which just checks that no entity of type unit is a the given coords.
+#
+# Background: The move logic allows moving onto certain types of entities
+# (e.g. map logic entities like cities), but not others (units, mainly). 
+# In this case it is necessary to check if there is a unit at the given coords
+# or "something else", which qualifies as "tilemap" in this case.
+#
 # @input {Vector2} position of the click to check for tilemap
 # @input {Boolean} (optional) Strict mode, checks against entities.
 # @returns {Boolean} return true if there is no entity at given coords
@@ -519,6 +539,7 @@ func deselect_all_entities():
 				GUI.disable_movement_button(true)
 				GUI.disable_attack_button(true)
 				GUI.disable_supply_button(true)
+				GUI.update_unit_info("","","","")
 			entity.node.deselect()
 			self.selected_unit = null
 
@@ -556,7 +577,7 @@ func highlight_hex(given_position):
 	var highlight_pos = _get_center_of_hex(hex_world_pos)
 	hex_marker.set_position(highlight_pos)
 
-# Returns the centered position of the tile, which position is given
+# Returns the centered position of the tile, whose position is given
 # @input {Vector2} global position of hex
 # @output {Vector2} global position of center of hex
 func _get_center_of_hex(given_position):
@@ -702,9 +723,9 @@ func _show_path(path, mark_start_tile=true):
 # Helper function to visualize the breadcrumbs in each tile object added by flood fill
 # by rendering an arrow on every tile, pointing to the origin tile.
 # @input {Array} of tile objects
-func _show_origin(tile_list):
+func _show_origin(local_tile_list):
 	self._delete_all_nodes_with('OriginMarker')
-	for tile in tile_list:
+	for tile in local_tile_list:
 		var new_arrow = arrow_marker.duplicate()
 		# Set custom name for the arrow marker, so it can be deleted later
 		new_arrow.set_name('OriginMarker')
@@ -736,7 +757,7 @@ func debug_log(filename, message):
 	var log_path = 'res://logs/'
 	var file_ending = '.log'
 	var logfile = File.new()
-	logfile.open('res://logs/pathfinding.log', File.READ_WRITE)
+	logfile.open(log_path+filename+file_ending, File.READ_WRITE)
 	logfile.seek_end() # Find end
 	logfile.store_string('\n') # Newline
 	if message:
@@ -880,9 +901,7 @@ func _mark_hex_dimensions(given_position):
 # Display various coordinates for hex tiles at grid-based coordinates
 # Render the information onto the tile itself
 # @input {Vector2} input_coordinates - grid local coordinates of tile
-# @input {String} show_coordinates - String of the name of coordinates that should be shown
-# Possible values are: "grid", "global", "id"
-func _display_hex_info(input_coordinates, show_coordinates):
+func _display_hex_info(input_coordinates):
 	var new_label = Label.new()
 	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
 	new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))

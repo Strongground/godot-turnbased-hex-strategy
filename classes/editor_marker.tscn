@@ -1,43 +1,29 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://classes/editor_marker.gd" type="Script" id=1]
 [ext_resource path="res://assets/icons/editor_marker_city.png" type="Texture" id=2]
 [ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
+[ext_resource path="res://classes/flag.tscn" type="PackedScene" id=4]
 
 [sub_resource type="CircleShape2D" id=1]
 
-custom_solver_bias = 0.0
-radius = 10.0
-
 [node name="EditorMarker" type="Area2D"]
-
-input_pickable = true
-gravity_vec = Vector2( 0, 1 )
-gravity = 98.0
-linear_damp = 0.1
-angular_damp = 1.0
-audio_bus_override = false
-audio_bus_name = "Master"
 script = ExtResource( 1 )
-is_selectable = false
-map_text = ""
-marker_type = null
 
-[node name="Icon" type="Sprite" parent="." index="0"]
-
+[node name="Icon" type="Sprite" parent="."]
 position = Vector2( 0, 0.999999 )
 scale = Vector2( 0.843744, 0.843744 )
 texture = ExtResource( 2 )
 
-[node name="hex_outline" type="Sprite" parent="." index="1"]
-
+[node name="hex_outline" type="Sprite" parent="."]
 visible = false
 texture = ExtResource( 3 )
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="." index="2"]
-
-position = Vector2( -2, 1 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2( 0, 1 )
 scale = Vector2( 6.31008, 6.31008 )
 shape = SubResource( 1 )
 
-
+[node name="OwnerIcon" parent="." instance=ExtResource( 4 )]
+position = Vector2( 72.5975, -56 )
+scale = Vector2( 0.065, 0.065 )

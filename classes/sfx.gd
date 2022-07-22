@@ -7,6 +7,7 @@ extends Node2D
 # member vars here
 onready var animated_sprite = $AnimatedSprite
 onready var themeMgr =  $"/root/Game/ThemeManager"
+onready var sound_emitter = $SoundEmitter
 # If 'lifetime' is -1, it will exist until manually deleted.
 # If 'lifetime' is 0 (default), the effect will exist as long as the animation
 # runs and then terminate itself.

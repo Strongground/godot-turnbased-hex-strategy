@@ -7,7 +7,7 @@
 usarmy:
   display_name: 'US Army'
   description: "We're the good guys!"
-  icon: 'graphics/faction_icons/us.png'
+  icon: 'graphics/faction_icons/us.jpg'
   experience:
     untrained:
       display_name: 'Private'
@@ -49,7 +49,7 @@ taliban:
       multiplier: 0.9
 
 civilians:
-  display_name: 'Innocent Civilians'
+  display_name: 'Civilians'
   description: 'Protect us, we are unarmed.'
   icon: 'graphics/faction_icons/civ.png'
   experience:
