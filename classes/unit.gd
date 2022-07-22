@@ -5,22 +5,27 @@ extends "res://classes/entity.gd"
 # unit owner
 # expect identifier of player
 export (int) var unit_owner = 0
+
 # unit faction
 # expect id of faction based on imported factions file from theme
 export var unit_faction = ''
+
 # direction the unit is facing visually
 # @TODO this must be changed so it can be used with 1-6 directions. Possible directions
-# and their resprective mappings would be:
+# and their respective mappings would be:
 # * "none" (For static entites like buildings)
 # * "left/right" = 0/1 (Done in software by mirroring)
 # * "northwest/north/northeast/southeast/south/southwest" = 0,1,2,3,4,5
 export (int) var direction = 0
+
 # if a unit has e.g. various camo schemes (desert, woodland) or randomized appearance.
 # the detailed documentation for these go into the faction object
 export (int) var graphical_scheme = null
+
 # unit id, from which all additional data like sprite, unit attributes, name etc
 # are loaded from units.data
 export var unit_id = ''
+
 #################################################################################
 # 
 # Unit Attributes
@@ -210,13 +215,21 @@ var max_movement_points = 0
 var experience_definitions = null
 var active_modifiers = {}
 var state_save = {}
+onready var property_display = $Panel
 onready var sound_emitter = $'SoundEmitter'
 onready var attack_delay_timer = $'AttackEffectDelay'
+onready var settingsMgr = $'/root/Game/SettingsManager'
+onready var themeMgr =  $'/root/Game/ThemeManager'
+onready var gui = $'/root/Game/MainCamera/GUI Container/GUI'
 
 # This function simply is a getter for the unit_id string, corresponding to
 # one entry in the theme files.
 func get_unit_id():
 	return unit_id
+
+# Public getter for display name
+func get_unit_name():
+	return display_name
 
 # This function capsulates all actions necessary to move this unit
 # from a start_point of the map to an end_point if it is possible.
@@ -242,19 +255,30 @@ func move_unit(start_point, end_point, entity):
 	self._play_sound('move')
 	self.animate_path(new_path, entity)
 	self.deselect()
+	gui.update_unit_info("","","","")
 
 # Set crest icon based on faction of unit
 func _set_faction_icon():
-	var icon_texture = $"/root/Game/ThemeManager".get_faction_icon(self.unit_faction)
-	$FactionIcon.set_texture(icon_texture)
+	var icon_texture = themeMgr.get_faction_icon(self.unit_faction)
+	$Flag/FlagSin.set_texture(icon_texture)
+
+# Public getter for faction
+# @returns {String} The id of the faction according to theme
+func get_faction():
+	return self.unit_faction
+
+# Public setter for visual attribute visibility
+# @input {Bool} If the panel should be shown or not
+func show_panel(value):
+	property_display.visible = bool(value)
 
 # This function sets the sprite of the unit according to the themes-data object
 # and the direction of the unit
 # @input {int} The direction of the unit
 func _set_sprite(dir):
-	var sprites = $"/root/Game/ThemeManager".get_unit_sprites(unit_id)
-	var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
-	var sprite_scale = $"/root/Game/ThemeManager".get_sprite_scale(unit_id)
+	var sprites = themeMgr.get_unit_sprites(unit_id)
+	var theme_name = themeMgr.get_current_theme_name()
+	var sprite_scale = themeMgr.get_sprite_scale(unit_id)
 	var sprite_index = null
 	var texture = null
 	# If only one sprite per unit, use it (or the automatically generated 
@@ -277,10 +301,10 @@ func reset_movement_points():
 	self.movement_points = self.max_movement_points
 	self._update_movementpoints_indicator()
 
-# Public getter for the experience value. Returns an dictionary with all information
+# Public getter for the experience value. Returns a dictionary with all information
 # about the current level of experience, like display_name of rank, multiplier (maybe
 # icon in the future?)
-# @returns {Dictionary}
+# @returns {Dictionary} see description above
 func get_experience():
 	for exp_level in self.experience_definitions:
 		if self.experience >= self.experience_definitions[exp_level]['range'][0] or self.experience < self.experience_definitions[exp_level]['range'][1]:
@@ -290,6 +314,11 @@ func get_experience():
 # @returns {Float}
 func get_experience_points():
 	return self.experience
+
+# Public getter for owning players ID
+# @returns {Int} ID of owning player
+func get_owner():
+	return self.unit_owner
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this unit.
@@ -325,8 +354,10 @@ func resupply(grid_pos):
 	var is_unit = game._is_unit(grid_pos, true)
 	if is_unit != null:
 		var unit = is_unit.node
+		# Check if unit is eligible for supplying
 		if unit.owned_by_active_player() || unit.get_unit_stance() == 'ally':
 			print('Valid target for resupply. Resupplying now!')
+			# Check 
 
 # This function should update the appearance of the unit, calculate stat
 # changes etc. after each round. There is no need to do this in _process
@@ -337,11 +368,22 @@ func update():
 	self._apply_mods()
 	self._update_unitstrength_indicator()
 	self._update_movementpoints_indicator()
-	
+	self._update_unitammo_indicator()
+	if self.get_movement_points() <= 0:
+		gui.disable_movement_button(true)
+		gui.disable_attack_button(true)
+	if self.get_ammo() <= 0:
+		gui.disable_attack_button(true)
+
 # Public getter for movement points of this unit.
 # @returns {int} Movement points of this unit
 func get_movement_points():
 	return self.movement_points
+
+# Public getter for unit strength.
+# @returns {float} Strength points of this unit
+func get_strength_points():
+	return self.unit_strength
 
 # Internal, updates movement points based on next tile movement.
 func _update_movement_points(target_tile):
@@ -350,11 +392,15 @@ func _update_movement_points(target_tile):
 
 # Internal, updates the indicator at the unit to show the movement points.
 func _update_movementpoints_indicator():
-	$MovementPointsIndicator.set_bbcode('[center]'+String(self.movement_points)+'[/center]')
+	$Panel/MovementPointsIndicator.set_bbcode(String(self.get_movement_points()))
 
-# Internal, updates the visual unit_strength indicator, e.g. after attack.
+# Internal, updates the visual unit_strength indicator, e.g. after getting attacked.
 func _update_unitstrength_indicator():
-	$UnitStrengthIndicator.set_bbcode('[center]'+String(self.unit_strength)+'[/center]')
+	$Panel/UnitStrengthIndicator.set_bbcode(String(self.get_strength_points()))
+
+# Internal, updates the visual ammo counter at the unit, e.g. after attacking.
+func _update_unitammo_indicator():
+	$Panel/UnitAmmoIndicator.set_bbcode(String(self.get_ammo()))
 
 # Public getter for ammo left in this unit.
 # @outputs {int} Ammo of this unit
@@ -362,10 +408,10 @@ func get_ammo():
 	return self.ammo
 
 # Public getter that checks if this unit is able to move.
-# If it is a non-motorized unit, or fuel AND movement points are positive,
-# @returns {Boolean} if fuel AND movement points are depleted, return false, otherwise true.
+# If it is a non-motorized unit or has fuel AND if unit has movement points, return true.
+# @returns {Boolean} if fuel or movement points are depleted, return false, otherwise true.
 func can_move():
-	if self.fuel == -1 or (self.fuel > 0 and self.movement_points > 0):
+	if (self.fuel == -1 or self.fuel > 0) and self.movement_points > 0:
 		return true
 	elif self.fuel == 0 or self.movement_points == 0:
 		return false
@@ -385,7 +431,8 @@ func kill():
 # It takes into consideration both the state of this unit as well as the
 # type and position of the given enemy unit.
 # If nothing definitive can be determined, return false per default.
-# @input {Object} -optional- The enemy unit, if not given, return basic combat readiness
+# @input {Object} -optional- The enemy unit, if not given, return basic
+# combat readiness.
 # @returns {Boolean} 
 # @TODO Test if chosen weapon exists, has ammo / needs ammo, is in range
 func can_attack_unit(enemy_unit):
@@ -402,8 +449,8 @@ func can_attack_unit(enemy_unit):
 # @returns {Boolean}
 func combat_ready():
 	var has_weapon = !self.weapons.empty()
-	var has_ammo = self.ammo > 0
-	if has_weapon and has_ammo and self.can_move():
+	var has_ammo = self.get_ammo() > 0
+	if has_weapon and has_ammo and self.get_movement_points() >= 1:
 		return true
 	return false
 
@@ -440,7 +487,7 @@ func get_weapon(id):
 # Public function to control the direction the unit grapic
 # is rotated. This is only cosmetic at the moment, but may
 # be extended to allow for "attack from behind" bonus etc.
-func turn_towards(grid_pos):
+func turn_towards(_grid_pos):
 	# get direction of target grid_pos relative to this unit
 	if self.unit_sprites.size() == 2:
 		# determine how we should rotate, just towards x axis if only two sprites exist?
@@ -454,7 +501,7 @@ func attack(entity, weapon=null):
 	if weapon == null:
 		weapon = self.get_main_weapon()
 		if weapon == null:
-			print('Cannot comply, unit has no weapon!')
+			print("Cannot comply, unit has no weapon! Attack action shouldn't be possible to select.")
 			return false
 	# Play sound
 	self._play_sound('attack', weapon)
@@ -479,7 +526,7 @@ func attack(entity, weapon=null):
 		attacker_effective_attack += attacking_unit['attack_bonus']
 		print('Attacker has attack modifier of ',attacking_unit['attack_bonus'],' resulting in effective attack value change to: ',attacker_effective_attack)
 
-	## Armor Piercing ammo & armor effects
+	## Armor piercing weapon & armor effects
 	if defending_unit['armor'] > 0:
 		print('Defender has armor value of ',defending_unit['armor'])
 		if attacking_unit_weapon['armor_piercing'] <= 0:
@@ -490,7 +537,7 @@ func attack(entity, weapon=null):
 			attacker_effective_attack = attacker_effective_attack + at_factor
 			print('But attackers weapons are armor piercing, dealing additional damage of ',at_factor,' totalling ',attacker_effective_attack,' attack value.')
 
-	## High Explosive ammo
+	## Area of effect weapon
 	if defending_unit['armor'] <= 0 and attacking_unit_weapon['explosive'] > 0:
 		attacker_effective_attack = attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)
 		var he_factor = ((attacker_effective_attack * (attacking_unit_weapon['explosive'])) - attacker_effective_attack) / 0.75
@@ -526,11 +573,17 @@ func attack(entity, weapon=null):
 	# Determine if hit or miss, based on experience of unit
 	var rand = randf()
 	var hit = false
-	if rand >= (0.35 - get_experience()['multiplier']):
+	if rand >= (0.45 - get_experience()['multiplier']):
 		print("It's a hit!")
 		hit = true
 	else:
 		print('Attacking unit misses!')
+
+	# Update base stats, ragardless of hit or miss
+	if attacking_unit_weapon['use_ammo']:
+		attacking_unit.ammo -= 1
+	attacking_unit.movement_points -= 1
+	attacking_unit.update()
 
 	if hit:
 		state_save = {
@@ -538,6 +591,7 @@ func attack(entity, weapon=null):
 			'defender_effective_strength': defender_effective_strength,
 			'attacking_unit_weapon': attacking_unit_weapon,
 			'attacker_effective_attack': attacker_effective_attack,
+			'attacking_unit': attacking_unit
 		}
 		self.attack_delay_timer.start()
 		# Hit
@@ -558,6 +612,7 @@ func _process_attack_finish():
 	var defender_effective_strength = state_save['defender_effective_strength']
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
+	var attacking_unit = state_save['attacking_unit']
 
 	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
 
@@ -570,17 +625,12 @@ func _process_attack_finish():
 		# Has attack managed to overcome effective defense boost?
 		if new_defender_strength < defender_effective_strength:
 			if float(new_defender_strength) <= 0:
-				state_save['defending_unit'].kill()
+				defending_unit.kill()
 			else:
-				state_save['defending_unit']['unit_strength'] = new_defender_strength
-				state_save['defending_unit']._update_unitstrength_indicator()
+				defending_unit['unit_strength'] = new_defender_strength
+				defending_unit._update_unitstrength_indicator()
 		else:
 			prints('Attack did not manage to get trough to defenders base strength.')
-	# Update base stats
-	if attacking_unit_weapon['use_ammo']:
-		self.ammo -= 1
-	self.movement_points -= 1
-	self.update()
 
 # Function to fill the attributes of the unit from the themes data object
 # corresponding to it. If a value was filled by the level editor with a non-
@@ -594,13 +644,14 @@ func fill_attributes(data_object):
 	self.max_movement_points = self.movement_points
 	self._populate_weapons()
 	self._fill_mods()
-	self.experience_definitions = $"/root/Game/ThemeManager".get_faction_experience_definitions(self.unit_faction)
+	self.experience_definitions = themeMgr.get_faction_experience_definitions(self.unit_faction)
+	self._update_unitammo_indicator()
 
 # Fill modifiers from theme
 func _fill_mods():
 	for index in range(0, self.modifiers.size()):
 		var modifier_id = modifiers[index]
-		self.active_modifiers[modifier_id] = $"/root/Game/ThemeManager".get_modifier(modifier_id)
+		self.active_modifiers[modifier_id] = themeMgr.get_modifier(modifier_id)
 		self.active_modifiers[modifier_id]['applied'] = false
 
 # Apply modifier changes to unit stats, also deletes mods if their max duration is reached.
@@ -688,11 +739,17 @@ func _get_direction(angle):
 # - death
 # - resupply
 # - ...
+# Note that "hit" sound does include the effect on the unit of a successful hit, but not the
+# sound of the weapon hit itself. So e.g. the sound of a soft body being hit by a sword/arrow
+# will emit from the unit but the sound of the sword swing/arrow flying will be emitted
+# by the effect/sfx node which is dynamically spawned upon attack. This way, a missed attack
+# won't play a "hit" sound and overall less unique sounds are necessary.
 # These keywords reference either a sound given in the unit definition in the theme, or
 # a fallback default sound is used, that either the theme supplies or the base game.
 # @input {String} info, optional additional info
 func _play_sound(keyword, info=null):
-	self.sound_emitter.stream = $"/root/Game/ThemeManager".get_sound(self.unit_id, keyword, info)
+	self.sound_emitter.set_volume_db(settingsMgr.get_sfx_volume())
+	self.sound_emitter.stream = themeMgr.get_sound(self.unit_id, keyword, info)
 	self.sound_emitter.play()
 
 # @TODO Find out how to calc distance between two points, read up on
@@ -705,7 +762,7 @@ func _populate_weapons():
 	var weapon_ids = self.weapons
 	self.weapons = {}
 	for weapon_id in weapon_ids:
-		self.weapons[weapon_id] = $"/root/Game/ThemeManager".get_weapon(weapon_id)
+		self.weapons[weapon_id] = themeMgr.get_weapon(weapon_id)
 
 func _ready():
 	## Init ingame
@@ -713,6 +770,8 @@ func _ready():
 	# Set necessary offset for correct position relative to grid
 	offset = Vector2(-6, 0)
 	set_process_input(true)
+	# Mark unit as selectable
+	self.set_selectable(true)
 
 func _input(event):
 	pass
@@ -730,7 +789,7 @@ func _on_MoveTween_tween_completed(object, key):
 	else:
 		# Done animating, update unit locally
 		self.update()
-		$"/root/Game"._delete_all_nodes_with('path_vis')
+		# $"/root/Game"._delete_all_nodes_with('path_vis')
 		# ...then call global update
 		# Global update is for udpating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)
