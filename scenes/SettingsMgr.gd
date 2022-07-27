@@ -10,7 +10,7 @@ onready var sfxManager = $"/root/Game/SfxManager"
 var scene_loaded = false
 # public members
 export (float) var generalVolume = 1.0 setget _update_general_volume
-export (float) var musicVolume = 1.0 setget _update_music_volume
+export (float) var musicVolume = 0 setget _update_music_volume
 export (float) var sfxVolume = 1.0 setget _update_sfx_volume
 
 func _ready():

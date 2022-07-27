@@ -238,6 +238,7 @@ func _create_entity_list():
 		# if node is of allowed type
 		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
+			node.initialize()
 			result.append({
 				"id": i,
 				"node": node,
@@ -282,6 +283,7 @@ func _get_hex_neighbour_pos(hex_position, direction):
 # @returns {Object} The tile object
 func _get_hex_object_from_global_pos(given_position):
 	var grid_position = hexmap.world_to_map(given_position)
+	print(given_position)
 	for tile in tile_list:
 		if tile['grid_pos'] == grid_position:
 			return tile
@@ -306,17 +308,19 @@ func _get_hex_object_from_id(id):
 func _input(event):
 	# @TODO Maybe outsource this to a click controller module, or maybe delegate all
 	# click events to appropiate nodes from here. Ask Q/A
-
-	# 
 	if event is InputEventMouseMotion:
 		var mouse_pos = self.get_global_mouse_position()
 		var tile = self._get_hex_object_from_global_pos(mouse_pos)
-		hex_highlight.set_position(self._get_center_of_hex(hexmap.map_to_world(tile['grid_pos'])))
-		# var grid_pos = tile['grid_pos']
-		# var entity = _get_entity_by_pos(grid_pos)
-		# if (entity): 
-		# 	if (entity.node.get_type() == 'unit'):
-		# 		entity.node.show_panel(true)
+		# If tile is null, mouse was outside play area
+		if tile != null:
+			hex_highlight.set_position(self._get_center_of_hex(hexmap.map_to_world(tile['grid_pos'])))
+			var entity = _get_entity_by_pos(tile['grid_pos'])
+			if (entity):
+				if (entity.node.get_type() == 'unit'):
+					# self._render_dot(entity.node.get_global_position(), self)
+					GUI.show_unit_quick_panel(entity, true)
+			else:
+				GUI.hide_unit_quick_panel()
 		
 	if event is InputEventKey:
 		if event.scancode == KEY_ESCAPE:

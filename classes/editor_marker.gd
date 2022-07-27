@@ -34,11 +34,24 @@ func _ready():
 	if root.city_names_visible && map_text.length() > 0:
 		self._create_map_text(map_text)
 	
-	# For victory markers, show different decoration
+	# For victory markers, show outline
 	if self.marker_type == 'VICTORY':
 		$'hex_outline'.set_visible(true)
-		$'OwnerIcon'.set_visible(true)
+	# For reinforcement markers, show different outline
+	if self.marker_type == 'REINFORCEMENT':
+		$'hex_outline'.set_visible(true)
+		$'hex_outline'.set_modulate(Color("3b9125"))
 	
+	# Show owner icon
+	$'OwnerIcon'.set_visible(true)
+
+
+func initialize():
+	if location_owner:
+		var faction_id = playerMgr.get_player_faction(location_owner)
+		if faction_id:
+			self.set_owner(location_owner)
+			self._set_owner_icon(faction_id)
 
 # Public getter for type of editor marker
 func get_marker_type():

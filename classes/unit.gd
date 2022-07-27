@@ -215,7 +215,6 @@ var max_movement_points = 0
 var experience_definitions = null
 var active_modifiers = {}
 var state_save = {}
-onready var property_display = $Panel
 onready var sound_emitter = $'SoundEmitter'
 onready var attack_delay_timer = $'AttackEffectDelay'
 onready var settingsMgr = $'/root/Game/SettingsManager'
@@ -255,6 +254,7 @@ func move_unit(start_point, end_point, entity):
 	self._play_sound('move')
 	self.animate_path(new_path, entity)
 	self.deselect()
+	# Update movement points display
 	gui.update_unit_info("","","","")
 
 # Set crest icon based on faction of unit
@@ -266,11 +266,6 @@ func _set_faction_icon():
 # @returns {String} The id of the faction according to theme
 func get_faction():
 	return self.unit_faction
-
-# Public setter for visual attribute visibility
-# @input {Bool} If the panel should be shown or not
-func show_panel(value):
-	property_display.visible = bool(value)
 
 # This function sets the sprite of the unit according to the themes-data object
 # and the direction of the unit
@@ -392,15 +387,18 @@ func _update_movement_points(target_tile):
 
 # Internal, updates the indicator at the unit to show the movement points.
 func _update_movementpoints_indicator():
-	$Panel/MovementPointsIndicator.set_bbcode(String(self.get_movement_points()))
+	# $Panel/MovementPointsIndicator.set_bbcode(String(self.get_movement_points()))
+	pass
 
 # Internal, updates the visual unit_strength indicator, e.g. after getting attacked.
 func _update_unitstrength_indicator():
-	$Panel/UnitStrengthIndicator.set_bbcode(String(self.get_strength_points()))
+	# $Panel/UnitStrengthIndicator.set_bbcode(String(self.get_strength_points()))
+	pass
 
 # Internal, updates the visual ammo counter at the unit, e.g. after attacking.
 func _update_unitammo_indicator():
-	$Panel/UnitAmmoIndicator.set_bbcode(String(self.get_ammo()))
+	# $Panel/UnitAmmoIndicator.set_bbcode(String(self.get_ammo()))
+	pass
 
 # Public getter for ammo left in this unit.
 # @outputs {int} Ammo of this unit

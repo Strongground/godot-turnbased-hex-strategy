@@ -48,6 +48,16 @@ func _set_player_stances(player_options):
 # be found, it is returned. Otherwise, false is returned.
 func get_player_by_id(id):
 	for player in self.players:
-		if player.node.get_id() == id:
+		if String(player.node.get_id()) == String(id):
 			return player
+	return false
+
+# Public getter to return faction ID of player
+# @input {String} ID of player
+# @returns {String} ID of faction of player
+func get_player_faction(id):
+	for player in self.players:
+		var testtest = player.node.get_id()
+		if String(player.node.get_id()) == String(id):
+			return player.node.get_faction_id()
 	return false

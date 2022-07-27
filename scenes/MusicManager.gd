@@ -18,8 +18,8 @@ var standard_themes_path = 'res://themes'
 var standard_music_path = 'music'
 var playlist = null
 var iterator = 0
-var musicVolume = 0
-var generalVolume = 0
+var musicVolume = 1
+var generalVolume = 1
 onready var streamPlayer = $"/root/Game/BackgroundMusicPlayer"
 # public members
 
@@ -48,7 +48,7 @@ func play():
 
 # Adjust volume of background music
 func adjust_volume(volume):
-	var volume_db = volume * 40 - 40
+	var volume_db = volume * 80 - 80
 	self.streamPlayer.set_volume_db(volume_db)
 	return true
 

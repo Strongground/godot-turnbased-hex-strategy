@@ -26,6 +26,9 @@ func _physics_process(_delta):
 		# This is only executed in editor
 		self._snap_to_grid()
 
+func initialize():
+	pass
+
 # Getter for if this entity is selectable
 func is_selectable():
 	return self.selectable
@@ -97,8 +100,8 @@ func _snap_to_grid():
 
 # Internal helper function that returns the centered coordinates corrected
 # by given offset
-# @input {Vector2} offset, this can depend on entity type
 # @input {Vector2} grid coordinates of a hex
+# @input {Vector2} offset, this can depend on entity type
 # @returns {Vector2} global coordinates that represent the center of a hex
 func _get_centered_grid_pos(grid_coords, offset):
 	var world_coords = hexmap.map_to_world(grid_coords)

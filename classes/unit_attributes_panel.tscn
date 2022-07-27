@@ -1,0 +1,77 @@
+[gd_scene load_steps=5 format=2]
+
+[ext_resource path="res://assets/icons/ammo_icon.png" type="Texture" id=1]
+[ext_resource path="res://assets/fonts/lato_regular.tres" type="DynamicFont" id=2]
+[ext_resource path="res://assets/icons/heart_icon.png" type="Texture" id=3]
+[ext_resource path="res://assets/icons/walk_icon.png" type="Texture" id=4]
+
+[node name="UnitQuickPanel" type="Node2D"]
+
+[node name="Panel" type="Panel" parent="."]
+margin_left = -65.1535
+margin_top = -10.043
+margin_right = 54.8465
+margin_bottom = 9.95705
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="MovementPointsIndicator" type="RichTextLabel" parent="Panel"]
+margin_left = 20.2008
+margin_top = 1.25748
+margin_right = 40.2008
+margin_bottom = 19.2575
+custom_fonts/normal_font = ExtResource( 2 )
+bbcode_enabled = true
+bbcode_text = "0"
+meta_underlined = false
+text = "0"
+scroll_active = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="walk_icon" type="Sprite" parent="Panel"]
+position = Vector2( 9.92923, 9.10687 )
+scale = Vector2( 0.13715, 0.13715 )
+texture = ExtResource( 4 )
+
+[node name="UnitStrengthIndicator" type="RichTextLabel" parent="Panel"]
+margin_left = 60.9756
+margin_top = 1.37592
+margin_right = 80.9756
+margin_bottom = 19.3759
+custom_fonts/normal_font = ExtResource( 2 )
+bbcode_enabled = true
+bbcode_text = "0"
+text = "0"
+scroll_active = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="heart_icon" type="Sprite" parent="Panel"]
+position = Vector2( 48.1431, 9.31726 )
+scale = Vector2( 0.0886544, 0.0886544 )
+texture = ExtResource( 3 )
+
+[node name="UnitAmmoIndicator" type="RichTextLabel" parent="Panel"]
+margin_left = 99.725
+margin_top = 0.795349
+margin_right = 119.725
+margin_bottom = 18.7953
+custom_fonts/normal_font = ExtResource( 2 )
+bbcode_enabled = true
+bbcode_text = "0
+"
+text = "0
+"
+scroll_active = false
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="ammo_icon" type="Sprite" parent="Panel"]
+position = Vector2( 88.2598, 9.27246 )
+scale = Vector2( 0.0134269, 0.0134269 )
+texture = ExtResource( 1 )

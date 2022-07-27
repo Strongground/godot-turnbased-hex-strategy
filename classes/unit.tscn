@@ -1,17 +1,14 @@
-[gd_scene load_steps=10 format=2]
+[gd_scene load_steps=6 format=2]
 
 [ext_resource path="res://classes/unit.gd" type="Script" id=1]
 [ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
 [ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
-[ext_resource path="res://assets/fonts/lato_regular.tres" type="DynamicFont" id=4]
-[ext_resource path="res://assets/icons/walk_icon.png" type="Texture" id=5]
-[ext_resource path="res://assets/icons/heart_icon.png" type="Texture" id=6]
 [ext_resource path="res://classes/flag.tscn" type="PackedScene" id=7]
-[ext_resource path="res://assets/icons/ammo_icon.png" type="Texture" id=8]
 
 [sub_resource type="CircleShape2D" id=1]
 
 [node name="Unit" type="Area2D"]
+position = Vector2( 1, 0 )
 gravity = 100.0
 collision_layer = 33
 script = ExtResource( 1 )
@@ -40,75 +37,5 @@ shape = SubResource( 1 )
 
 [node name="AttackEffectDelay" type="Timer" parent="."]
 process_mode = 0
-
-[node name="Panel" type="Panel" parent="."]
-visible = false
-margin_left = -60.1896
-margin_top = -79.5112
-margin_right = 59.8104
-margin_bottom = -59.5112
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="MovementPointsIndicator" type="RichTextLabel" parent="Panel"]
-margin_left = 20.2008
-margin_top = 1.25748
-margin_right = 40.2008
-margin_bottom = 19.2575
-custom_fonts/normal_font = ExtResource( 4 )
-bbcode_enabled = true
-bbcode_text = "0"
-meta_underlined = false
-text = "0"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="walk_icon" type="Sprite" parent="Panel"]
-position = Vector2( 9.92923, 9.10687 )
-scale = Vector2( 0.13715, 0.13715 )
-texture = ExtResource( 5 )
-
-[node name="UnitStrengthIndicator" type="RichTextLabel" parent="Panel"]
-margin_left = 60.9756
-margin_top = 1.37592
-margin_right = 80.9756
-margin_bottom = 19.3759
-custom_fonts/normal_font = ExtResource( 4 )
-bbcode_enabled = true
-bbcode_text = "0"
-text = "0"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="heart_icon" type="Sprite" parent="Panel"]
-position = Vector2( 48.1431, 9.31726 )
-scale = Vector2( 0.0886544, 0.0886544 )
-texture = ExtResource( 6 )
-
-[node name="UnitAmmoIndicator" type="RichTextLabel" parent="Panel"]
-margin_left = 99.725
-margin_top = 0.795349
-margin_right = 119.725
-margin_bottom = 18.7953
-custom_fonts/normal_font = ExtResource( 4 )
-bbcode_enabled = true
-bbcode_text = "0
-"
-text = "0
-"
-scroll_active = false
-__meta__ = {
-"_edit_use_anchors_": false
-}
-
-[node name="ammo_icon" type="Sprite" parent="Panel"]
-position = Vector2( 88.2598, 9.27246 )
-scale = Vector2( 0.0134269, 0.0134269 )
-texture = ExtResource( 8 )
 [connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
 [connection signal="timeout" from="AttackEffectDelay" to="." method="_on_AttackEffectDelay_timeout"]

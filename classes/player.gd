@@ -67,6 +67,10 @@ func set_active(active):
 func get_faction():
 	return $FactionManager.get_faction(self.faction)
 
+# Public getter to get faction ID this players plays as.
+func get_faction_id():
+	return faction
+
 # Public getter to check wether this player is controlled by AI or a human.
 func is_human():
 	return is_human

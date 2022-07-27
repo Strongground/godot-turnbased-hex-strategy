@@ -1,7 +1,13 @@
 extends Container
 
+onready var hexmap = $"/root/Game/MapZones"
+onready var game = $"/root/Game"
+onready var unit_attributes_panel = $"UnitQuickPanel"
+onready var qp_strength = $"UnitQuickPanel/Panel/UnitStrengthIndicator"
+onready var qp_movement = $"UnitQuickPanel/Panel/MovementPointsIndicator"
+onready var qp_ammo = $"UnitQuickPanel/Panel/UnitAmmoIndicator"
+
 var camera = null
-var game = null
 var root = null
 var tile_info_popup = null
 var tile_info_popup_text = null
@@ -70,10 +76,6 @@ func _unhandled_input(event):
 # @input {Object} the tile object which information should be shown
 func _show_tile_info_popup(tile_object):
 	var popup_pos = camera.get_screen_center()
-	# popup_pos = Vector2(
-	# 	popup_pos.x - self.get_size().x,
-	# 	popup_pos.y - self.get_size().y
-	# )
 	tile_info_popup.set_position(popup_pos)
 	tile_info_popup_text.set_text(String(tile_object))
 	tile_info_popup.popup()
@@ -100,6 +102,21 @@ func update_unit_actionpoints(value):
 # Public setter for unit ammo indicator in GUI
 func update_unit_ammo(value):
 	unit_info_ammo.set_bbcode(String(value))
+
+# Public toggle for showing the units core attributes in a little panel above it
+func show_unit_quick_panel(entity, show):
+	# Figure out entities position + offset so panel is above it
+	var grid_coords = hexmap.world_to_map(entity.node.get_global_position())
+	unit_attributes_panel.set_global_position(entity.node._get_centered_grid_pos(grid_coords, Vector2(0,55)))
+	update_quick_panel(entity.node)
+
+func hide_unit_quick_panel():
+	unit_attributes_panel.set_global_position(Vector2(999999,999999))
+
+func update_quick_panel(unit):
+	qp_strength.set_bbcode(String(unit.get_strength_points()))
+	qp_movement.set_bbcode(String(unit.get_movement_points()))
+	qp_ammo.set_bbcode(String(unit.get_ammo()))
 
 func _physics_process(delta):
 	var popup_pos = camera.get_camera_screen_center()

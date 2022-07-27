@@ -8,7 +8,7 @@ var tile_types = [
 		'move_cost': 1.0,
 		'terrain': 'land'
 	},
-	# 1
+	# 1 
 	{
 		'name': 'Forest',
 		'move_cost': 2.0,
@@ -43,6 +43,18 @@ var tile_types = [
 		'name': 'Water',
 		'move_cost': 1.0,
 		'terrain': 'water'
+	},
+	# 7
+	{
+		'name': 'Desert',
+		'move_cost': 1.0,
+		'terrain': 'land'
+	},
+	# 8
+	{
+		'name': 'City',
+		'move_cost': 1.0,
+		'terrain': 'land'
 	}
 ]
 
