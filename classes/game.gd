@@ -283,7 +283,6 @@ func _get_hex_neighbour_pos(hex_position, direction):
 # @returns {Object} The tile object
 func _get_hex_object_from_global_pos(given_position):
 	var grid_position = hexmap.world_to_map(given_position)
-	print(given_position)
 	for tile in tile_list:
 		if tile['grid_pos'] == grid_position:
 			return tile
@@ -314,6 +313,7 @@ func _input(event):
 		# If tile is null, mouse was outside play area
 		if tile != null:
 			hex_highlight.set_position(self._get_center_of_hex(hexmap.map_to_world(tile['grid_pos'])))
+			GUI.update_tile_info(tile)
 			var entity = _get_entity_by_pos(tile['grid_pos'])
 			if (entity):
 				if (entity.node.get_type() == 'unit'):

@@ -6,6 +6,7 @@ onready var unit_attributes_panel = $"UnitQuickPanel"
 onready var qp_strength = $"UnitQuickPanel/Panel/UnitStrengthIndicator"
 onready var qp_movement = $"UnitQuickPanel/Panel/MovementPointsIndicator"
 onready var qp_ammo = $"UnitQuickPanel/Panel/UnitAmmoIndicator"
+onready var tile_info = $"Panel/UnitInfo/HoveringTileInfo"
 
 var camera = null
 var root = null
@@ -102,6 +103,9 @@ func update_unit_actionpoints(value):
 # Public setter for unit ammo indicator in GUI
 func update_unit_ammo(value):
 	unit_info_ammo.set_bbcode(String(value))
+
+func update_tile_info(tile):
+	tile_info.set_bbcode(String(tile.name))
 
 # Public toggle for showing the units core attributes in a little panel above it
 func show_unit_quick_panel(entity, show):
