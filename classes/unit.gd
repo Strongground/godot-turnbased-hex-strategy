@@ -414,12 +414,11 @@ func can_move():
 	elif self.fuel == 0 or self.movement_points == 0:
 		return false
 
-# Public function to kill this unit. This is mostly called by successful attack
-# function calls from another unit. It removes this node from the games entities list,
+# Public method to kill this unit. It removes this node from the games entities list,
 # so after this it will not be considered by the game.
 func kill():
-	# play animation
-	# on animation finished, call free() deferred
+	# - play death animation
+	# - on animation finished, remove unit
 	# for now, just remove node to show attack worked
 	game.remove_entity_from_list(self)
 	call_deferred('free')
@@ -572,10 +571,8 @@ func attack(entity, weapon=null):
 	var rand = randf()
 	var hit = false
 	if rand >= (0.45 - get_experience()['multiplier']):
-		print("It's a hit!")
+		#print("It's a hit!")
 		hit = true
-	else:
-		print('Attacking unit misses!')
 
 	# Update base stats, ragardless of hit or miss
 	if attacking_unit_weapon['use_ammo']:
@@ -613,8 +610,8 @@ func _process_attack_finish():
 	var attacking_unit = state_save['attacking_unit']
 
 	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
-
 	defending_unit._play_sound('hit', attacking_unit_weapon)
+
 	# If attacker has attack value greater zero...
 	if attacker_effective_attack > 0:
 		prints('Defending unit strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))

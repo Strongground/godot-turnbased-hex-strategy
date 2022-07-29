@@ -14,4 +14,5 @@ frames = SubResource( 1 )
 [node name="lifetimer" type="Timer" parent="."]
 
 [node name="SoundEmitter" type="AudioStreamPlayer" parent="."]
+
 [connection signal="timeout" from="lifetimer" to="." method="_on_lifetimer_timeout"]

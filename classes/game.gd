@@ -23,19 +23,15 @@ extends Node2D
 
 
 ### Implementation Notes/TODO:
-# Add a routine to populate the units in the game at the start
 # If exported/public values of a unit are filled with non-default values,
 # use them. Otherwise, fill the attributes with the defaults from the theme.
-# Unit will need to get another set of default values, because the current
-# depicts a specific unit already.
 #
-# Add the count of movement points. Make sure movement points are only deducted
+# Make sure movement points are only deducted
 # after the unit has entered a new hex tile, not at the end or the beginning of the
 # movement phase summarized, because a movement in progress can be interrupted if
 # an enemy unit is revealed or terrain changes blocks access.
-
-# TODOs
-# * Add a way of saving table of which unit type can attack which unit type
+# 
+# Add a way of saving table of which unit type can attack which unit type
 
 # member vars here
 # unused members are commented out, but left here for later use

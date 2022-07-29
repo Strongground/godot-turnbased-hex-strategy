@@ -5,7 +5,7 @@ extends Node2D
 
 # member vars here
 onready var game = $"/root/Game"
-onready var musicManager = $"root/Game/MusicManager"
+onready var musicManager = $"/root/Game/MusicManager"
 onready var sfxManager = $"/root/Game/SfxManager"
 var scene_loaded = false
 # public members
@@ -37,6 +37,7 @@ func _update_music_volume(volume):
 func _update_general_volume(volume):
 	if scene_loaded:
 		musicManager.adjust_volume(volume)
+		sfxManager.adjust_volume(volume)
 
 # private setter for sfx volume
 func _update_sfx_volume(volume):
