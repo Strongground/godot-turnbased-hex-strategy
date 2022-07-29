@@ -28,9 +28,9 @@ def yaml_to_json(yaml_file, json_file, source_dir, target_dir, verbose):
         return False
 
 def convert(current_file, target_dir, json_file, current_dir):
-    origin_file = open(current_dir+'/'+current_file)
+    origin_file = open(os.path.normpath(current_dir+'/'+current_file))
     yaml_content = yaml.safe_load(origin_file)
-    newfile = open(str(current_dir)+'/'+str(json_file)+'.json', mode='w+')
+    newfile = open(os.path.normpath(str(current_dir)+'/'+str(json_file)+'.json'), mode='w+')
     ## convert into json
     simplejson.dump(yaml_content, newfile)
     newfile.close()
