@@ -87,8 +87,8 @@ mg50cal:
   range: 1
   effect: 'mg_fire'
   effect_impact: 'mg_impact'
-  sound: 'sounds/sfx/weapons/machinegun.wav'
-  sound_impact: 'sounds/sfx/weapons/machinegun_impact.wav'
+  sound: 'sounds/sfx/weapons/machinegun_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/small_caliber_impact.wav'
 
 tow:
   display_name: 'BGM-71 TOW Missile System'
@@ -103,8 +103,8 @@ tow:
   range: 3
   effect: 'missile_fire'
   effect_impact: 'missile_impact'
-  sound: 'sounds/sfx/weapons/missile.wav'
-  sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
+  sound: 'sounds/sfx/weapons/missile_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/explosive_impact.wav'
 
 assault_rifles:
   display_name: 'Assault Rifles'
@@ -119,8 +119,8 @@ assault_rifles:
   range: 2
   effect: 'mg_fire'
   effect_impact: 'mg_impact'
-  sound: 'sounds/sfx/weapons/assault_rifles.wav'
-  sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
+  sound: 'sounds/sfx/weapons/assault_rifles_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/small_caliber_impact.wav'
 
 javelin:
   display_name: 'FGM-148 Javelin Medium Antiarmor Missile'
@@ -135,8 +135,8 @@ javelin:
   range: 2
   effect: 'missile_fire'
   effect_impact: 'missile_impact'
-  sound: 'sounds/sfx/weapons/missile.wav'
-  sound_impact: 'sounds/sfx/weapons/missile_impact.wav'
+  sound: 'sounds/sfx/weapons/missile_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/explosive_impact.wav'
 
 m242_cannon:
   display_name: 'M242 Bushmaster Cannon'
@@ -151,7 +151,7 @@ m242_cannon:
   range: 3
   effect: 'cannon_fire'
   effect_impact: 'cannon_impact'
-  sound: 'sounds/sfx/weapons/cannon.wav'
+  sound: 'sounds/sfx/weapons/cannon_fire.wav'
   sound_impact: 'sounds/sfx/weapons/cannon_impact.wav'
 
 irregular_rifles:
@@ -167,8 +167,8 @@ irregular_rifles:
   range: 1
   effect: 'mg_fire'
   effect_impact: 'mg_impact'
-  sound: 'sounds/sfx/weapons/assault_rifles.wav'
-  sound_impact: 'sounds/sfx/weapons/assault_rifles_impact.wav'
+  sound: 'sounds/sfx/weapons/assault_rifles_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/small_caliber_impact.wav'
 
 irregular_heavy:
   display_name: 'Irregular Heavy Weapons'
@@ -183,7 +183,7 @@ irregular_heavy:
   range: 1
   effect: 'heavy_weapons_fire'
   effect_impact: 'heavy_weapons_impact'
-  sound: 'sounds/sfx/weapons/heavy_weapons_mixed.wav'
+  sound: 'sounds/sfx/weapons/heavy_weapons_mixed_fire.wav'
   sound_impact: 'sounds/sfx/weapons/heavy_weapons_mixed_impact.wav'
 
 small_arms:
@@ -199,8 +199,8 @@ small_arms:
   range: 1
   effect: 'mg_fire'
   effect_impact: 'mg_impact'
-  sound: 'sounds/sfx/weapons/small_arms.wav'
-  sound_impact: 'sounds/sfx/weapons/small_arms_impact.wav'
+  sound: 'sounds/sfx/weapons/small_arms_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/small_caliber_impact.wav'
 
 irregular_tank_cannon_he:
   display_name: 'Taliban Heavy Tank Cannon - High Explosive'
@@ -215,8 +215,8 @@ irregular_tank_cannon_he:
   range: 3
   effect: 'tank-cannon_fire'
   effect_impact: 'tank-cannon_impact'
-  sound: 'sounds/sfx/weapons/tank_cannon.wav'
-  sound_impact: 'sounds/sfx/weapons/tank_cannon_impact.wav'
+  sound: 'sounds/sfx/weapons/tank_cannon_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/explosive_impact.wav'
 
 irregular_tank_cannon_at:
   display_name: 'Taliban Heavy Tank Cannon - Armor Piercing'
@@ -231,5 +231,5 @@ irregular_tank_cannon_at:
   range: 3
   effect: 'tank-cannon_fire'
   effect_impact: 'tank-cannon_impact'
-  sound: 'sounds/sfx/weapons/tank_cannon.wav'
-  sound_impact: 'sounds/sfx/weapons/tank_cannon_impact.wav'
+  sound: 'sounds/sfx/weapons/tank_cannon_fire.wav'
+  sound_impact: 'sounds/sfx/weapons/explosive_impact.wav'

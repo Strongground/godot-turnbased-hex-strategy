@@ -160,10 +160,10 @@ func get_sound(unit_id, keyword, info=null):
 					if units[unit_id]['move_sound'] in self.default_sounds:
 						return self.default_sounds[units[unit_id]['move_sound']]
 			if keyword == 'attack' and info != null:
-				var attack_sound = load(theme_path+'/'+info['sound'])
-				print(theme_path+'/'+info['sound'])
-				print(attack_sound)
-				return attack_sound
+				if units[unit_id]['weapons'].size() > 0:
+					return load(theme_path+'/'+info['sound'])
+			if keyword == 'hit':
+				return load(theme_path+'/'+info['sound_impact'])
 
 # Public getter for sprites of a unit.
 # If a unit has only one sprite, automatically generate a flipped copy of this
