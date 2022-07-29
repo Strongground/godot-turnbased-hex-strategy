@@ -426,6 +426,7 @@ func _input(event):
 
 # Process the current turn
 func _end_turn():
+	deselect_all_entities()
 	_update_all_entities()
 	_advance_player_rotation()
 	turn_counter += 1

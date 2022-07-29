@@ -423,7 +423,12 @@ func kill():
 	game.remove_entity_from_list(self)
 	call_deferred('free')
 
-# This function returns a Boolean indicating if it can attack a given unit,
+# Public method to damage this unit and update its strength indicators.
+func damage(new_strength):
+	self.unit_strength = new_strength
+	self._update_unitstrength_indicator()
+
+# This method returns a Boolean indicating if it can attack a given unit,
 # or if no target is given, general combat readiness.
 # It takes into consideration both the state of this unit as well as the
 # type and position of the given enemy unit.
@@ -622,8 +627,7 @@ func _process_attack_finish():
 			if float(new_defender_strength) <= 0:
 				defending_unit.kill()
 			else:
-				defending_unit['unit_strength'] = new_defender_strength
-				defending_unit._update_unitstrength_indicator()
+				defending_unit.damage(new_defender_strength)
 		else:
 			prints('Attack did not manage to get trough to defenders base strength.')
 
