@@ -1,0 +1,12 @@
+# Theme configuration
+name: 'example-ancient'
+display_name: 'Example Theme - Ancient Warfare'
+description: 'This serves to illustrate the contents of a theme package illustrating ancient warfare. It is set in a generic middle european "Romans against Germans" setting.'
+data_files: [
+  units: 'units.json',
+  weapons: 'weapons.json',
+  factions: 'factions.json',
+  modifiers: 'mods.json',
+  music: 'music.json',
+  effects: 'effects.json'
+]

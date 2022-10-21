@@ -1,0 +1,15 @@
+### Music list
+# Contains all the music titles. 
+# Titles can be defined per faction, but at least the "all" entry must exist, which play for all factions that don't have music defined for them.
+
+# US Army
+all:
+  battle: [
+    'Battle_1.ogg',
+    'Battle_2.ogg',
+    'Battle_3.ogg'
+  ]
+  peace: [
+    'Peaceful_1.wav',
+    'Peaceful_2.wav'
+  ]
