@@ -76,6 +76,7 @@ var active_player_rot_index = null
 var player_rotation = []
 var players = {}
 ## Game Ressource Managers
+onready var scenario = $Scenario
 onready var playerMgr = $PlayerManager
 onready var factionMgr = $FactionManager
 onready var themeMgr = $ThemeManager
@@ -88,20 +89,13 @@ func _ready():
 	set_process_input(true)
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
-	# Define players, this should later be done either in the scenario
-	# or the pre-scenario settings for multiplayer matches.
-	var registered_players = [
-		{'id': 0, 'name': 'Human Tester', 'factionID': 'usarmy', 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
-		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
-		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
-		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
-	]
-	players = playerMgr.create_players(registered_players)
-	# Load theme
-	themeMgr.load_theme('example')
-	# Create factions
+	# Load theme specified in scenario
+	themeMgr.load_theme(scenario.get_theme())
+	# Create players according to scenario definition
+	players = playerMgr.create_players(scenario.get_players_def())
+	# Create factions based on theme
 	factionMgr.load_factions()
-	# Load list of music titles to play
+	# Play music
 	musicMgr.play()
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
