@@ -1,0 +1,74 @@
+# Weapons for the ancient warfare theme
+
+# Melee weapon for legionaries
+# Range 1 means adjacent tiles only
+
+gladius:
+  display_name: 'Gladius'
+  description: 'Short Roman sword optimized for close combat.'
+  use_ammo: false
+  attack_strength: 3
+  armor_piercing: 1
+  explosive: 0
+  attacks_units: ['LAND']
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'melee_swing'
+  effect_impact: 'melee_hit'
+  sound: 'sounds/sfx/weapons/sword_swing.wav'
+  sound_impact: 'sounds/sfx/weapons/sword_hit.wav'
+
+# Ranged javelin throw
+
+pilum:
+  display_name: 'Pilum'
+  description: 'Heavy javelin thrown to disrupt enemy formations.'
+  use_ammo: true
+  attack_strength: 4
+  armor_piercing: 2
+  explosive: 0
+  attacks_units: ['LAND']
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 2
+  effect: 'javelin_throw'
+  effect_impact: 'javelin_hit'
+  sound: 'sounds/sfx/weapons/javelin_throw.wav'
+  sound_impact: 'sounds/sfx/weapons/javelin_hit.wav'
+
+# Basic spear for barbarians
+
+spear:
+  display_name: 'Spear'
+  description: 'A long spear effective for keeping enemies at bay.'
+  use_ammo: false
+  attack_strength: 2
+  armor_piercing: 0
+  explosive: 0
+  attacks_units: ['LAND']
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 1
+  effect: 'spear_thrust'
+  effect_impact: 'melee_hit'
+  sound: 'sounds/sfx/weapons/spear_thrust.wav'
+  sound_impact: 'sounds/sfx/weapons/spear_hit.wav'
+
+# Basic bow for archers
+
+bow:
+  display_name: 'Bow'
+  description: 'Simple bow for volley fire at range.'
+  use_ammo: true
+  attack_strength: 2
+  armor_piercing: 0
+  explosive: 0
+  attacks_units: ['LAND']
+  area_of_effect: 0
+  aoe_falloff: 0
+  range: 3
+  effect: 'arrow_shot'
+  effect_impact: 'arrow_hit'
+  sound: 'sounds/sfx/weapons/arrow_shot.wav'
+  sound_impact: 'sounds/sfx/weapons/arrow_hit.wav'

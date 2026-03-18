@@ -33,6 +33,9 @@ func load_theme(theme_name):
 	theme_path = standard_themes_path + '/' + theme_name
 	var config_file = theme_path + '/config.json'
 	var file_content = _read_json(config_file)
+	if typeof(file_content) != TYPE_DICTIONARY or not file_content.has("data_files"):
+		push_warning("ThemeManager: Invalid theme config: " + config_file)
+		return {}
 	_debug_log("load_theme(): loading '" + theme_name + "' from " + config_file)
 	var data_files = _get_data_files(file_content)
 	theme_object['base_path'] = theme_path
@@ -69,6 +72,10 @@ func load_theme(theme_name):
 func get_current_theme_name():
 	return self.theme_object.get("name", "")
 
+# Public getter for active theme base path.
+func get_theme_base_path():
+	return theme_path
+
 func get_music_list():
 	return self.theme_object.get("music", {})
 
@@ -100,6 +107,18 @@ func get_units():
 	if _is_theme_loaded():
 		return theme_object['units']
 
+# Public getter for tile definitions
+# @returns {Array} Array containing tile attributes
+func get_tiles():
+	if _is_theme_loaded():
+		return theme_object.get("tiles", [])
+
+# Public getter for scenarios
+# @returns {Dictionary} Dict containing all scenarios and their attributes
+func get_scenarios():
+	if _is_theme_loaded():
+		return theme_object.get("scenarios", {})
+
 # Public getter for specific hexUnit object
 # @input {String} id of the hexUnit to get
 # @returns {Array} Attributes of the hexUnit
@@ -125,15 +144,15 @@ func get_faction_experience_definitions(faction_id):
 # @returns {Array} Object with all effect sprite names
 func get_effect_sprites(effect_id, effect_type):
 	if _is_theme_loaded():
-		if effect_id in theme_object['effects']:
-			var sprite_array = theme_object['effects'][effect_id]['sprites']
+		if effect_id in theme_object.get('effects', {}):
+			var sprite_array = theme_object['effects'][effect_id].get('sprites', [])
 			var i = 0
 			# Add full res: path to frame image for SpriteFrames object to consume
 			for element in sprite_array:
 				sprite_array[i] = self.get_sprite_path() + '/sfx/' + effect_type + '/' + effect_id + '/' + sprite_array[i]
 				i += 1
 			return Array(sprite_array)
-		return false
+		return []
 
 # Public getter for a units weapon object
 # @input {String} Id of the hexUnit
@@ -168,9 +187,15 @@ func get_sound(unit_id, keyword, info=null):
 						return self.default_sounds[units[unit_id]['move_sound']]
 			if keyword == 'attack' and info != null:
 				if units[unit_id]['weapons'].size() > 0:
-					return load(theme_path+'/'+info['sound'])
+					var sound_path = theme_path + '/' + info['sound']
+					if ResourceLoader.exists(sound_path):
+						return load(sound_path)
+					return null
 			if keyword == 'hit':
-				return load(theme_path+'/'+info['sound_impact'])
+				var impact_path = theme_path + '/' + info['sound_impact']
+				if ResourceLoader.exists(impact_path):
+					return load(impact_path)
+				return null
 
 # Public getter for sprites of a hexUnit.
 # If a hexUnit has only one sprite, automatically generate a flipped copy of this
@@ -289,10 +314,9 @@ func _read_json(file_path):
 		return file_contents_json
 	var text = file.get_as_text()
 	var parsed = JSON.parse_string(text)
-	if typeof(parsed) == TYPE_DICTIONARY:
-		file_contents_json = parsed
-	else:
-		push_warning("ThemeManager: Invalid JSON in " + file_path)
+	if typeof(parsed) == TYPE_DICTIONARY or typeof(parsed) == TYPE_ARRAY:
+		return parsed
+	push_warning("ThemeManager: Invalid JSON in " + file_path)
 	return file_contents_json
 
 # This function parses a themes config file given as an object.
@@ -300,7 +324,9 @@ func _read_json(file_path):
 # @outputs {Array} array containing all data files references in the config
 func _get_data_files(config_dict):
 	var data_files = {}
-	for entry in config_dict['data_files']:
+	if not config_dict.has("data_files"):
+		return data_files
+	for entry in config_dict["data_files"]:
 		data_files[entry.keys()[0]] = entry.values()[0]
 	return data_files
 

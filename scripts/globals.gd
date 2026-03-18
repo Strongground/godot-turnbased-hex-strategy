@@ -1,8 +1,27 @@
 extends Node
 # Define global definitions of often used statics
 
+var selected_theme: String = ""
+var selected_theme_id: String = ""
+var selected_theme_folder: String = ""
+var selected_scenario: String = ""
+var selected_scenario_scene: String = ""
+
 func _ready():
 	pass
+
+func set_selected_theme(theme_id: String, theme_folder: String = "") -> void:
+	selected_theme = theme_id
+	selected_theme_id = theme_id
+	selected_theme_folder = theme_folder
+
+func set_selected_scenario(scenario_id: String, scene_path: String) -> void:
+	selected_scenario = scenario_id
+	selected_scenario_scene = scene_path
+
+func clear_selected_scenario() -> void:
+	selected_scenario = ""
+	selected_scenario_scene = ""
 
 # Return Dict of all colors with named indexes
 # @return Dictionary

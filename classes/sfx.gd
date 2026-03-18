@@ -27,8 +27,7 @@ func initialize(position, id, effect_type, effect_lifetime=self.lifetime):
 	sprite_frames.set_animation_loop(id, false)
 	self.animated_sprite.speed_scale = 5
 	var frames = themeMgr.get_effect_sprites(id, effect_type)
-	if !frames:
-		print("Error: SFX: Effect "+id+" does not exist or couldn't be found!")
+	if frames == null or frames.is_empty():
 		call_deferred('free')
 		return
 	frames.reverse()

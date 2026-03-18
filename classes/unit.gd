@@ -487,11 +487,11 @@ func damage(new_strength):
 # @returns {Boolean} 
 # @TODO Test if chosen weapon exists, has ammo / needs ammo, is in range
 func can_attack_unit(enemy_unit):
-	if enemy_unit != null:
-		if self.combat_ready() and self._is_in_range(enemy_unit.get_global_position()):
-			return true
-	else:
+	if enemy_unit == null:
 		return self.combat_ready()
+	if not self.combat_ready():
+		return false
+	return _get_weapon_in_range(enemy_unit.get_global_position()) != null
 
 # Public getter for general combat readiness. This definition will likely
 # change later, as this can be different for different types of units as
@@ -548,9 +548,13 @@ func turn_towards(_grid_pos):
 # Attack a entity/entity
 func attack(target_entity, weapon=null):
 	if weapon == null:
-		weapon = self.get_main_weapon()
+		weapon = _get_weapon_in_range(target_entity.get_global_position())
 		if weapon == null:
-			print("Cannot comply, entity has no weapon! Attack action shouldn't be possible to select.")
+			print("Cannot comply, no weapon in range for this target.")
+			return false
+	else:
+		if not _is_weapon_in_range(weapon, target_entity.get_global_position()):
+			print("Cannot comply, target out of range for selected weapon.")
 			return false
 	# Play sound
 	self._play_sound('attack', weapon)
@@ -754,7 +758,7 @@ func animate_path(path_array, moving_entity):
 # @input current_tile {Object} the tile which is the target of the current step
 # @input step {int} the current step in the path, starting with 0 for the first step
 # @input max_steps {int} the total number of steps in the path
-func _animate_step(current_tile, step, max_steps):
+func _animate_step(current_tile, step, _max_steps):
 	var easing = Tween.EASE_IN_OUT
 	var timing = Tween.TRANS_LINEAR
 	self._update_movement_points(current_tile)
@@ -810,13 +814,55 @@ func _get_direction(angle):
 # @input {String} info, optional additional info
 func _play_sound(keyword, info=null):
 	self.sound_emitter.volume_db = settingsMgr.get_sfx_volume()
-	self.sound_emitter.stream = themeMgr.get_sound(self.unit_id, keyword, info)
+	var stream = themeMgr.get_sound(self.unit_id, keyword, info)
+	if stream == null:
+		return
+	self.sound_emitter.stream = stream
 	self.sound_emitter.play()
 
-# @TODO Find out how to calc distance between two points, read up on
-# red blob games blog about it.
-func _is_in_range(_target_entity):
-	return true
+func _get_weapons_dict() -> Dictionary:
+	if weapons == null:
+		return {}
+	if typeof(weapons) != TYPE_DICTIONARY:
+		_populate_weapons()
+	if typeof(weapons) == TYPE_DICTIONARY:
+		return weapons
+	return {}
+
+func _get_distance_to_target(target_global_pos: Vector2) -> int:
+	if game == null or hexmap == null:
+		return -1
+	var self_grid = hexmap.global_to_map(self.global_position)
+	var target_grid = hexmap.global_to_map(target_global_pos)
+	return game.get_hex_distance(Vector2i(self_grid), Vector2i(target_grid))
+
+func _get_weapon_range(weapon) -> int:
+	if weapon == null:
+		return 0
+	if weapon.has("range"):
+		return int(weapon["range"])
+	return 1
+
+func _is_weapon_in_range(weapon, target_global_pos: Vector2) -> bool:
+	var distance = _get_distance_to_target(target_global_pos)
+	if distance < 0:
+		return false
+	return distance <= _get_weapon_range(weapon)
+
+func _get_weapon_in_range(target_global_pos: Vector2):
+	var weapons_dict = _get_weapons_dict()
+	if weapons_dict.is_empty():
+		return null
+	for weapon_id in weapons_dict:
+		var weapon = weapons_dict[weapon_id]
+		if weapon == null:
+			continue
+		if _is_weapon_in_range(weapon, target_global_pos):
+			return weapon
+	return null
+
+func _is_in_range(target_global_pos: Vector2) -> bool:
+	return _get_weapon_in_range(target_global_pos) != null
 
 # Internal function to populate weapon list with actual theme objects
 func _populate_weapons():

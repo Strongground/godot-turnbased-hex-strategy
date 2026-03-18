@@ -64,6 +64,8 @@ var factions = null
 var movement_selection = false
 var attack_selection = false
 var resupply_selection = false
+# Track whether the active player has attacked this turn.
+var attack_made_this_turn = false
 # Options
 @export var grid_visible = false
 @export var city_names_visible = true
@@ -101,8 +103,23 @@ func _ready():
 	players = playerMgr.create_players(registered_players)
 	_debug_log("_ready(): players created=" + str(players.size()))
 	# Load theme
-	themeMgr.load_theme('example')
-	_debug_log("_ready(): theme loaded")
+	var theme_name = "example-modern"
+	if globals != null:
+		var selected_theme_folder = globals.get("selected_theme_folder")
+		if typeof(selected_theme_folder) == TYPE_STRING and selected_theme_folder != "":
+			theme_name = selected_theme_folder
+		else:
+			var selected_theme = globals.get("selected_theme")
+			if typeof(selected_theme) == TYPE_STRING and selected_theme != "":
+				theme_name = selected_theme
+	if not FileAccess.file_exists("res://themes/" + theme_name + "/config.json"):
+		theme_name = _find_first_theme_folder()
+	themeMgr.load_theme(theme_name)
+	_debug_log("_ready(): theme loaded='" + str(theme_name) + "'")
+	# Apply tile definitions from theme (if provided)
+	var theme_tiles = themeMgr.get_tiles()
+	if typeof(theme_tiles) == TYPE_ARRAY and not theme_tiles.is_empty():
+		hexmap.set_tile_types(theme_tiles)
 	# Create factions
 	factionMgr.load_factions()
 	_debug_log("_ready(): factions loaded=" + str(factionMgr.factions.size()))
@@ -376,6 +393,51 @@ func _get_hex_neighbour_pos(hex_position, direction):
 	else:
 		return null
 
+# Mark that an attack was executed this turn.
+func register_attack(_attacking_unit):
+	attack_made_this_turn = true
+
+# Return current music mood based on combat activity this turn.
+func get_music_mood() -> String:
+	return "battle" if attack_made_this_turn else "peace"
+
+# Find first theme folder that contains a config.json.
+func _find_first_theme_folder() -> String:
+	var dir = DirAccess.open("res://themes")
+	if dir == null:
+		return "example-modern"
+	var candidates = []
+	dir.list_dir_begin()
+	var name = dir.get_next()
+	while name != "":
+		if dir.current_is_dir() and not name.begins_with("."):
+			var config_path = "res://themes/" + name + "/config.json"
+			if FileAccess.file_exists(config_path):
+				candidates.append(name)
+		name = dir.get_next()
+	dir.list_dir_end()
+	if candidates.is_empty():
+		return "example-modern"
+	candidates.sort()
+	return candidates[0]
+
+# Convert offset (even-q) coordinates to cube coordinates for distance calc.
+func _offset_to_cube(coord: Vector2i) -> Vector3i:
+	var q = int(coord.x)
+	var r = int(coord.y)
+	var z = r - int((q + (q & 1)) / 2)
+	var x = q
+	var y = -x - z
+	return Vector3i(x, y, z)
+
+# Get hex distance between two grid positions.
+func get_hex_distance(start: Vector2i, target: Vector2i) -> int:
+	if start == target:
+		return 0
+	var a = _offset_to_cube(start)
+	var b = _offset_to_cube(target)
+	return maxi(absi(a.x - b.x), maxi(absi(a.y - b.y), absi(a.z - b.z)))
+
 # Get the hex tile object by world position
 # @input {Vector2} hex_position - global position of tile
 # @returns {Object} The tile object
@@ -466,12 +528,13 @@ func _handle_primary_click(click_pos):
 				# If in attack mode
 				if self.attack_selection == true:
 					# Check if, for the player entity the click pos is a valid attack target
-					if player_unit.is_valid_attack_target(click_pos):
-						var enemy_unit = self._is_unit(click_pos, true).node
-						player_unit.attack(enemy_unit)
-						self.attack_selection = false
-						# Deselect all selectable entities
-						self.deselect_all_entities()
+						if player_unit.is_valid_attack_target(click_pos):
+							var enemy_unit = self._is_unit(click_pos, true).node
+							player_unit.attack(enemy_unit)
+							self.register_attack(player_unit)
+							self.attack_selection = false
+							# Deselect all selectable entities
+							self.deselect_all_entities()
 
 			##### On click on two tiles, flood fill the map and get path from first to second click
 #			if click_counter < 1:
@@ -512,6 +575,7 @@ func _end_turn():
 	_update_all_entities()
 	_advance_player_rotation()
 	turn_counter += 1
+	attack_made_this_turn = false
 
 # Internal function to update all entities, based on type or other criteria.
 # Should ideally only be done once, so use this function for alle updates that should

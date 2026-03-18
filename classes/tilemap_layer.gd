@@ -13,6 +13,12 @@ var tile_types = [
 	{"name": "City", "move_cost": 1.5, "terrain": "land"}
 ]
 
+# Replace tile definitions at runtime (e.g. from a theme file).
+func set_tile_types(new_tile_types: Array) -> void:
+	if new_tile_types.is_empty():
+		return
+	tile_types = new_tile_types.duplicate(true)
+
 # Return the tile index used by the game logic for the given grid position.
 func get_tile_index(grid_pos: Vector2i) -> int:
 	var source_id = get_cell_source_id(grid_pos)

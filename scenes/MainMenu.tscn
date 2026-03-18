@@ -1,0 +1,77 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scenes/MainMenu.gd" id="1"]
+
+[node name="MainMenu" type="Control" node_paths=PackedStringArray("theme_select", "scenario_select", "start_button", "message_label", "quit_button")]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 0.0
+offset_bottom = 0.0
+script = ExtResource("1")
+theme_select = NodePath("CenterContainer/PanelContainer/MarginContainer/VBox/ThemeSelect")
+scenario_select = NodePath("CenterContainer/PanelContainer/MarginContainer/VBox/ScenarioSelect")
+start_button = NodePath("CenterContainer/PanelContainer/MarginContainer/VBox/StartButton")
+message_label = NodePath("CenterContainer/PanelContainer/MarginContainer/VBox/Message")
+quit_button = NodePath("CenterContainer/PanelContainer/MarginContainer/VBox/QuitButton")
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+anchor_left = 0.0
+anchor_top = 0.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(520, 360)
+
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 16
+theme_override_constants/margin_right = 16
+theme_override_constants/margin_bottom = 16
+
+[node name="VBox" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
+custom_minimum_size = Vector2(488, 328)
+size_flags_horizontal = 3
+size_flags_vertical = 3
+alignment = 1
+
+[node name="Title" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = "Select Theme & Scenario"
+
+[node name="Spacer1" type="Control" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ThemeLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = "Theme"
+
+[node name="ThemeSelect" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+size_flags_horizontal = 3
+
+[node name="Spacer2" type="Control" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 8)
+
+[node name="ScenarioLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = "Scenario"
+
+[node name="ScenarioSelect" type="OptionButton" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+size_flags_horizontal = 3
+
+[node name="Message" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = ""
+
+[node name="Spacer3" type="Control" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+custom_minimum_size = Vector2(0, 12)
+
+[node name="StartButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = "Start"
+
+[node name="QuitButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBox"]
+text = "Quit"
+
+[connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBox/StartButton" to="." method="_on_start_pressed"]
+[connection signal="pressed" from="CenterContainer/PanelContainer/MarginContainer/VBox/QuitButton" to="." method="_on_quit_pressed"]
+[connection signal="item_selected" from="CenterContainer/PanelContainer/MarginContainer/VBox/ThemeSelect" to="." method="_on_theme_selected"]
