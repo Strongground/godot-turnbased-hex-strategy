@@ -3,7 +3,7 @@ extends Node2D
 # This is the faction manager. It manages factions, d'oh.
 
 # member vars here
-onready var game = get_node('/root/Game')
+@onready var game = get_node('/root/Game')
 var factions = {}
 
 func _ready():

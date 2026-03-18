@@ -1,0 +1,219 @@
+[gd_scene format=3 uid="uid://d13fmt3mmejd7"]
+
+[ext_resource type="Texture2D" uid="uid://cdf166gccre4m" path="res://assets/buttons/move.png" id="1_ajyu1"]
+[ext_resource type="Script" uid="uid://hln2qqf2h5qv" path="res://classes/gui.gd" id="1_m8p4d"]
+[ext_resource type="Texture2D" uid="uid://kd8rafbjmtlh" path="res://assets/buttons/move_clicked.png" id="2_m8p4d"]
+[ext_resource type="Texture2D" uid="uid://cn74giturkgy0" path="res://assets/buttons/move_disabled.png" id="3_gm6g3"]
+[ext_resource type="Texture2D" uid="uid://b3li2ohmrvibh" path="res://assets/buttons/attack.png" id="4_adr5q"]
+[ext_resource type="Texture2D" uid="uid://b1c8ci5yy8m7t" path="res://assets/buttons/attack_clicked.png" id="5_ajnbq"]
+[ext_resource type="Texture2D" uid="uid://c5p4l2oyrxs66" path="res://assets/buttons/attack_disabled.png" id="6_kdart"]
+[ext_resource type="Texture2D" uid="uid://k2poqrcj2mvi" path="res://assets/buttons/supply.png" id="7_2yx18"]
+[ext_resource type="Texture2D" uid="uid://4pnd216n017g" path="res://assets/buttons/supply_clicked.png" id="8_2o6e4"]
+[ext_resource type="Texture2D" uid="uid://dvdex4j1jwjog" path="res://assets/buttons/supply_disabled.png" id="9_topw0"]
+[ext_resource type="Texture2D" uid="uid://b5b3ui5w8yry1" path="res://assets/buttons/toggle_grid.png" id="10_ysvud"]
+[ext_resource type="Texture2D" uid="uid://c82waagc1vs1q" path="res://assets/buttons/toggle_grid_clicked.png" id="11_p8w5y"]
+[ext_resource type="Texture2D" uid="uid://3cx653y600t7" path="res://assets/buttons/end_turn.png" id="12_llryh"]
+[ext_resource type="Texture2D" uid="uid://eqchbnuoa4ao" path="res://assets/buttons/end_turn_clicked.png" id="13_v4rwy"]
+[ext_resource type="Theme" uid="uid://duxnjsw464w05" path="res://default_gui_theme.tres" id="14_b3g3y"]
+[ext_resource type="Texture2D" uid="uid://bejs7y6nxj8jt" path="res://assets/icons/heart_icon.png" id="15_6hhfy"]
+[ext_resource type="Texture2D" uid="uid://catss378pujh1" path="res://assets/icons/walk_icon.png" id="16_pd6gp"]
+[ext_resource type="Texture2D" uid="uid://dy7s40jb3b025" path="res://assets/icons/ammo_icon.png" id="17_ux20m"]
+
+[sub_resource type="Shortcut" id="8"]
+
+[node name="Control" type="Control" unique_id=1437505244 node_paths=PackedStringArray("move_button", "attack_button", "supply_button")]
+layout_mode = 3
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 3
+size_flags_vertical = 8
+script = ExtResource("1_m8p4d")
+move_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/MoveButton")
+attack_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/AttackButton")
+supply_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/SupplyButton")
+
+[node name="Panel" type="Panel" parent="." unique_id=1636567235]
+custom_minimum_size = Vector2(0, 100)
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="Panel" unique_id=1932913859]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = -75.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/margin_left = 25
+theme_override_constants/margin_top = 0
+theme_override_constants/margin_right = 25
+theme_override_constants/margin_bottom = 25
+
+[node name="VBoxContainer" type="VBoxContainer" parent="Panel/MarginContainer" unique_id=1220723568]
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=573672681]
+layout_mode = 2
+
+[node name="MoveButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=2076888496]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 3
+shortcut = SubResource("8")
+texture_normal = ExtResource("1_ajyu1")
+texture_pressed = ExtResource("2_m8p4d")
+texture_disabled = ExtResource("3_gm6g3")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="AttackButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1686728762]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 3
+texture_normal = ExtResource("4_adr5q")
+texture_pressed = ExtResource("5_ajnbq")
+texture_disabled = ExtResource("6_kdart")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="SupplyButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=398804219]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 3
+texture_normal = ExtResource("7_2yx18")
+texture_pressed = ExtResource("8_2o6e4")
+texture_disabled = ExtResource("9_topw0")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="ToggleGridButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1090885603]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 3
+texture_normal = ExtResource("10_ysvud")
+texture_pressed = ExtResource("11_p8w5y")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="EndTurnButton" type="TextureButton" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=367045423]
+custom_minimum_size = Vector2(50, 50)
+layout_mode = 2
+size_flags_vertical = 3
+texture_normal = ExtResource("12_llryh")
+texture_pressed = ExtResource("13_v4rwy")
+ignore_texture_size = true
+stretch_mode = 0
+
+[node name="Debug-Label" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1434321023]
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+text = "Current player:
+Turn No#:"
+scroll_active = false
+
+[node name="CurrentPlayer" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=1742253327]
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+text = "Test line"
+
+[node name="CurrentTurn" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=765303783]
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+theme = ExtResource("14_b3g3y")
+scroll_active = false
+
+[node name="UnitInfoButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=2101174238]
+layout_mode = 2
+text = "Show Selection Info"
+
+[node name="UnitInfo" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=589048598]
+visible = false
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UnitName" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=1108393660]
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+scroll_active = false
+
+[node name="HoveringTileInfo" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=252492291]
+layout_mode = 2
+size_flags_horizontal = 2
+size_flags_vertical = 2
+scroll_active = false
+
+[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=941516576]
+layout_mode = 2
+
+[node name="TextureRect" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer" unique_id=111720257]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("15_6hhfy")
+expand_mode = 1
+
+[node name="UnitStrength" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer" unique_id=335767844]
+clip_contents = false
+layout_mode = 2
+size_flags_horizontal = 3
+text = "100"
+fit_content = true
+scroll_active = false
+vertical_alignment = 3
+
+[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=1467947618]
+layout_mode = 2
+
+[node name="TextureRect2" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2" unique_id=1791011627]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("16_pd6gp")
+expand_mode = 1
+
+[node name="UnitActionPoints" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2" unique_id=1904854256]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "26
+"
+fit_content = true
+scroll_active = false
+
+[node name="HBoxContainer3" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=913194119]
+layout_mode = 2
+
+[node name="TextureRect3" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3" unique_id=105559816]
+custom_minimum_size = Vector2(16, 16)
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 4
+texture = ExtResource("17_ux20m")
+expand_mode = 1
+
+[node name="UnitAmmo" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3" unique_id=1052985017]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "45"
+fit_content = true
+scroll_active = false

@@ -1,8 +1,11 @@
 
 logs/
 .vscode/
-\.import/
-*.import
 svn-opengeneral/
 *.code-workspace
 *.DS_Store
+.godot/
+.nomedia
+export.cfg
+export_credentials.cfg
+*.tmp

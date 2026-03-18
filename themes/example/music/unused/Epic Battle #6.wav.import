@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://cgkwwh2i5e0dx"
+path="res://.godot/imported/Epic Battle #6.wav-4d35181ffa2ab2034e95a56bab50d807.sample"
+
+[deps]
+
+source_file="res://themes/example/music/unused/Epic Battle #6.wav"
+dest_files=["res://.godot/imported/Epic Battle #6.wav-4d35181ffa2ab2034e95a56bab50d807.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

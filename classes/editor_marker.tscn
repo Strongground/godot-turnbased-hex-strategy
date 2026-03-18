@@ -1,35 +1,35 @@
-[gd_scene load_steps=7 format=2]
+[gd_scene format=3]
 
-[ext_resource path="res://classes/editor_marker.gd" type="Script" id=1]
-[ext_resource path="res://assets/icons/editor_marker_city.png" type="Texture" id=2]
-[ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
-[ext_resource path="res://classes/flag.tscn" type="PackedScene" id=4]
-[ext_resource path="res://assets/images/flagpole.png" type="Texture" id=5]
+[ext_resource type="Script" uid="uid://dk601kh7vv2d" path="res://classes/editor_marker.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cvphdhiybcb8a" path="res://assets/icons/editor_marker_city.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://ddbb7so5ingjm" path="res://assets/images/hex_outline_white.png" id="3"]
+[ext_resource type="PackedScene" path="res://classes/flag.tscn" id="4"]
+[ext_resource type="Texture2D" uid="uid://dgaq88naxxmes" path="res://assets/images/flagpole.png" id="5"]
 
-[sub_resource type="CircleShape2D" id=1]
+[sub_resource type="CircleShape2D" id="1"]
 
 [node name="EditorMarker" type="Area2D"]
-script = ExtResource( 1 )
+script = ExtResource("1")
 
-[node name="Icon" type="Sprite" parent="."]
-position = Vector2( 0, 0.999999 )
-scale = Vector2( 0.843744, 0.843744 )
-texture = ExtResource( 2 )
+[node name="Icon" type="Sprite2D" parent="."]
+position = Vector2(0, 0.999999)
+scale = Vector2(0.843744, 0.843744)
+texture = ExtResource("2")
 
-[node name="hex_outline" type="Sprite" parent="."]
+[node name="hex_outline" type="Sprite2D" parent="."]
 visible = false
-texture = ExtResource( 3 )
+texture = ExtResource("3")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-position = Vector2( 0, 1 )
-scale = Vector2( 6.31008, 6.31008 )
-shape = SubResource( 1 )
+position = Vector2(0, 1)
+scale = Vector2(6.31008, 6.31008)
+shape = SubResource("1")
 
-[node name="OwnerIcon" parent="." instance=ExtResource( 4 )]
-position = Vector2( 72.5975, -56 )
-scale = Vector2( 0.065, 0.065 )
+[node name="OwnerIcon" parent="." instance=ExtResource("4")]
+position = Vector2(72.5975, -56)
+scale = Vector2(0.065, 0.065)
 
-[node name="flagpole" type="Sprite" parent="."]
-position = Vector2( 51.8936, -20.1981 )
-scale = Vector2( 0.11053, 0.0942532 )
-texture = ExtResource( 5 )
+[node name="flagpole" type="Sprite2D" parent="."]
+position = Vector2(51.8936, -20.1981)
+scale = Vector2(0.11053, 0.0942532)
+texture = ExtResource("5")

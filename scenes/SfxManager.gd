@@ -4,9 +4,6 @@ extends Node2D
 # manages the correction creation, lifetime and destruction and removal of
 # special effects nodes.
 
-# member vars here
-onready var root = get_node('/root')
-
 func _ready():
 	pass
 
@@ -19,10 +16,24 @@ func _ready():
 # @returns {Object} node that was created
 func create_effect(grid_position, id, type, permanent=false):
 	var sfx = load("res://classes/sfx.tscn")
-	var sfx_instance = sfx.instance()
-	root.get_node('Game').add_child(sfx_instance)
+	var sfx_instance = sfx.instantiate()
+	var game_node = get_node_or_null("/root/Game")
+	if game_node == null:
+		return null
+	game_node.add_child(sfx_instance)
 	if permanent:
 		sfx_instance.initialize(grid_position, id, type, -1)
 	else:
 		sfx_instance.initialize(grid_position, id, type)
 	return sfx_instance
+
+func adjust_volume(volume):
+	var game_node = get_node_or_null("/root/Game")
+	if game_node == null:
+		return false
+	for child in game_node.get_children():
+		if child.has_node("SoundEmitter"):
+			var emitter = child.get_node("SoundEmitter")
+			if emitter is AudioStreamPlayer:
+				emitter.volume_db = volume * 80 - 80
+	return true

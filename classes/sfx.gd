@@ -5,9 +5,9 @@ extends Node2D
 # like a crater or a trench.
 
 # member vars here
-onready var animated_sprite = $AnimatedSprite
-onready var themeMgr =  $"/root/Game/ThemeManager"
-onready var sound_emitter = $SoundEmitter
+@onready var animated_sprite = $AnimatedSprite
+@onready var themeMgr =  $"/root/Game/ThemeManager"
+@onready var sound_emitter = $SoundEmitter
 # If 'lifetime' is -1, it will exist until manually deleted.
 # If 'lifetime' is 0 (default), the effect will exist as long as the animation
 # runs and then terminate itself.
@@ -22,31 +22,29 @@ func _ready():
 func initialize(position, id, effect_type, effect_lifetime=self.lifetime):
 	if effect_lifetime != self.lifetime:
 		self.lifetime = effect_lifetime
-	sprite_frames = self.animated_sprite.get_sprite_frames()
+	sprite_frames = self.animated_sprite.sprite_frames
 	sprite_frames.add_animation(id)
 	sprite_frames.set_animation_loop(id, false)
-	self.animated_sprite.set_speed_scale(5)
+	self.animated_sprite.speed_scale = 5
 	var frames = themeMgr.get_effect_sprites(id, effect_type)
 	if !frames:
 		print("Error: SFX: Effect "+id+" does not exist or couldn't be found!")
 		call_deferred('free')
 		return
-	frames.invert()
+	frames.reverse()
 	for frame in frames:
-		var i = 0
 		var tex = load(frame)
-		sprite_frames.add_frame(id, tex, i)
-		i = i + 1
-	self.animated_sprite.set_animation(id)
-	self.set_global_position(position)
-	self.animated_sprite._set_playing(true)
+		sprite_frames.add_frame(id, tex)
+	self.animated_sprite.animation = id
+	self.global_position = position
+	self.animated_sprite.play(id)
 	if effect_lifetime >= 0:
 		var runtime
 		if effect_lifetime == 0:
-			runtime = self.animated_sprite.get_sprite_frames().get_frame_count(id) / (self.animated_sprite.get_speed_scale()*2)
+			runtime = self.animated_sprite.sprite_frames.get_frame_count(id) / (self.animated_sprite.speed_scale * 2)
 		if effect_lifetime > 0:
 			runtime = lifetime
-		$lifetimer.set_wait_time(runtime)
+		$lifetimer.wait_time = runtime
 		$lifetimer.start()
 
 func _on_lifetimer_timeout():

@@ -8,7 +8,7 @@ extends Node2D
 # Basic members
 var active = false
 var faction = 0
-var is_human = true
+var is_human_player = true
 var player_name = ''
 var identifer = 0
 var enemies = []
@@ -26,23 +26,23 @@ func create(playerName, factionID=null, isHuman=false, id=null):
 	else:
 		self.set_id(id)
 	if playerName.length() > 0:
-		self.set_name(playerName)
+		self.set_player_name(playerName)
 	else:
-		var tempName = 'UnknownPlayer'+String(self.get_instance_id())
-		self.set_name(tempName)
+		var tempName = "UnknownPlayer" + str(self.get_instance_id())
+		self.set_player_name(tempName)
 	if factionID == null:
 		self.faction = 0
 	else:
 		self.faction = factionID
-	if is_human:
-		self.is_human = true
+	if isHuman:
+		self.is_human_player = true
 
 # Public setter for display name of this player.
-func set_name(name):
-	self.player_name = String(name)
+func set_player_name(name):
+	self.player_name = str(name)
 	
 # Public getter for display name of this player.
-func get_name():
+func get_player_name():
 	return self.player_name
 
 # To get Godots node ID, use player.id, to get custom ID the
@@ -73,7 +73,7 @@ func get_faction_id():
 
 # Public getter to check wether this player is controlled by AI or a human.
 func is_human():
-	return is_human
+	return is_human_player
 
 # Public getter to check the stance of this player towards another player.
 # If for some reason no stance is found for the player, the default of
@@ -84,7 +84,7 @@ func get_stance_to(player):
 		return 'enemy'
 	elif id in self.allies:
 		return 'ally'
-	elif id in self.allies:
+	elif id in self.neutrals:
 		return 'neutral'
 	else:
 		return 'neutral'

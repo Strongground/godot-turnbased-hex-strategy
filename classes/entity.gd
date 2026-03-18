@@ -2,14 +2,15 @@ extends Area2D
 class_name entity
 ### public class member vars
 # is selectable by player
-export (bool) var selectable = null
+@export var selectable = null
 
 ### internal class member variables
-onready var root = get_tree().get_current_scene()
-onready var game = $"/root/Game"
-onready var hex_outline = find_node("HexOutline")
-onready var hexmap = root.find_node("MapZones")
-onready var red_dot = root.find_node("RedDot") #Debug
+@onready var root = get_tree().current_scene
+@onready var game = $"/root/Game"
+@onready var globals = get_node("/root/globals")
+@onready var hex_outline = find_child("HexOutline", true, false)
+@onready var hexmap = root.find_child("MapZones", true, false)
+@onready var red_dot = root.find_child("RedDot", true, false) #Debug
 var selected = null
 var type = null
 var path = null
@@ -46,6 +47,8 @@ func select():
 		self.selected = true
 		self._show_marker('red')
 		root.selected_unit = self.id
+		# Call virtual handler for selection
+		_on_selected()
 
 # Getter for state of selection
 func is_selected():
@@ -57,6 +60,8 @@ func deselect():
 	self._hide_marker()
 	if root.selected_unit != null:
 		root.selected_unit = null
+	# Call virtual handler for de-select
+	_on_deselected()
 
 # Setter to check if entity can be a container of other units (towns, markers)
 func set_container(value):
@@ -71,11 +76,11 @@ func get_type():
 	return self.type
 
 # Setter for path array
-func set_path(path_array):
+func set_move_path(path_array):
 	self.path = path_array
 	
 # Getter for path array
-func get_path():
+func get_move_path():
 	return self.path
 
 # Setter for id
@@ -105,6 +110,17 @@ func _snap_to_grid():
 # @returns {Vector2} global coordinates that represent the center of a hex
 func _get_centered_grid_pos(grid_coords, offset):
 	var world_coords = hexmap.map_to_world(grid_coords)
-	world_coords.x += ((hexmap.get_cell_size().x/2) + offset.x)
-	world_coords.y += ((hexmap.get_cell_size().y/2) + offset.y)
-	return world_coords
+	var center_coords = root.get_center_of_hex(world_coords)
+	center_coords.x += offset.x
+	center_coords.y += offset.y
+	return center_coords
+
+# Base implementation is currently empty but must exist so derived classes can
+# overwrite
+func _on_selected():
+	pass
+	
+# Base implementation is currently empty but must exist so derived classes can
+# overwrite
+func _on_deselected():
+	pass

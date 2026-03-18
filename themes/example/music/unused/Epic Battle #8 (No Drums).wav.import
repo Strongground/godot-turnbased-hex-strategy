@@ -1,0 +1,24 @@
+[remap]
+
+importer="wav"
+type="AudioStreamWAV"
+uid="uid://d25nrwr543gqr"
+path="res://.godot/imported/Epic Battle #8 (No Drums).wav-f23a8244d17bd53d702c05c6d3b5c02d.sample"
+
+[deps]
+
+source_file="res://themes/example/music/unused/Epic Battle #8 (No Drums).wav"
+dest_files=["res://.godot/imported/Epic Battle #8 (No Drums).wav-f23a8244d17bd53d702c05c6d3b5c02d.sample"]
+
+[params]
+
+force/8_bit=false
+force/mono=false
+force/max_rate=false
+force/max_rate_hz=44100
+edit/trim=false
+edit/normalize=false
+edit/loop_mode=0
+edit/loop_begin=0
+edit/loop_end=-1
+compress/mode=2

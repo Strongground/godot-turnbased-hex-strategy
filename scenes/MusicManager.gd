@@ -12,18 +12,23 @@ extends Node2D
 # Also define and utilize music volume but get it - like all settings - from SettingsMgr.
 
 # member vars here
-onready var game = get_node('/root/Game')
-onready var settingsMgr = $"/root/Game/SettingsManager"
+@onready var game = get_node('/root/Game')
+@onready var settingsMgr = $"/root/Game/SettingsManager"
 var standard_themes_path = 'res://themes'
 var standard_music_path = 'music'
 var playlist = null
 var iterator = 0
 var musicVolume = 1
 var generalVolume = 1
-onready var streamPlayer = $"/root/Game/BackgroundMusicPlayer"
+@onready var streamPlayer = get_node_or_null("/root/Game/BackgroundMusicPlayer")
 # public members
 
 func _ready():
+	if streamPlayer == null:
+		streamPlayer = AudioStreamPlayer.new()
+		streamPlayer.name = "BackgroundMusicPlayer"
+		game.add_child(streamPlayer)
+		streamPlayer.finished.connect(_on_AudioStreamPlayer_finished)
 	print('MusicManager: I am ready!')
 
 # Private loader that makes sure there is music in the playlist
@@ -48,8 +53,10 @@ func play():
 
 # Adjust volume of background music
 func adjust_volume(volume):
+	if streamPlayer == null:
+		return false
 	var volume_db = volume * 80 - 80
-	self.streamPlayer.set_volume_db(volume_db)
+	self.streamPlayer.volume_db = volume_db
 	return true
 
 # Public function to play next song

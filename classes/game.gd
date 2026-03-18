@@ -21,33 +21,31 @@ extends Node2D
 #   L overlays
 #   L all entities
 
-
 ### Implementation Notes/TODO:
-# If exported/public values of a unit are filled with non-default values,
+# If exported/public values of a entity are filled with non-default values,
 # use them. Otherwise, fill the attributes with the defaults from the theme.
 #
 # Make sure movement points are only deducted
-# after the unit has entered a new hex tile, not at the end or the beginning of the
+# after the entity has entered a new hex tile, not at the end or the beginning of the
 # movement phase summarized, because a movement in progress can be interrupted if
-# an enemy unit is revealed or terrain changes blocks access.
+# an enemy entity is revealed or terrain changes blocks access.
 # 
-# Add a way of saving table of which unit type can attack which unit type
+# Add a way of saving table of which entity type can attack which entity type
 
 # member vars here
 # unused members are commented out, but left here for later use
-# onready var camera = find_node('MainCamera')
+# onready var camera = find_child('MainCamera')
 # onready var root = get_node('/root')
-onready var globals = get_node('/root/globals')
-onready var hexmap = get_node('MapZones')
-onready var marker = get_node('RedDot')
-onready var hex_grid = get_node('HexGridOverlay')
-onready var rect = get_node('SizeRect')
-onready var hex_marker = find_node('HexMarker')
-onready var hex_fill = find_node('Hex_Fill')
-onready var arrow_marker = find_node('Arrow')
-onready var tween = find_node('Tween')
-onready var GUI = find_node('GUI')
-onready var hex_highlight = $HexOutline
+@onready var globals = get_node('/root/globals')
+@onready var hexmap = get_node('MapZones')
+@onready var marker = get_node('RedDot')
+@onready var hex_grid = get_node('HexGridOverlay')
+@onready var rect = get_node('SizeRect')
+@onready var hex_marker = find_child('HexMarker')
+@onready var hex_fill = find_child('Hex_Fill')
+@onready var arrow_marker = find_child('Arrow')
+@onready var GUI = find_child('GUI')
+@onready var hex_highlight = $HexOutline
 # var tiles = null
 var tile_list = null
 var hex_offset = null
@@ -67,25 +65,27 @@ var movement_selection = false
 var attack_selection = false
 var resupply_selection = false
 # Options
-export var grid_visible = false
-export var city_names_visible = true
+@export var grid_visible = false
+@export var city_names_visible = true
+@export var debug_sprite_loading = true
 ## Loop vars
 var turn_counter = 0
 var active_player = null
 var active_player_rot_index = null
 var player_rotation = []
 var players = {}
+var _last_mouse_pos = Vector2(INF, INF)
 ## Game Ressource Managers
-onready var playerMgr = $PlayerManager
-onready var factionMgr = $FactionManager
-onready var themeMgr = $ThemeManager
-onready var musicMgr = $MusicManager
+@onready var playerMgr = $PlayerManager
+@onready var factionMgr = $FactionManager
+@onready var themeMgr = $ThemeManager
+@onready var musicMgr = $MusicManager
 ## debug labels
-onready var label_player = find_node('CurrentPlayer')
-onready var label_turn = find_node('CurrentTurn')
+@onready var label_player = find_child('CurrentPlayer')
+@onready var label_turn = find_child('CurrentTurn')
 
 func _ready():
-	set_process_input(true)
+	_debug_sprite("_ready(): start")
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
 	# Define players, this should later be done either in the scenario
@@ -97,12 +97,16 @@ func _ready():
 		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
 	]
 	players = playerMgr.create_players(registered_players)
+	_debug_sprite("_ready(): players created=" + str(players.size()))
 	# Load theme
 	themeMgr.load_theme('example')
+	_debug_sprite("_ready(): theme loaded")
 	# Create factions
 	factionMgr.load_factions()
+	_debug_sprite("_ready(): factions loaded=" + str(factionMgr.factions.size()))
 	# Load list of music titles to play
 	musicMgr.play()
+	_debug_sprite("_ready(): music manager play() called")
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
@@ -125,29 +129,43 @@ func _ready():
 	}
 	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
 	tile_list = self._build_hex_object_database()
+	_debug_sprite("_ready(): tile_list built, size=" + str(tile_list.size()))
 	# Place the units according to their ID and fill attributes.
 	# Create a global list of all entities on the map, their type, positions and nodes
 	entities = self._create_entity_list()
+	_debug_sprite("_ready(): entities created, size=" + str(entities.size()))
 	self._place_units()
+	_debug_sprite("_ready(): _place_units() done")
 	self._update_units()
+	_debug_sprite("_ready(): _update_units() done")
 	# GUI ready functions
 	GUI.disable_movement_button(true)
 	GUI.disable_attack_button(true)
 	GUI.disable_supply_button(true)
 	# Start first turn
 	self._advance_player_rotation()
-	
+	_debug_sprite("_ready(): done")
+	# for tile in tile_list:
+	# 	self._render_dot(tile['id'])
+
 # "Place" units according to the ID of their placeholder entity. This means:
-# Fill all atributes of the entity with the values of the unit with the given
+# Fill all atributes of the entity with the values of the entity with the given
 # ID from the theme, while leaving non-default values.
 func _place_units():
 	# Fetch one-time list of all units in theme
 	var theme_units = themeMgr.get_units()
-	for entity in entities:
-		# If entity is of type "unit" and the unit_id is existing in the theme
-		if entity.type == 'unit' and entity.node.unit_id in theme_units:
-			var unit_data = themeMgr.get_unit(entity.node.unit_id)
-			entity.node.fill_attributes(unit_data)
+	for new_entity in entities:
+		# If entity is of type "entity" and the unit_id is existing in the theme
+		if new_entity.type == 'entity' and new_entity.node.unit_id in theme_units:
+			var unit_data = themeMgr.get_unit(new_entity.node.unit_id)
+			_debug_sprite("_place_units(): applying theme data to node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "', pre_faction='" + str(new_entity.node.unit_faction) + "'")
+			new_entity.node.fill_attributes(unit_data)
+		elif new_entity.type == 'entity':
+			_debug_sprite("_place_units(): no theme data found for node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "'")
+
+func _debug_sprite(message):
+	if debug_sprite_loading:
+		print("[SpriteDebug][Game] " + message)
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
@@ -176,27 +194,31 @@ func _build_hex_object_database():
 		i+=1
 	return tiles
 
-# Update all unit nodes with their internal update-method. There is still
+# Update all entity nodes with their internal update-method. There is still
 # udpates going on in the main game script that handles grid-position tables
 # etc.
 # This is necessary because of inconvenient ready()-order in Godot
 func _update_units():
-	for entity in entities:
-		if entity.type == 'unit':
-			entity.node.update() 
+	for current_entity in entities:
+		if current_entity.type == 'entity':
+			current_entity.node.update() 
 
 # Check if the given position is a valid move-to destination for the given
-# unit.
+# entity.
 # @input {Vector2} Position to be checked
-# @input {Object} The unit for which the validity of the destination is checked
+# @input {Object} The entity for which the validity of the destination is checked
 # @returns {Boolean}
 func _is_valid_destination(click_pos):
 	var clicked_hex_object = self._get_hex_object_from_global_pos(click_pos)
-	for entity in entities:
-		if entity.grid_pos == clicked_hex_object.grid_pos and not entity.node.is_container():
+	print("Checking if clicked position is valid destination. Clicked hex object: " + str(clicked_hex_object))
+	# Find out if there is a entity on the clicked tile that blocks movement.
+	for current_entity in entities:
+		if current_entity.grid_pos == clicked_hex_object.grid_pos and not current_entity.node.is_container():
 			return false
 	var target_terrain = clicked_hex_object.terrain
+	print("Clicked terrain: " + str(target_terrain))
 	var unit_can_traverse = _get_entity_by_id(self.selected_unit).node.can_traverse
+	print("Unit can traverse: " + str(unit_can_traverse))
 	if not target_terrain in unit_can_traverse:
 		return false
 	return true
@@ -204,42 +226,49 @@ func _is_valid_destination(click_pos):
 # Get entity by given id
 # Either returns an entity object or 'false'
 func _get_entity_by_id(id):
-	for entity in entities:
-		if entity.id == id:
-			return entity
+	for current_entity in entities:
+		if current_entity.id == id:
+			return current_entity
 	return false
 
 # Get entities array index from node ID
 # return the index of the entity corresponding to a node in the
 # global entities array.
 func _get_entity_index_from_node(node):
-	for entity in entities:
-		if entity.node.get_instance_id() == node.get_instance_id():
-			return entity.id
+	for current_entity in entities:
+		if current_entity.node.get_instance_id() == node.get_instance_id():
+			return current_entity.id
 
 # Get entity by grid position
-# Either returns an entity object or 'false'
-func _get_entity_by_pos(pos):
-	for entity in entities:
-		if entity.grid_pos == pos:
-			return entity
-	return false
+# Returns an entity dictionary, empty if no entity found
+func _get_entity_by_pos(pos) -> Dictionary:
+	for current_entity in entities:
+		if current_entity.grid_pos == Vector2i(pos):
+			return current_entity
+	return {}
 
 # Create a list of all entities and their grid local positions as well as nodes
 func _create_entity_list():
 	var result = []
 	var i = 0
-	var allowed_node_types = ["unit", "editor_marker"]
+	var allowed_node_types = ["entity", "editor_marker"]
 	for node in self.get_children():
 		# if node is of allowed type
 		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
 			node.initialize()
+			var hex_object = self._get_hex_object_from_global_pos(node.get_global_position())
+			var grid_pos = null
+			if hex_object == null:
+				grid_pos = hexmap.world_to_map(node.get_global_position())
+				_debug_sprite("_create_entity_list(): no tile object for node='" + node.name + "', fallback grid_pos=" + str(grid_pos))
+			else:
+				grid_pos = hex_object.grid_pos
 			result.append({
 				"id": i,
 				"node": node,
 				"type": node.get_type(),
-				"grid_pos": self._get_hex_object_from_global_pos(node.get_global_position()).grid_pos
+				"grid_pos": grid_pos
 			})
 			i += 1
 	return result
@@ -248,16 +277,18 @@ func _create_entity_list():
 func remove_entity_from_list(node):
 	var id = self._get_entity_index_from_node(node)
 	var i = 0
-	for entity in self.entities:
-		if entity.id == id:
-			self.entities.remove(i)
+	for current_entity in self.entities:
+		if current_entity.id == id:
+			self.entities.remove_at(i)
 		i += 1
 
 # Update an entity in the global list of entities and their grid local positions.
-# This needs to be done after a unit has changed location, since all calculations
+# This needs to be done after a entity has changed location, since all calculations
 # that involve position, are done with help of this global list.
-func update_entity_list_entry(entity):
-	entity.grid_pos = self._get_hex_object_from_global_pos(entity.node.get_global_position()).grid_pos
+func update_entity_list_entry(current_entity):
+	var hex_object = self._get_hex_object_from_global_pos(current_entity.node.get_global_position())
+	if hex_object != null:
+		current_entity.grid_pos = hex_object.grid_pos
 
 # Get the neighbouring tile of a given tile, by ID and direction
 # @input {Int} ID of the hex for which the neighbour should be returned
@@ -286,11 +317,11 @@ func _get_hex_object_from_global_pos(given_position):
 # Get the hex tile object by grid local position
 # @input {Vector2} hex_position - grid local position of tile
 # @returns {Object} The tile object
-func _get_hex_object_from_grid_pos(given_position):
+func _get_hex_object_from_grid_pos(given_position: Vector2i):
 	for tile in tile_list:
 		if tile['grid_pos'] == given_position:
 			return tile
-	
+
 # Get the hex tile object by its ID
 # @input {int} The ID of the tile to get
 # @returns {Object} The tile object
@@ -300,96 +331,76 @@ func _get_hex_object_from_id(id):
 			return tile
 
 #### INPUT CONTROL ####
-func _input(event):
-	# @TODO Maybe outsource this to a click controller module, or maybe delegate all
-	# click events to appropiate nodes from here. Ask Q/A
-	if event is InputEventMouseMotion:
-		var mouse_pos = self.get_global_mouse_position()
-		var tile = self._get_hex_object_from_global_pos(mouse_pos)
-		# If tile is null, mouse was outside play area
-		if tile != null:
-			hex_highlight.set_position(self._get_center_of_hex(hexmap.map_to_world(tile['grid_pos'])))
-			GUI.update_tile_info(tile)
-			var entity = _get_entity_by_pos(tile['grid_pos'])
-			if (entity):
-				if (entity.node.get_type() == 'unit'):
-					# self._render_dot(entity.node.get_global_position(), self)
-					GUI.show_unit_quick_panel(entity, true)
+func _poll_input_actions():
+	# Use action polling only. This avoids event-type checks and keeps remapping flexible.
+	if Input.is_action_pressed("ui_cancel"):
+		get_tree().quit()
+		return
+	if Input.is_action_just_pressed("mouse_click"):
+		_handle_primary_click(get_global_mouse_position())
+
+func _update_mouse_hover():
+	var mouse_pos = get_global_mouse_position()
+	if mouse_pos == _last_mouse_pos:
+		return
+	_last_mouse_pos = mouse_pos
+	var tile = self._get_hex_object_from_global_pos(mouse_pos)
+	# If tile is null, mouse was outside play area
+	if tile == null:
+		return
+	hex_highlight.set_position(self.get_center_of_hex(hexmap.map_to_world(tile["grid_pos"])))
+	GUI.update_tile_info(tile)
+
+func _handle_primary_click(click_pos):
+	### If clicked on empty spot on map, not on a entity or GUI
+	var gui_click = GUI.is_gui_clicked()
+	var map_click = self._is_tilemap(click_pos)
+	var unit_click = self._is_unit(click_pos)
+	if not unit_click and not gui_click and map_click:
+		# Save tile information in local variable for easy access
+		self.current_tile = self.get_tile(click_pos)
+		# If a entity was previously selected
+		if self.selected_unit != null:
+			# If the selected entity can move and the player clicks on a valid target destination, 
+			# the click sets the movement destination and triggers pathfinding to it.
+			if self.movement_selection == true and self._is_valid_destination(click_pos) == true:
+				var selected_entity = _get_entity_by_id(self.selected_unit)
+				selected_entity.node.move_unit(selected_entity.node.get_global_position(), click_pos, selected_entity)
+				self.movement_selection = false
+	# if clicked on entity
+	elif unit_click and not gui_click:
+		var current_entity = self._is_unit(click_pos, true).node
+		# if clicked entity is owned by player, select it and evaluate its possibilities
+		if current_entity.owned_by_active_player():
+			if self.resupply_selection == true:
+				var player_unit = _get_entity_by_id(self.selected_unit).node
+				# Check if, for the player entity, resupplying the click pos is possible, and if yes, do it.
+				player_unit.resupply(click_pos)
+				self.resupply_selection = false
+			elif self.attack_selection == true:
+				self.attack_selection = false
 			else:
-				GUI.hide_unit_quick_panel()
-		
-	if event is InputEventKey:
-		if event.scancode == KEY_ESCAPE:
-			get_tree().quit()
-	elif event.is_action_pressed('mouse_click'):
-		# Once set the actual global mouse position needed for conversion of the coordinates
-		var click_pos = self.get_global_mouse_position()
-		#print('Click registered at '+String(click_pos))
-		
-		### If clicked on empty spot on map, not on a unit or GUI
-		var gui_click = GUI.is_gui_clicked()
-		var map_click = self._is_tilemap(click_pos)
-		var unit_click = self._is_unit(click_pos)
-		if not unit_click and not gui_click and map_click:
-			# Save tile information in local variable for easy access
-			self.current_tile = self.get_tile(click_pos)
-			#print('Click was not on unit, was not on gui, but on map, on tile '+String(current_tile))
-			# If a unit was previously selected
+				self.selected_unit = current_entity
+				self.selected_unit.select()
+				# Update entity stats in GUI
+				GUI.update_unit_info(current_entity.get_unit_name(), current_entity.get_strength_points(), current_entity.get_movement_points(), current_entity.get_ammo())
+				# Enable or disable action buttons based on units attributes
+				GUI.disable_movement_button(not current_entity.can_move())
+				GUI.disable_attack_button((not current_entity.combat_ready() or not current_entity.can_move()))
+				GUI.disable_supply_button(not current_entity.can_resupply())
+		else:
+			# if clicked entity is not owned by player, see if a player-owned entity is selected...
 			if self.selected_unit != null:
-				#print('A unit is still selected...')
-				# If the selected unit can move and the player clicks on a valid target destination, 
-				# the click sets the movement destination and triggers pathfinding to it, saving
-				# the resulting path array at the selected unit.
-				if self.movement_selection == true and self._is_valid_destination(click_pos) == true:
-					#print('Move command issued. Click Pos is valid destination and unit can move.')
-					var unit = _get_entity_by_id(self.selected_unit)
-					unit.node.move_unit(unit.node.get_global_position(), click_pos, unit)
-					self.movement_selection = false
-		# if clicked on unit
-		elif unit_click and not gui_click:
-			#print('Click was on a unit, was not on gui.')
-			var unit = self._is_unit(click_pos, true).node
-			# if clicked unit is owned by player, select it and evaluate its possibilities
-			if unit.owned_by_active_player():
-				#print('Unit is owned by active player')
-				if self.resupply_selection == true:
-					#print('Resupply action to own unit from already selected unit')
-					var player_unit = _get_entity_by_id(self.selected_unit).node
-					# Check if, for the player unit, resupplying the click pos is possible, and if yes, do it.
-					player_unit.resupply(click_pos)
-					self.resupply_selection = false
-				elif self.attack_selection == true:
-					#print('Invalid choice, no intentional friendly fire!')
-					self.attack_selection = false
-					# Do something here, some sort of "Nah ah!", visually or via audio cue, to indicate
-					# this action is not possible.
-				else:
-					#print('Mark clicked unit as selected')
-					self.selected_unit = unit
-					self.selected_unit.select()
-					# Update unit stats in GUI
-					GUI.update_unit_info(unit.get_unit_name(), unit.get_strength_points(), unit.get_movement_points(), unit.get_ammo())
-					# Enable or disable action buttons based on units attributes
-					GUI.disable_movement_button(not unit.can_move())
-					GUI.disable_attack_button((not unit.combat_ready() or not unit.can_move()))
-					GUI.disable_supply_button(not unit.can_resupply())
-			else:
-				# if clicked unit is not owned by player, see if a player-owned unit is selected...
-				#print('Clicked unit is not owned by active player')
-				if self.selected_unit != null:
-					#print('A own unit is selected')
-					var player_unit = _get_entity_by_id(self.selected_unit).node
-					# If in attack mode
-					if self.attack_selection == true:
-						#print('Entered attack mode')
-						# Check if, for the player unit the click pos is a valid attack target
-						if player_unit.is_valid_attack_target(click_pos):
-							#print('Attack command issued. Target is valid attack target.')
-							var enemy_unit = self._is_unit(click_pos, true).node
-							player_unit.attack(enemy_unit)
-							self.attack_selection = false
-							# Deselect all selectable entities
-							self.deselect_all_entities()
+				var player_unit = _get_entity_by_id(self.selected_unit).node
+				# If in attack mode
+				if self.attack_selection == true:
+					# Check if, for the player entity the click pos is a valid attack target
+					if player_unit.is_valid_attack_target(click_pos):
+						var enemy_unit = self._is_unit(click_pos, true).node
+						player_unit.attack(enemy_unit)
+						self.attack_selection = false
+						# Deselect all selectable entities
+						self.deselect_all_entities()
 
 			##### On click on two tiles, flood fill the map and get path from first to second click
 #			if click_counter < 1:
@@ -421,8 +432,8 @@ func _input(event):
 			# self._highlight_neighbours(click_pos)
 		
 			# Show the popup with tile information
-#			GUI._show_tile_info_popup(_get_hex_object_from_global_pos(click_pos))
-#			GUI._show_tile_info_popup(current_tile)
+			GUI._show_tile_info_popup(_get_hex_object_from_global_pos(click_pos))
+			GUI._show_tile_info_popup(current_tile)
 
 # Process the current turn
 func _end_turn():
@@ -435,19 +446,19 @@ func _end_turn():
 # Should ideally only be done once, so use this function for alle updates that should
 # occur globally once in a turn.
 func _update_all_entities():
-	for entity in self.entities:
-		print('Check entity: ',entity)
-		if entity.type == 'unit':
-			entity.node.reset_movement_points()
-			entity.node.update_timed_modifiers()
-		elif entity.type == 'editor_marker':
-			if entity.node.get_marker_type() == 'VICTORY':
-				entity.node.check_ownership()
+	for current_entity in self.entities:
+		print('Check entity: ',current_entity)
+		if current_entity.type == 'entity':
+			current_entity.node.reset_movement_points()
+			current_entity.node.update_timed_modifiers()
+		elif current_entity.type == 'editor_marker':
+			if current_entity.node.get_marker_type() == 'VICTORY':
+				current_entity.node.check_ownership()
 
 # Internal function to advance player rotation, normally when turn ends.
 func _advance_player_rotation():
-	var player_active = false
-	var next_player = ''
+	var _player_active = false
+	var _next_player = ''
 	# first call of this function
 	if players.size() != self.player_rotation.size():
 		# set first human player as active
@@ -464,7 +475,7 @@ func _advance_player_rotation():
 		return true
 	# if this is not the initial call of this function, determine next player
 	else:
-		var next_player_id = null
+		var _next_player_id = null
 		if self.active_player_rot_index == self.player_rotation.size()-1:
 			self.active_player_rot_index = 0
 		else:
@@ -472,23 +483,25 @@ func _advance_player_rotation():
 		self.active_player.set_active(false)
 		self.active_player = playerMgr.get_player_by_id(self.player_rotation[self.active_player_rot_index]).node
 		self.active_player.set_active(true)
-		print('Round ended. Current player is now '+String(self.active_player.get_name()))
+		print('Round ended. Current player is now ' + str(self.active_player.get_player_name()))
 		return true
 
-func _physics_process(delta):
+func _physics_process(_delta):
+	_poll_input_actions()
+	_update_mouse_hover()
 	if active_player != null:
-		label_player.set_text(String(active_player.get_id()))
+		label_player.set_text(str(active_player.get_id()))
 	if turn_counter:
-		label_turn.set_text(String(turn_counter))
+		label_turn.set_text(str(turn_counter))
 
 # Check if there is a tilemap at the given position.
 # Use this to wrap up input loop, to avoid NPE when clicked outside tilemap.
 # Offers strict mode (check if no entity at given coords) or standard
-# mode, which just checks that no entity of type unit is a the given coords.
+# mode, which just checks that no entity of type entity is a the given coords.
 #
 # Background: The move logic allows moving onto certain types of entities
 # (e.g. map logic entities like cities), but not others (units, mainly). 
-# In this case it is necessary to check if there is a unit at the given coords
+# In this case it is necessary to check if there is a entity at the given coords
 # or "something else", which qualifies as "tilemap" in this case.
 #
 # @input {Vector2} position of the click to check for tilemap
@@ -496,61 +509,61 @@ func _physics_process(delta):
 # @returns {Boolean} return true if there is no entity at given coords
 func _is_tilemap(given_position, strict_mode=false):
 	var tile = _get_hex_object_from_global_pos(given_position)
-	var unit = _get_entity_by_pos(given_position)
+	var current_entity = _get_entity_by_pos(given_position)
 	# Tilemap at given position
 	if tile != null and tile.size() > 1:
 		print("Found tilemap at given coords")
 		# If a entity was found at the given coords
-		if unit:
+		if current_entity:
 			# If strict mode enabled, return 'false' if any entity exists at given coords.
-			# Per default, only return 'false' if a entity of type 'unit' is found.
+			# Per default, only return 'false' if a entity of type 'entity' is found.
 			if strict_mode:
 				print("Found entity in strict mode, no tilemap hit.")
 				return false
 			else:
-				print("Did I find a unit?" + str(!(unit.node.get_type() == 'unit')))
-				return !(unit.node.get_type() == 'unit')
+				print("Did I find a entity?" + str(!(current_entity.node.get_type() == 'entity')))
+				return !(current_entity.node.get_type() == 'entity')
 		return true
 	return false
 
-# Determine if there is a unit at the grid local position that is given.
-# @input {Vector2} position of the click to check for unit
-# @input {Boolean} (optional) return unit object if true
-# @returns {Boolean | Object} return true if there is a unit at given coords
-# or the unit instance itself
+# Determine if there is a entity at the grid local position that is given.
+# @input {Vector2} position of the click to check for entity
+# @input {Boolean} (optional) return entity object if true
+# @returns {Boolean | Object} return true if there is a entity at given coords
+# or the entity instance itself
 func _is_unit(given_position, return_unit=false):
 	var grid_position = hexmap.world_to_map(given_position)
-	for entity in entities:
-		if entity.node.get_type() == 'unit':
-			if entity.grid_pos == grid_position:
+	for every_entity in entities:
+		if every_entity.node.get_type() == 'entity':
+			if every_entity.grid_pos == grid_position:
 				if return_unit == true:
-					print("Found unit at location "+str(entity.node.get_global_position()))
-					print(entity)
-					return entity
+					print("Found entity at location "+str(every_entity.node.get_global_position()))
+					print(every_entity)
+					return every_entity
 				else:
 					return true
 	return false
 
 # Deselects all selectable entities on the map 
 func deselect_all_entities():
-	for entity in entities:
-		if entity.node.has_method('is_selected') and entity.node.is_selected():
-			# If a unit is deselected, deactivate the action buttons in GUI
-			if entity.type == 'unit':
+	for every_entity in entities:
+		if every_entity.node.has_method('is_selected') and every_entity.node.is_selected():
+			# If a entity is deselected, deactivate the action buttons in GUI
+			if every_entity.type == 'entity':
 				GUI.disable_movement_button(true)
 				GUI.disable_attack_button(true)
 				GUI.disable_supply_button(true)
 				GUI.update_unit_info("","","","")
-			entity.node.deselect()
+			every_entity.node.deselect()
 			self.selected_unit = null
 
 # Getter for unit_selected. This is faster than iterating over all
 # units and check each for its 'selected' states
-# @returns {Boolean} Returns true if a unit was selected.
+# @returns {Boolean} Returns true if a entity was selected.
 func _is_unit_selected():
-	for entity in entities:
-		if entity.type == 'unit':
-			if entity.node.is_selected():
+	for every_entity in entities:
+		if every_entity.type == 'entity':
+			if every_entity.node.is_selected():
 				return true
 	return false
 
@@ -566,7 +579,7 @@ func get_tile(given_position):
 	tile.index = hexmap.get_cell(grid_pos.x, grid_pos.y)
 	tile.position = grid_pos
 	return tile
-	
+
 # Method to draw a outline on one tile at a time to highlight it
 # @input {Vector2} position - of the click in global coordinates
 func highlight_hex(given_position):
@@ -575,15 +588,15 @@ func highlight_hex(given_position):
 	# get global coordinates of hexagon from grid local coordinates
 	var hex_world_pos = hexmap.map_to_world(global_hex_position)
 	# calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
-	var highlight_pos = _get_center_of_hex(hex_world_pos)
+	var highlight_pos = get_center_of_hex(hex_world_pos)
 	hex_marker.set_position(highlight_pos)
 
 # Returns the centered position of the tile, whose position is given
 # @input {Vector2} global position of hex
 # @output {Vector2} global position of center of hex
-func _get_center_of_hex(given_position):
-	return Vector2(given_position.x + self.hex_offset.x + (hexmap.get_cell_size().x/2),
-				   given_position.y + self.hex_offset.y + (hexmap.get_cell_size().y/2))
+func get_center_of_hex(given_position):
+	return Vector2(given_position.x + self.hex_offset.x,
+				   given_position.y + self.hex_offset.y)
 
 # Breadth First Search implementation
 # @input {Vector2} start_position global coordinates, from where to calculate the visitation
@@ -595,80 +608,94 @@ func _visit_map(start_position, target_position=null):
 	# a tuple in each entry, with the full tile-object and priority (a.k.a. cost).
 	# We will then sort the array based on that value by using sorted with cost as 
 	# key. Sadly, Godot does not offer 'sorted' function, so we implement this 
-	# manually by using 'custom_sort'
+	# manually by using 'sort_custom' with _sort_by_second_attr().
 	var frontier = []
-	# Start the visitation witht the tile gotten from the click position
+	# Start the visitation with the tile gotten from the click position
 	var start_tile = _get_hex_object_from_global_pos(start_position)
-	frontier.push_front([tile_list[start_tile['id']], 0]) # Start tile has cost 0
-	
-	var visited = []
+	if start_tile == null:
+		return
+	var target_tile = null
+	if target_position != null:
+		target_tile = _get_hex_object_from_global_pos(target_position)
+		if target_tile == null:
+			return
+	# Clear stale breadcrumbs from previous pathfinding runs.
+	for tile in tile_list:
+		if tile.has("came_from"):
+			tile.erase("came_from")
+	frontier.push_front([start_tile, 0]) # Start tile has cost 0
+
 	var current = null
-	var next = null
-	var i = 0
 	var cost_so_far = {
 		# Cost for start tile is always 0 and cost_so_far cannot be empty
-		String(start_tile['id']): 0
+		str(start_tile['id']): 0
 	}
 
 	# @DEBUG: Delete all debug path visualisations so there is no overlay.
 	# This can be commented out if the path visualisation is commented out as well.
 	# self._delete_all_nodes_with('path_vis')
 	
-	while not frontier.empty():
-		frontier.sort_custom(self, "_sort_by_second_attr") # First sort frontier by cost attribute in each tuple
+	while not frontier.is_empty():
+		frontier.sort_custom(_sort_by_second_attr) # First sort frontier by cost attribute in each tuple
 		current = frontier[0] # Now current[0] gives the tile object, current[1] the associated cost
+		frontier.pop_front()
 
 		# if target_position is already found, stop visitation to speed up overall calculation
-		if target_position != null and current[0]['grid_pos'] == self._get_hex_object_from_global_pos(target_position)['grid_pos']:
+		if target_tile != null and current[0]['id'] == target_tile['id']:
 			break
-		
-		frontier.pop_front()
+
 		for neighbour in current[0]['neighbours']:
-			var next_tile_object = _get_hex_object_from_grid_pos(current[0]['neighbours'][neighbour])
+			var next_neigbour = current[0]['neighbours'][neighbour]
 			# A neighbour may be null if the tile is on the edge of the map. In that case, skip.
-			if next_tile_object != null:
-				next = next_tile_object
-			else:
+			if next_neigbour == null:
+				continue
+			var next_tile_object = _get_hex_object_from_grid_pos(Vector2i(next_neigbour))
+			if next_tile_object == null:
 				continue
 			### Uniform cost search part
 			# Calculate the movement cost by next tile movement cost and adding current
-			var new_cost = cost_so_far[String(current[0]['id'])] + next['move_cost']
-			if not cost_so_far.has(String(next['id'])) || new_cost < cost_so_far[String(next['id'])]:
-				cost_so_far[String(next['id'])] = new_cost
+			var new_cost = cost_so_far[str(current[0]['id'])] + next_tile_object['move_cost']
+			if not cost_so_far.has(str(next_tile_object['id'])) or new_cost < cost_so_far[str(next_tile_object['id'])]:
+				cost_so_far[str(next_tile_object['id'])] = new_cost
 				var cost = new_cost
-				next['came_from'] = {
-					'id': current[0].id,
+				next_tile_object['came_from'] = {
+					'id': current[0]['id'],
 					'dir': neighbour
 				}
-				frontier.append([next, cost])
-				visited.append(next)
+				frontier.append([next_tile_object, cost])
 				# @DEBUG: Show movement cost per tile.
-				# self._render_on_tile(next['grid_pos'], String(cost_so_far[String(next['id'])]), 'path_vis')
-		i += 1
+				# self._render_on_tile(next_tile_object['grid_pos'], str(cost_so_far[str(next_tile_object['id'])]), 'path_vis')
 
 # Determine path from tile to tile, all coordinates are global
 # @input {Vector2} start_position, from this the start tile is derived
 # @input {Vector2} target_position, from this the target tile is derived
 # @returns {Array} path to the target tile
-func find_path(start_position, target_position):
+func find_path(start_position, target_position) -> Array:
 	self._visit_map(start_position, target_position)
 	var start_tile = self._get_hex_object_from_global_pos(start_position)
 	var target_tile = self._get_hex_object_from_global_pos(target_position)
+	if start_tile == null or target_tile == null:
+		return []
 	var current = null
-	var path = []
+	var path: Array = []
 	
 	# add target to path array
 	current = target_tile
 	path.append(current)
 
-	while current.id != start_tile.id:
-		current = self._get_hex_object_from_id(current.came_from.id)
+	while current['id'] != start_tile['id']:
+		# If a tile has no breadcrumb, the target is unreachable from start.
+		if not current.has("came_from"):
+			return []
+		current = self._get_hex_object_from_id(current["came_from"]["id"])
+		if current == null:
+			return []
 		path.append(current)
 	
 	# finally add start to path array
 	#path.append(start_tile)
 	# invert path array so it goes from start to target and return
-	path.invert()
+	path.reverse()
 	# _show_path(path, true)
 	return path
 
@@ -679,8 +706,8 @@ func _mark_grid_position(grid_position, counter):
 	var new_marker = marker.duplicate()
 	var counter_label = Label.new()
 	var hex_world_pos = hexmap.map_to_world(grid_position)
-	var marker_pos = _get_center_of_hex(hex_world_pos)
-	counter_label.set_text(String(counter))
+	var marker_pos = get_center_of_hex(hex_world_pos)
+	counter_label.set_text(str(counter))
 	new_marker.set_position(marker_pos)
 	counter_label.set_position(Vector2(marker_pos.x, marker_pos.y + 15))
 	self.add_child(new_marker)
@@ -696,10 +723,10 @@ func _mark_grid_position(grid_position, counter):
 func _sort_by_second_attr(a, b):
 	return a[1] < b[1]
 
-##########################################################################
+#################################################################################
 # These methods are for debug purposes only
-# They should be deleted, cleaned and integrated or very well hidden away
-##########################################################################
+# They should either be deleted, cleaned and integrated or very well hidden away
+#################################################################################
 
 # Helper function to visualize the path found by flood fill by rendering
 # a marker on top of every tile in the path
@@ -731,19 +758,19 @@ func _show_origin(local_tile_list):
 		# Set custom name for the arrow marker, so it can be deleted later
 		new_arrow.set_name('OriginMarker')
 		var arrow_pos = hexmap.map_to_world(tile.grid_pos)
-		arrow_pos = _get_center_of_hex(arrow_pos)
+		arrow_pos = get_center_of_hex(arrow_pos)
 		# Use rotation lookup table to get from String like 'n' to a rotation degree
 		# like '-90'
 		var origin_dir = tile.came_from.dir
 		var arrow_rotation = neighbour_position_rotation_table[origin_dir]
-		new_arrow.set_rotd(arrow_rotation)
+		new_arrow.rotation_degrees = arrow_rotation
 		new_arrow.set_position(arrow_pos)
 		self.add_child(new_arrow)
 		new_arrow.set_owner(get_tree().get_edited_scene_root())
 
 # Helper to delete all nodes that start with a certain string.
-# This will add a @-sign in front of the given name_fragment because
-# dynamically added nodes are auto-prefixed by this by Godot.
+# This will search for given name_fragment plus @-sign in front because
+# dynamically added nodes are auto-prefixed by this sign by Godot.
 # @input {String} Nodes that contain this in their names, will get deleted
 func _delete_all_nodes_with(name_fragment):
 	for node in self.get_children():
@@ -757,13 +784,13 @@ func _delete_all_nodes_with(name_fragment):
 func debug_log(filename, message):
 	var log_path = 'res://logs/'
 	var file_ending = '.log'
-	var logfile = File.new()
-	logfile.open(log_path+filename+file_ending, File.READ_WRITE)
+	var logfile = FileAccess.open(log_path + filename + file_ending, FileAccess.READ_WRITE)
+	if logfile == null:
+		return
 	logfile.seek_end() # Find end
 	logfile.store_string('\n') # Newline
 	if message:
-		logfile.store_string(String(message))
-	logfile.close()
+		logfile.store_string(str(message))
 
 # Used to display additional information on top of the tile, also create a new marker on every
 # tile click and does not delete the old one
@@ -776,7 +803,7 @@ func highlight_every_hex(given_position, marker_color, show_coords):
 	# get global coordinates of hexagon from grid local coordinates
 	var hex_world_pos = hexmap.map_to_world(global_hex_position)
 	# calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
-	var highlight_pos = _get_center_of_hex(hex_world_pos)
+	var highlight_pos = get_center_of_hex(hex_world_pos)
 	# duplicate the highlight
 	var new_highlight = hex_marker.duplicate()
 	new_highlight.set_modulate(marker_color)
@@ -795,13 +822,13 @@ func highlight_every_hex(given_position, marker_color, show_coords):
 		var grid_pos_label_pos = Vector2(hex_world_pos.x, hex_world_pos.y+20)
 		grid_pos_label.set_position(grid_pos_label_pos)
 		# Fill the labels with text
-		global_pos_label.set_text(String(hex_world_pos))
-		grid_pos_label.set_text(String(global_hex_position))
+		global_pos_label.set_text(str(hex_world_pos))
+		grid_pos_label.set_text(str(global_hex_position))
 		# add the elements to scene
 		self.add_child(global_pos_label)
 		self.add_child(grid_pos_label)
 		global_pos_label.set_owner(get_tree().get_edited_scene_root())
-		grid_pos_label.set_owner(get_tree().get_current_scene())
+		grid_pos_label.set_owner(get_tree().get_edited_scene_root())
 
 # Create a highlight marker on a given hex that stays.
 # This looks different than the hex highlight in that it
@@ -810,17 +837,17 @@ func highlight_every_hex(given_position, marker_color, show_coords):
 # @input {Color} Color of the markers created
 # @input {String} (optional) Name of the marker node
 func _set_hex_fill(hex_world_pos, marker_color, opt_name=null):
-	var highlight_pos = _get_center_of_hex(hex_world_pos)
+	var highlight_pos = get_center_of_hex(hex_world_pos)
 	# duplicate the highlight
 	var new_hex_fill = hex_fill.duplicate()
 	if opt_name != null:
 		new_hex_fill.set_name(opt_name)
-	new_hex_fill.set_modulate(globals.getColor(String(marker_color)))
+	new_hex_fill.set_modulate(globals.getColor(str(marker_color)))
 	# position the highlight
 	new_hex_fill.set_position(highlight_pos)
 	# add the highlight to scene
 	self.add_child(new_hex_fill)
-	
+	new_hex_fill.set_owner(get_tree().get_edited_scene_root())
 # Highlight the neighbours of a hex tile at a given global position
 # @input {Vector2} global position of the tile
 func _highlight_neighbours(given_global_position):
@@ -834,20 +861,22 @@ func _highlight_neighbours(given_global_position):
 # Per default the file is res://tiles.txt and it mus exist before calling this method.
 # @input {Tilemap} tilemap for which all used tiles should be exported
 func _export_tile_list(tilemap):
-	var myfile = File.new()
+	var myfile = FileAccess.open("res://tiles.txt", FileAccess.WRITE)
+	if myfile == null:
+		return
 	print('Start exporting tiles')
-	myfile.open("res://tiles.txt", 3)
-	myfile.store_string(String(tilemap.get_used_cells()))
-	myfile.close()
+	myfile.store_string(str(tilemap.get_used_cells()))
 	print('Done storing')
 
-# Renders red dot at given position relative to given parent
-# @input {Vector2} position to render dot
+# Renders red dot at hex tile with id, relative to given parent
+# @input {int} id of the hex tile to render the dot on
 # @input {Object} parent node of the created sprite
-func _render_dot(given_position, parent):
+func _render_dot(id):
 	var new_marker = marker.duplicate()
+	var tile = self._get_hex_object_from_id(id)
+	var given_position = self.get_center_of_hex(hexmap.map_to_world(tile["grid_pos"]))
 	new_marker.set_position(given_position)
-	parent.add_child(new_marker)
+	self.add_child(new_marker)
 	new_marker.set_owner(get_tree().get_edited_scene_root())
 
 # Renders a texture frame at given position, with given size, 
@@ -905,7 +934,7 @@ func _mark_hex_dimensions(given_position):
 func _display_hex_info(input_coordinates):
 	var new_label = Label.new()
 	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
-	new_label.set_text(String(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
+	new_label.set_text(str(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
 	new_label.set_position(tile_world_pos)
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
@@ -929,7 +958,7 @@ func _render_on_tile(input_coordinates, info, opt_name):
 func _display_terrain_type(grid_coordinates):
 	# Fill label
 	var new_label = Label.new()
-	new_label.set_text(String(hexmap._get_tile_attributes_by_index(hexmap.get_cell(grid_coordinates[0],grid_coordinates[1]))['name']))
+	new_label.set_text(str(hexmap._get_tile_attributes_by_index(hexmap.get_cell(grid_coordinates[0],grid_coordinates[1]))['name']))
 	# Set pos
 	var y_pos = grid_coordinates[1] + (hexmap.get_cell_size().y/2)
 	var x_pos = grid_coordinates[0]
@@ -954,8 +983,11 @@ func _on_ToggleGridButton_pressed():
 		from_opacity = Color(1, 1, 1, 0)
 		to_opacity = Color(1, 1, 1, 0.3)
 		self.grid_visible = true
-	tween.interpolate_property(hex_grid, 'modulate', from_opacity, to_opacity, 2.0, Tween.TRANS_LINEAR, Tween.EASE_IN_OUT)
-	tween.start()
+	hex_grid.modulate = from_opacity
+	var grid_tween = create_tween()
+	grid_tween.set_trans(Tween.TRANS_LINEAR)
+	grid_tween.set_ease(Tween.EASE_IN_OUT)
+	grid_tween.tween_property(hex_grid, "modulate", to_opacity, 2.0)
 
 func _on_EndTurnButton_pressed():
 	_end_turn()

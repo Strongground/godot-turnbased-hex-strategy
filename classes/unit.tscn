@@ -1,41 +1,57 @@
-[gd_scene load_steps=6 format=2]
+[gd_scene format=3 uid="uid://qhanmbr84ihp"]
 
-[ext_resource path="res://classes/unit.gd" type="Script" id=1]
-[ext_resource path="res://assets/images/humvee_placeholder_d.png" type="Texture" id=2]
-[ext_resource path="res://assets/images/hex_outline_white.png" type="Texture" id=3]
-[ext_resource path="res://classes/flag.tscn" type="PackedScene" id=7]
+[ext_resource type="Script" uid="uid://byvfqqnibunqt" path="res://classes/unit.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://r0m635kakqv8" path="res://assets/images/humvee_placeholder_d.png" id="2"]
+[ext_resource type="Texture2D" uid="uid://ddbb7so5ingjm" path="res://assets/images/hex_outline_white.png" id="3"]
+[ext_resource type="PackedScene" uid="uid://13ycmaxrlj3x" path="res://classes/unit_attributes_panel.tscn" id="5_qujnu"]
+[ext_resource type="PackedScene" path="res://classes/flag.tscn" id="7"]
 
-[sub_resource type="CircleShape2D" id=1]
+[sub_resource type="CircleShape2D" id="1"]
 
-[node name="Unit" type="Area2D"]
-position = Vector2( 1, 0 )
-gravity = 100.0
+[node name="Unit" type="Area2D" unique_id=116737479 node_paths=PackedStringArray("unit_quick_panel", "qp_strength_text", "qp_movement_text", "qp_ammo_text")]
 collision_layer = 33
-script = ExtResource( 1 )
+script = ExtResource("1")
+unit_quick_panel = NodePath("UnitQuickPanel")
+qp_strength_text = NodePath("UnitQuickPanel/Panel/MarginContainer/VBoxContainer/HBoxContainer2/UnitStrength")
+qp_movement_text = NodePath("UnitQuickPanel/Panel/MarginContainer/VBoxContainer/HBoxContainer3/UnitActionPoints")
+qp_ammo_text = NodePath("UnitQuickPanel/Panel/MarginContainer/VBoxContainer/HBoxContainer4/UnitAmmo")
 
-[node name="UnitImage" type="Sprite" parent="."]
-scale = Vector2( 0.352323, 0.352323 )
+[node name="UnitImage" type="Sprite2D" parent="." unique_id=1570784795]
 z_as_relative = false
-texture = ExtResource( 2 )
+scale = Vector2(0.352323, 0.352323)
+texture = ExtResource("2")
 
-[node name="HexOutline" type="Sprite" parent="."]
+[node name="HexOutline" type="Sprite2D" parent="." unique_id=1307774512]
 visible = false
-texture = ExtResource( 3 )
+texture = ExtResource("3")
 
-[node name="Flag" parent="." instance=ExtResource( 7 )]
-position = Vector2( 45.3435, -48.7712 )
-scale = Vector2( 0.0487769, 0.0487769 )
+[node name="Flag" parent="." unique_id=1862623733 instance=ExtResource("7")]
+position = Vector2(45.3435, -48.7712)
+scale = Vector2(0.0487769, 0.0487769)
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-scale = Vector2( 6.31008, 6.31008 )
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=968852350]
 z_index = 1
-shape = SubResource( 1 )
+scale = Vector2(6.31008, 6.31008)
+shape = SubResource("1")
 
-[node name="MoveTween" type="Tween" parent="."]
+[node name="SoundEmitter" type="AudioStreamPlayer" parent="." unique_id=1331105720]
 
-[node name="SoundEmitter" type="AudioStreamPlayer" parent="."]
+[node name="AttackEffectDelay" type="Timer" parent="." unique_id=746489775]
 
-[node name="AttackEffectDelay" type="Timer" parent="."]
-process_mode = 0
-[connection signal="tween_completed" from="MoveTween" to="." method="_on_MoveTween_tween_completed"]
+[node name="UnitQuickPanel" parent="." unique_id=1289821078 instance=ExtResource("5_qujnu")]
+visible = false
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -91.0
+offset_top = 51.0
+offset_right = 109.0
+offset_bottom = 81.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+
 [connection signal="timeout" from="AttackEffectDelay" to="." method="_on_AttackEffectDelay_timeout"]
+
+[editable path="UnitQuickPanel"]
