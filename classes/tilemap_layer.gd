@@ -9,38 +9,30 @@ var tile_types = [
 	{"name": "Mountains", "move_cost": 5.0, "terrain": "land"},
 	{"name": "Village", "move_cost": 1.5, "terrain": "land"},
 	{"name": "Water", "move_cost": 1.0, "terrain": "water"},
-	{"name": "Desert", "move_cost": 1.0, "terrain": "land"},
+	{"name": "Desert", "move_cost": 2.0, "terrain": "land"},
 	{"name": "City", "move_cost": 1.5, "terrain": "land"}
 ]
 
-# Compatibility wrapper for legacy code paths that used TileMap.get_cell_size().
-func get_cell_size():
+# Return the tile index used by the game logic for the given grid position.
+func get_tile_index(grid_pos: Vector2i) -> int:
+	var source_id = get_cell_source_id(grid_pos)
+	if source_id == -1:
+		return -1
+	var atlas_coords = get_cell_atlas_coords(grid_pos)
+	if atlas_coords.x >= 0:
+		return atlas_coords.x
+	return source_id
+
+func get_cell_size() -> Vector2:
 	if tile_set != null:
 		return Vector2(tile_set.tile_size)
 	return Vector2(128, 128)
 
-# Compatibility wrapper for Godot 2/3 API.
-func world_to_map(world_pos):
-	return local_to_map(to_local(world_pos))
+func global_to_map(given_position: Vector2) -> Vector2i:
+	return local_to_map(to_local(given_position))
 
-# Compatibility wrapper for Godot 2/3 API.
-func map_to_world(grid_pos):
-	return to_global(map_to_local(Vector2i(grid_pos)))
-
-# Compatibility wrapper that mirrors the older API used in game.gd.
-func get_used_cells_compat(_layer = 0):
-	return get_used_cells()
-
-# Compatibility wrapper for Godot 2/3 API.
-func get_cell(x, y):
-	var coords = Vector2i(int(x), int(y))
-	var source_id = get_cell_source_id(coords)
-	if source_id == -1:
-		return -1
-	var atlas_coords = get_cell_atlas_coords(coords)
-	if atlas_coords.x >= 0:
-		return atlas_coords.x
-	return source_id
+func map_to_global(grid_position: Vector2i) -> Vector2:
+	return to_global(map_to_local(grid_position))
 
 # Return a object with attributes for the tile with the given tileset index.
 func _get_tile_attributes_by_index(index):

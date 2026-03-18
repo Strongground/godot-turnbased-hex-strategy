@@ -23,8 +23,6 @@ func _ready():
 
 func _physics_process(_delta):
 	if Engine.is_editor_hint():
-		print("EDITOR!!!")
-		# This is only executed in editor
 		self._snap_to_grid()
 
 func initialize():
@@ -99,7 +97,7 @@ func _hide_marker():
 
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():
-	var grid_coords = hexmap.world_to_map(self.get_global_position())
+	var grid_coords = hexmap.global_to_map(self.get_global_position())
 	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(-6,0))
 	self.set_position(world_coords)
 
@@ -109,7 +107,7 @@ func _snap_to_grid():
 # @input {Vector2} offset, this can depend on entity type
 # @returns {Vector2} global coordinates that represent the center of a hex
 func _get_centered_grid_pos(grid_coords, offset):
-	var world_coords = hexmap.map_to_world(grid_coords)
+	var world_coords = hexmap.map_to_global(Vector2i(grid_coords))
 	var center_coords = root.get_center_of_hex(world_coords)
 	center_coords.x += offset.x
 	center_coords.y += offset.y

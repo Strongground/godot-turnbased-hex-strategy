@@ -31,7 +31,7 @@ extends "res://classes/entity.gd"
 @export var unit_id = ''
 
 # For debugging sprite loading in detail
-@export var debug_sprite_loading = false
+@export var debug_logging = false
 
 #################################################################################
 # 
@@ -252,7 +252,7 @@ func get_unit_name():
 # @input entity {Object} This is a reference to the entity in-game representing
 # this entity and is needed to be passed back to a callback.
 func move_unit(start_point, end_point, moving_entity):
-	var new_path = game.find_path(start_point, end_point)
+	var new_path = game.find_path(start_point, end_point, self)
 	if new_path.is_empty():
 		print("No valid path found from " + str(start_point) + " to " + str(end_point))
 		return false
@@ -275,7 +275,7 @@ func move_unit(start_point, end_point, moving_entity):
 
 func show_quick_panel() -> void:
 	# Figure out entities position + offset so panel is above it
-	var grid_coords = hexmap.world_to_map(self.get_global_position())
+	var grid_coords = hexmap.global_to_map(self.get_global_position())
 	unit_quick_panel.show()
 	unit_quick_panel.set_global_position(self._get_centered_grid_pos(grid_coords, Vector2(-100,50)))
 	_update_quick_panel()
@@ -303,11 +303,11 @@ func get_faction():
 # @input {int} The direction of the entity
 func _set_sprite(dir):
 	var sprites = themeMgr.get_unit_sprites(unit_id)
-	_debug_sprite("_set_sprite(): direction=" + str(dir) + ", sprites_from_theme=" + str(sprites))
+	_debug_log("_set_sprite(): direction=" + str(dir) + ", sprites_from_theme=" + str(sprites))
 	var sprite_scale = themeMgr.get_sprite_scale(unit_id)
 	if sprites == null or sprites.is_empty():
 		push_warning("Unit '" + str(unit_id) + "': No sprite paths returned by ThemeManager.")
-		_debug_sprite("_set_sprite(): no sprites returned, abort.")
+		_debug_log("_set_sprite(): no sprites returned, abort.")
 		return
 	var sprite_index = 0
 	# If only one sprite per entity, use it (or the automatically generated 
@@ -318,23 +318,23 @@ func _set_sprite(dir):
 			sprite_index = 1
 	elif sprites.size() > 1:
 		sprite_index = clampi(dir, 0, sprites.size() - 1)
-	_debug_sprite("_set_sprite(): using sprite_index=" + str(sprite_index) + " out of " + str(sprites.size()))
+	_debug_log("_set_sprite(): using sprite_index=" + str(sprite_index) + " out of " + str(sprites.size()))
 	var sprite_path = str(sprites[sprite_index])
 	if not sprite_path.begins_with("res://"):
 		var theme_name = themeMgr.get_current_theme_name()
 		sprite_path = "res://themes/%s/%s" % [theme_name, sprite_path]
-	_debug_sprite("_set_sprite(): loading texture from '" + sprite_path + "'")
+	_debug_log("_set_sprite(): loading texture from '" + sprite_path + "'")
 	# Load texture based on above information
 	var texture = load(sprite_path) as Texture2D
 	if texture == null:
 		push_warning("Unit '" + str(unit_id) + "': Could not load sprite '" + sprite_path + "'.")
-		_debug_sprite("_set_sprite(): texture load FAILED. UnitImage keeps current texture.")
+		_debug_log("_set_sprite(): texture load FAILED. UnitImage keeps current texture.")
 		return
 	$UnitImage.texture = texture
-	_debug_sprite("_set_sprite(): texture set successfully. resource_path='" + str(texture.resource_path) + "'")
+	_debug_log("_set_sprite(): texture set successfully. resource_path='" + str(texture.resource_path) + "'")
 	if sprite_scale:
 		$UnitImage.scale = Vector2(sprite_scale, sprite_scale)
-		_debug_sprite("_set_sprite(): applied sprite_scale=" + str(sprite_scale))
+		_debug_log("_set_sprite(): applied sprite_scale=" + str(sprite_scale))
 
 # This resets movement points to original value (e.g. when turn ends)
 func reset_movement_points():
@@ -685,18 +685,18 @@ func _process_attack_finish():
 # default value, it will not be overwritten.
 # @input {Dictionary} a dict containing all the attribute values for this entity
 func fill_attributes(data_object):
-	_debug_sprite("fill_attributes(): start for unit_id='" + str(unit_id) + "', faction='" + str(unit_faction) + "'")
+	_debug_log("fill_attributes(): start for unit_id='" + str(unit_id) + "', faction='" + str(unit_faction) + "'")
 	for entry in data_object:
 		if entry in self:
 			set(entry, data_object[entry])
-	_debug_sprite("fill_attributes(): after fill -> display_name='" + str(display_name) + "', unit_faction='" + str(unit_faction) + "', unit_strength=" + str(unit_strength) + ", base_defense=" + str(base_defense) + ", armor=" + str(armor))
+	_debug_log("fill_attributes(): after fill -> display_name='" + str(display_name) + "', unit_faction='" + str(unit_faction) + "', unit_strength=" + str(unit_strength) + ", base_defense=" + str(base_defense) + ", armor=" + str(armor))
 	self._update_movementpoints_indicator()
 	self.max_movement_points = self.movement_points
 	self._populate_weapons()
 	self._fill_mods()
 	self.experience_definitions = themeMgr.get_faction_experience_definitions(self.unit_faction)
 	self._update_unitammo_indicator()
-	_debug_sprite("fill_attributes(): done.")
+	_debug_log("fill_attributes(): done.")
 
 # Fill modifiers from theme
 func _fill_mods():
@@ -826,7 +826,7 @@ func _ready():
 	set_process_input(true)
 	# Mark entity as selectable
 	self.set_selectable(true)
-	_debug_sprite("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
+	_debug_log("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
 
 func _input(_event):
 	pass
@@ -862,6 +862,6 @@ func _on_selected():
 func _on_deselected():
 	self.hide_quick_panel()
 
-func _debug_sprite(message):
-	if debug_sprite_loading:
-		print("[SpriteDebug][Unit:" + name + "|" + str(unit_id) + "] " + message)
+func _debug_log(message):
+	if debug_logging:
+		print("[Debug][Unit:" + name + "|" + str(unit_id) + "] " + message)

@@ -53,7 +53,7 @@ var current_tile = null
 # var counter = 0
 var hex_directions = null
 var all_tiles = null
-var neighbour_position_rotation_table = null
+var astar_grid: AStarGrid2D = null
 var entities = []
 # var click_counter = 0
 # var start_position = null
@@ -67,7 +67,7 @@ var resupply_selection = false
 # Options
 @export var grid_visible = false
 @export var city_names_visible = true
-@export var debug_sprite_loading = true
+@export var debug_logging = true
 ## Loop vars
 var turn_counter = 0
 var active_player = null
@@ -85,7 +85,7 @@ var _last_mouse_pos = Vector2(INF, INF)
 @onready var label_turn = find_child('CurrentTurn')
 
 func _ready():
-	_debug_sprite("_ready(): start")
+	_debug_log("_ready(): start")
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
 	# Define players, this should later be done either in the scenario
@@ -97,16 +97,19 @@ func _ready():
 		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
 	]
 	players = playerMgr.create_players(registered_players)
-	_debug_sprite("_ready(): players created=" + str(players.size()))
+	_debug_log("_ready(): players created=" + str(players.size()))
 	# Load theme
 	themeMgr.load_theme('example')
-	_debug_sprite("_ready(): theme loaded")
+	_debug_log("_ready(): theme loaded")
 	# Create factions
 	factionMgr.load_factions()
-	_debug_sprite("_ready(): factions loaded=" + str(factionMgr.factions.size()))
+	_debug_log("_ready(): factions loaded=" + str(factionMgr.factions.size()))
 	# Load list of music titles to play
-	musicMgr.play()
-	_debug_sprite("_ready(): music manager play() called")
+	if DisplayServer.get_name() != "headless":
+		musicMgr.play()
+		_debug_log("_ready(): music manager play() called")
+	else:
+		_debug_log("_ready(): headless run, skipping music playback")
 	hex_offset = Vector2(-6,0)
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
@@ -119,32 +122,26 @@ func _ready():
 		# Odd columns
 		[[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
 	]
-	neighbour_position_rotation_table = {
-		'n':  -90,
-		'ne': -150,
-		'se': 150,
-		's':  90,
-		'sw': 30,
-		'nw': -30
-	}
 	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
 	tile_list = self._build_hex_object_database()
-	_debug_sprite("_ready(): tile_list built, size=" + str(tile_list.size()))
+	_debug_log("_ready(): tile_list built, size=" + str(tile_list.size()))
+	self._build_astar_grid()
+	_debug_log("_ready(): astar_grid built")
 	# Place the units according to their ID and fill attributes.
 	# Create a global list of all entities on the map, their type, positions and nodes
 	entities = self._create_entity_list()
-	_debug_sprite("_ready(): entities created, size=" + str(entities.size()))
+	_debug_log("_ready(): entities created, size=" + str(entities.size()))
 	self._place_units()
-	_debug_sprite("_ready(): _place_units() done")
+	_debug_log("_ready(): _place_units() done")
 	self._update_units()
-	_debug_sprite("_ready(): _update_units() done")
+	_debug_log("_ready(): _update_units() done")
 	# GUI ready functions
 	GUI.disable_movement_button(true)
 	GUI.disable_attack_button(true)
 	GUI.disable_supply_button(true)
 	# Start first turn
 	self._advance_player_rotation()
-	_debug_sprite("_ready(): done")
+	_debug_log("_ready(): done")
 	# for tile in tile_list:
 	# 	self._render_dot(tile['id'])
 
@@ -158,14 +155,14 @@ func _place_units():
 		# If entity is of type "entity" and the unit_id is existing in the theme
 		if new_entity.type == 'entity' and new_entity.node.unit_id in theme_units:
 			var unit_data = themeMgr.get_unit(new_entity.node.unit_id)
-			_debug_sprite("_place_units(): applying theme data to node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "', pre_faction='" + str(new_entity.node.unit_faction) + "'")
+			_debug_log("_place_units(): applying theme data to node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "', pre_faction='" + str(new_entity.node.unit_faction) + "'")
 			new_entity.node.fill_attributes(unit_data)
 		elif new_entity.type == 'entity':
-			_debug_sprite("_place_units(): no theme data found for node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "'")
+			_debug_log("_place_units(): no theme data found for node='" + new_entity.node.name + "', unit_id='" + str(new_entity.node.unit_id) + "'")
 
-func _debug_sprite(message):
-	if debug_sprite_loading:
-		print("[SpriteDebug][Game] " + message)
+func _debug_log(message):
+	if debug_logging:
+		print("[Debug][Game] " + message)
 
 # Build a database of tiles with look-up tables for neighbours and tileset information 
 # to allow pathfinding and game logic to work.
@@ -174,12 +171,13 @@ func _build_hex_object_database():
 	var tiles = []
 	var i = 0
 	for tile in all_tiles:
+		var tile_index = hexmap.get_tile_index(Vector2i(tile))
 		tiles.append({
 			'id': i,
 			'grid_pos': tile,
-			'terrain': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'terrain'),
-			'move_cost': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'move_cost'),
-			'name': hexmap._get_tile_attribute_by_index(hexmap.get_cell(tile[0], tile[1]), 'name'),
+			'terrain': hexmap._get_tile_attribute_by_index(tile_index, 'terrain'),
+			'move_cost': hexmap._get_tile_attribute_by_index(tile_index, 'move_cost'),
+			'name': hexmap._get_tile_attribute_by_index(tile_index, 'name'),
 			# contains the grid local positions of all neighbours. may also be null if no neighbour
 			# exists for a direction.
 			'neighbours': {
@@ -193,6 +191,74 @@ func _build_hex_object_database():
 		})
 		i+=1
 	return tiles
+
+# Build and configure AStarGrid2D for hex pathfinding.
+func _build_astar_grid():
+	if all_tiles == null or all_tiles.is_empty():
+		astar_grid = null
+		return
+	astar_grid = AStarGrid2D.new()
+	var cell_shape_hex = 2
+	if ClassDB.class_has_integer_constant("AStarGrid2D", "CELL_SHAPE_HEXAGON"):
+		cell_shape_hex = ClassDB.class_get_integer_constant("AStarGrid2D", "CELL_SHAPE_HEXAGON")
+	astar_grid.cell_shape = cell_shape_hex
+	astar_grid.diagonal_mode = AStarGrid2D.DIAGONAL_MODE_NEVER
+	astar_grid.cell_size = hexmap.get_cell_size()
+	# Determine bounds for the grid region.
+	var min_x = int(all_tiles[0].x)
+	var max_x = int(all_tiles[0].x)
+	var min_y = int(all_tiles[0].y)
+	var max_y = int(all_tiles[0].y)
+	for cell in all_tiles:
+		min_x = mini(min_x, int(cell.x))
+		max_x = maxi(max_x, int(cell.x))
+		min_y = mini(min_y, int(cell.y))
+		max_y = maxi(max_y, int(cell.y))
+	astar_grid.region = Rect2i(Vector2i(min_x, min_y), Vector2i(max_x - min_x + 1, max_y - min_y + 1))
+	astar_grid.update()
+	# Build lookup tables for quick assignment.
+	var tile_by_pos = {}
+	for tile in tile_list:
+		tile_by_pos[tile["grid_pos"]] = tile
+	# Set weights for used tiles and mark unused tiles as solid.
+	for cell in all_tiles:
+		var tile = tile_by_pos.get(cell, null)
+		if tile != null:
+			astar_grid.set_point_weight_scale(cell, float(tile["move_cost"]))
+	for x in range(astar_grid.region.position.x, astar_grid.region.position.x + astar_grid.region.size.x):
+		for y in range(astar_grid.region.position.y, astar_grid.region.position.y + astar_grid.region.size.y):
+			var pos = Vector2i(x, y)
+			if not tile_by_pos.has(pos):
+				astar_grid.set_point_solid(pos, true)
+
+# Apply per-unit traversal rules and dynamic blockers (e.g. enemy units).
+func _apply_astar_unit_constraints(moving_unit):
+	if astar_grid == null:
+		return
+	var can_traverse = []
+	if moving_unit != null and moving_unit.can_traverse != null:
+		can_traverse = moving_unit.can_traverse
+	var blocked_positions = {}
+	if moving_unit != null:
+		for current_entity in entities:
+			if current_entity.type != "entity":
+				continue
+			if current_entity.node == moving_unit:
+				continue
+			if current_entity.node.is_container():
+				continue
+			if current_entity.node.has_method("get_unit_stance"):
+				if current_entity.node.get_unit_stance() == "enemy":
+					blocked_positions[current_entity.grid_pos] = true
+			else:
+				blocked_positions[current_entity.grid_pos] = true
+	for tile in tile_list:
+		var solid = false
+		if not can_traverse.is_empty() and not can_traverse.has(tile["terrain"]):
+			solid = true
+		if blocked_positions.has(tile["grid_pos"]):
+			solid = true
+		astar_grid.set_point_solid(tile["grid_pos"], solid)
 
 # Update all entity nodes with their internal update-method. There is still
 # udpates going on in the main game script that handles grid-position tables
@@ -260,8 +326,8 @@ func _create_entity_list():
 			var hex_object = self._get_hex_object_from_global_pos(node.get_global_position())
 			var grid_pos = null
 			if hex_object == null:
-				grid_pos = hexmap.world_to_map(node.get_global_position())
-				_debug_sprite("_create_entity_list(): no tile object for node='" + node.name + "', fallback grid_pos=" + str(grid_pos))
+				grid_pos = hexmap.global_to_map(node.get_global_position())
+				_debug_log("_create_entity_list(): no tile object for node='" + node.name + "', fallback grid_pos=" + str(grid_pos))
 			else:
 				grid_pos = hex_object.grid_pos
 			result.append({
@@ -309,7 +375,7 @@ func _get_hex_neighbour_pos(hex_position, direction):
 # @input {Vector2} hex_position - global position of tile
 # @returns {Object} The tile object
 func _get_hex_object_from_global_pos(given_position):
-	var grid_position = hexmap.world_to_map(given_position)
+	var grid_position = hexmap.global_to_map(given_position)
 	for tile in tile_list:
 		if tile['grid_pos'] == grid_position:
 			return tile
@@ -348,7 +414,7 @@ func _update_mouse_hover():
 	# If tile is null, mouse was outside play area
 	if tile == null:
 		return
-	hex_highlight.set_position(self.get_center_of_hex(hexmap.map_to_world(tile["grid_pos"])))
+	hex_highlight.set_position(self.get_center_of_hex(hexmap.map_to_global(tile["grid_pos"])))
 	GUI.update_tile_info(tile)
 
 func _handle_primary_click(click_pos):
@@ -411,7 +477,7 @@ func _handle_primary_click(click_pos):
 #				click_counter += 1
 #				# color clicked (starting) tile red
 #				var vis_start_tile = self._get_hex_object_from_global_pos(start_position)
-#				self._set_hex_fill(hexmap.map_to_world(vis_start_tile.grid_pos), 'red', 'path_vis')
+#				self._set_hex_fill(hexmap.map_to_global(vis_start_tile.grid_pos), 'red', 'path_vis')
 #			elif click_counter == 1:
 #				print('Second click')
 #				# On second click, determine target position
@@ -532,7 +598,7 @@ func _is_tilemap(given_position, strict_mode=false):
 # @returns {Boolean | Object} return true if there is a entity at given coords
 # or the entity instance itself
 func _is_unit(given_position, return_unit=false):
-	var grid_position = hexmap.world_to_map(given_position)
+	var grid_position = hexmap.global_to_map(given_position)
 	for every_entity in entities:
 		if every_entity.node.get_type() == 'entity':
 			if every_entity.grid_pos == grid_position:
@@ -572,11 +638,11 @@ func _is_unit_selected():
 # @returns {Object} the tile object
 func get_tile(given_position):
 	# Calculate grid position from world position
-	var grid_pos = hexmap.world_to_map(given_position)
+	var grid_pos = hexmap.global_to_map(given_position)
 	# Get tile attributes based on tileset index
-	var tile = hexmap._get_tile_attributes_by_index(hexmap.get_cell(grid_pos.x, grid_pos.y))
+	var tile = hexmap._get_tile_attributes_by_index(hexmap.get_tile_index(Vector2i(grid_pos)))
 	# Enrich the returned tile object for debugging purposes
-	tile.index = hexmap.get_cell(grid_pos.x, grid_pos.y)
+	tile.index = hexmap.get_tile_index(Vector2i(grid_pos))
 	tile.position = grid_pos
 	return tile
 
@@ -584,9 +650,9 @@ func get_tile(given_position):
 # @input {Vector2} position - of the click in global coordinates
 func highlight_hex(given_position):
 	# get grid local coordinates of hexagon from global click coordinates
-	var global_hex_position = hexmap.world_to_map(given_position)
+	var global_hex_position = hexmap.global_to_map(given_position)
 	# get global coordinates of hexagon from grid local coordinates
-	var hex_world_pos = hexmap.map_to_world(global_hex_position)
+	var hex_world_pos = hexmap.map_to_global(global_hex_position)
 	# calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
 	var highlight_pos = get_center_of_hex(hex_world_pos)
 	hex_marker.set_position(highlight_pos)
@@ -598,105 +664,31 @@ func get_center_of_hex(given_position):
 	return Vector2(given_position.x + self.hex_offset.x,
 				   given_position.y + self.hex_offset.y)
 
-# Breadth First Search implementation
-# @input {Vector2} start_position global coordinates, from where to calculate the visitation
-# @input {Vector2|null} (optional) target_position, global coordinates, stops the visitation
-# early if the target is reached
-func _visit_map(start_position, target_position=null):
-	# No Queue() in GD, so using array instead for frontier
-	# No PriorityQueue() either in GD, so the frontier array will contain
-	# a tuple in each entry, with the full tile-object and priority (a.k.a. cost).
-	# We will then sort the array based on that value by using sorted with cost as 
-	# key. Sadly, Godot does not offer 'sorted' function, so we implement this 
-	# manually by using 'sort_custom' with _sort_by_second_attr().
-	var frontier = []
-	# Start the visitation with the tile gotten from the click position
-	var start_tile = _get_hex_object_from_global_pos(start_position)
-	if start_tile == null:
-		return
-	var target_tile = null
-	if target_position != null:
-		target_tile = _get_hex_object_from_global_pos(target_position)
-		if target_tile == null:
-			return
-	# Clear stale breadcrumbs from previous pathfinding runs.
-	for tile in tile_list:
-		if tile.has("came_from"):
-			tile.erase("came_from")
-	frontier.push_front([start_tile, 0]) # Start tile has cost 0
-
-	var current = null
-	var cost_so_far = {
-		# Cost for start tile is always 0 and cost_so_far cannot be empty
-		str(start_tile['id']): 0
-	}
-
-	# @DEBUG: Delete all debug path visualisations so there is no overlay.
-	# This can be commented out if the path visualisation is commented out as well.
-	# self._delete_all_nodes_with('path_vis')
-	
-	while not frontier.is_empty():
-		frontier.sort_custom(_sort_by_second_attr) # First sort frontier by cost attribute in each tuple
-		current = frontier[0] # Now current[0] gives the tile object, current[1] the associated cost
-		frontier.pop_front()
-
-		# if target_position is already found, stop visitation to speed up overall calculation
-		if target_tile != null and current[0]['id'] == target_tile['id']:
-			break
-
-		for neighbour in current[0]['neighbours']:
-			var next_neigbour = current[0]['neighbours'][neighbour]
-			# A neighbour may be null if the tile is on the edge of the map. In that case, skip.
-			if next_neigbour == null:
-				continue
-			var next_tile_object = _get_hex_object_from_grid_pos(Vector2i(next_neigbour))
-			if next_tile_object == null:
-				continue
-			### Uniform cost search part
-			# Calculate the movement cost by next tile movement cost and adding current
-			var new_cost = cost_so_far[str(current[0]['id'])] + next_tile_object['move_cost']
-			if not cost_so_far.has(str(next_tile_object['id'])) or new_cost < cost_so_far[str(next_tile_object['id'])]:
-				cost_so_far[str(next_tile_object['id'])] = new_cost
-				var cost = new_cost
-				next_tile_object['came_from'] = {
-					'id': current[0]['id'],
-					'dir': neighbour
-				}
-				frontier.append([next_tile_object, cost])
-				# @DEBUG: Show movement cost per tile.
-				# self._render_on_tile(next_tile_object['grid_pos'], str(cost_so_far[str(next_tile_object['id'])]), 'path_vis')
-
 # Determine path from tile to tile, all coordinates are global
 # @input {Vector2} start_position, from this the start tile is derived
 # @input {Vector2} target_position, from this the target tile is derived
 # @returns {Array} path to the target tile
-func find_path(start_position, target_position) -> Array:
-	self._visit_map(start_position, target_position)
-	var start_tile = self._get_hex_object_from_global_pos(start_position)
-	var target_tile = self._get_hex_object_from_global_pos(target_position)
+func find_path(start_position, target_position, moving_unit = null) -> Array:
+	if astar_grid == null:
+		_build_astar_grid()
+	if astar_grid == null:
+		return []
+	_apply_astar_unit_constraints(moving_unit)
+	var start_grid = hexmap.global_to_map(start_position)
+	var target_grid = hexmap.global_to_map(target_position)
+	var start_tile = self._get_hex_object_from_grid_pos(start_grid)
+	var target_tile = self._get_hex_object_from_grid_pos(target_grid)
 	if start_tile == null or target_tile == null:
 		return []
-	var current = null
+	var id_path = astar_grid.get_id_path(start_grid, target_grid)
+	if id_path.is_empty():
+		return []
 	var path: Array = []
-	
-	# add target to path array
-	current = target_tile
-	path.append(current)
-
-	while current['id'] != start_tile['id']:
-		# If a tile has no breadcrumb, the target is unreachable from start.
-		if not current.has("came_from"):
-			return []
-		current = self._get_hex_object_from_id(current["came_from"]["id"])
-		if current == null:
-			return []
-		path.append(current)
-	
-	# finally add start to path array
-	#path.append(start_tile)
-	# invert path array so it goes from start to target and return
-	path.reverse()
-	# _show_path(path, true)
+	for grid_pos in id_path:
+		var grid_pos_i = Vector2i(int(grid_pos.x), int(grid_pos.y))
+		var tile = self._get_hex_object_from_grid_pos(grid_pos_i)
+		if tile != null:
+			path.append(tile)
 	return path
 
 # Helper function to help visualize the working of the flood fill
@@ -705,7 +697,7 @@ func find_path(start_position, target_position) -> Array:
 func _mark_grid_position(grid_position, counter):
 	var new_marker = marker.duplicate()
 	var counter_label = Label.new()
-	var hex_world_pos = hexmap.map_to_world(grid_position)
+	var hex_world_pos = hexmap.map_to_global(Vector2i(grid_position))
 	var marker_pos = get_center_of_hex(hex_world_pos)
 	counter_label.set_text(str(counter))
 	new_marker.set_position(marker_pos)
@@ -714,14 +706,6 @@ func _mark_grid_position(grid_position, counter):
 	self.add_child(counter_label)
 	counter_label.set_owner(get_tree().get_edited_scene_root())
 	new_marker.set_owner(get_tree().get_edited_scene_root())
-
-# Sorting helper to compare second attribut of two given arrays
-# @input {Array} Array A to compare
-# @input {Array} Array B to compare
-# @output {Boolean} True if second attribute from A is smaller than
-# second attribute from B
-func _sort_by_second_attr(a, b):
-	return a[1] < b[1]
 
 #################################################################################
 # These methods are for debug purposes only
@@ -739,34 +723,14 @@ func _show_path(path, mark_start_tile=true):
 				pass
 			# else, color first tile green (for "start here")
 			else:
-				self._set_hex_fill(hexmap.map_to_world(tile.grid_pos), 'green', 'path_vis')
+				self._set_hex_fill(hexmap.map_to_global(tile.grid_pos), 'green', 'path_vis')
 		# color last tile red (for "stop here")
 		elif tile == path[path.size()-1]:
-			self._set_hex_fill(hexmap.map_to_world(tile.grid_pos), 'red', 'path_vis')
+			self._set_hex_fill(hexmap.map_to_global(tile.grid_pos), 'red', 'path_vis')
 		# color all other tiles blue
 		else:
-			self._set_hex_fill(hexmap.map_to_world(tile.grid_pos), 'blue', 'path_vis')
+			self._set_hex_fill(hexmap.map_to_global(tile.grid_pos), 'blue', 'path_vis')
 
-
-# Helper function to visualize the breadcrumbs in each tile object added by flood fill
-# by rendering an arrow on every tile, pointing to the origin tile.
-# @input {Array} of tile objects
-func _show_origin(local_tile_list):
-	self._delete_all_nodes_with('OriginMarker')
-	for tile in local_tile_list:
-		var new_arrow = arrow_marker.duplicate()
-		# Set custom name for the arrow marker, so it can be deleted later
-		new_arrow.set_name('OriginMarker')
-		var arrow_pos = hexmap.map_to_world(tile.grid_pos)
-		arrow_pos = get_center_of_hex(arrow_pos)
-		# Use rotation lookup table to get from String like 'n' to a rotation degree
-		# like '-90'
-		var origin_dir = tile.came_from.dir
-		var arrow_rotation = neighbour_position_rotation_table[origin_dir]
-		new_arrow.rotation_degrees = arrow_rotation
-		new_arrow.set_position(arrow_pos)
-		self.add_child(new_arrow)
-		new_arrow.set_owner(get_tree().get_edited_scene_root())
 
 # Helper to delete all nodes that start with a certain string.
 # This will search for given name_fragment plus @-sign in front because
@@ -799,9 +763,9 @@ func debug_log(filename, message):
 # @input {Bool} If the coordinates should be rendered onto the tile
 func highlight_every_hex(given_position, marker_color, show_coords):
 	# get grid local coordinates of hexagon from global click coordinates
-	var global_hex_position = hexmap.world_to_map(given_position)
+	var global_hex_position = hexmap.global_to_map(given_position)
 	# get global coordinates of hexagon from grid local coordinates
-	var hex_world_pos = hexmap.map_to_world(global_hex_position)
+	var hex_world_pos = hexmap.map_to_global(global_hex_position)
 	# calculate global position of hexagon highlight by adding half the cell size to the global hex position plus offset
 	var highlight_pos = get_center_of_hex(hex_world_pos)
 	# duplicate the highlight
@@ -854,7 +818,8 @@ func _highlight_neighbours(given_global_position):
 	var selected_tile = self._get_hex_object_from_global_pos(given_global_position)
 	for neighbour_entry in selected_tile['neighbours']:
 		if selected_tile.neighbours[neighbour_entry] != null:
-			var neighbour_tile_pos = hexmap.map_to_world(selected_tile.neighbours[neighbour_entry])
+			var neighbour_grid_pos = Vector2i(selected_tile.neighbours[neighbour_entry])
+			var neighbour_tile_pos = hexmap.map_to_global(neighbour_grid_pos)
 			self._set_hex_fill(neighbour_tile_pos, 'red')
 
 # Debug method to write every tile and its tilemap index into a file for checking.
@@ -874,7 +839,7 @@ func _export_tile_list(tilemap):
 func _render_dot(id):
 	var new_marker = marker.duplicate()
 	var tile = self._get_hex_object_from_id(id)
-	var given_position = self.get_center_of_hex(hexmap.map_to_world(tile["grid_pos"]))
+	var given_position = self.get_center_of_hex(hexmap.map_to_global(tile["grid_pos"]))
 	new_marker.set_position(given_position)
 	self.add_child(new_marker)
 	new_marker.set_owner(get_tree().get_edited_scene_root())
@@ -895,9 +860,9 @@ func _render_size_rect(given_position, size, parent):
 # @input {Vector2} world space coordinates of tiles
 func _mark_hex_dimensions(given_position):
 	# global position to grid position
-	var grid_pos = hexmap.world_to_map(given_position)
+	var grid_pos = hexmap.global_to_map(given_position)
 	# grid position back to global position
-	var global_pos = hexmap.map_to_world(grid_pos)
+	var global_pos = hexmap.map_to_global(grid_pos)
 	# get dimensions of cell
 	var hex_size = hexmap.get_cell_size()
 	# duplicate the markers
@@ -933,8 +898,9 @@ func _mark_hex_dimensions(given_position):
 # @input {Vector2} input_coordinates - grid local coordinates of tile
 func _display_hex_info(input_coordinates):
 	var new_label = Label.new()
-	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
-	new_label.set_text(str(hexmap.get_cell(input_coordinates[0],input_coordinates[1])))
+	var grid_pos = Vector2i(input_coordinates[0], input_coordinates[1])
+	var tile_world_pos = hexmap.map_to_global(grid_pos)
+	new_label.set_text(str(hexmap.get_tile_index(grid_pos)))
 	new_label.set_position(tile_world_pos)
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
@@ -945,7 +911,7 @@ func _display_hex_info(input_coordinates):
 # @input {String} String that should be used as name for the created node
 func _render_on_tile(input_coordinates, info, opt_name):
 	var new_label = Label.new()
-	var tile_world_pos = hexmap.map_to_world(Vector2(input_coordinates[0],input_coordinates[1]))
+	var tile_world_pos = hexmap.map_to_global(Vector2i(input_coordinates[0], input_coordinates[1]))
 	new_label.set_text(info)
 	new_label.set_position(tile_world_pos)
 	if opt_name != null:
@@ -958,11 +924,11 @@ func _render_on_tile(input_coordinates, info, opt_name):
 func _display_terrain_type(grid_coordinates):
 	# Fill label
 	var new_label = Label.new()
-	new_label.set_text(str(hexmap._get_tile_attributes_by_index(hexmap.get_cell(grid_coordinates[0],grid_coordinates[1]))['name']))
+	var grid_pos = Vector2i(grid_coordinates[0], grid_coordinates[1])
+	new_label.set_text(str(hexmap._get_tile_attributes_by_index(hexmap.get_tile_index(grid_pos))['name']))
 	# Set pos
-	var y_pos = grid_coordinates[1] + (hexmap.get_cell_size().y/2)
-	var x_pos = grid_coordinates[0]
-	var tile_world_pos = hexmap.map_to_world(Vector2(x_pos,y_pos))
+	var tile_world_pos = hexmap.map_to_global(grid_pos)
+	tile_world_pos.y += hexmap.get_cell_size().y / 2.0
 	new_label.set_position(tile_world_pos)
 	# Attach label
 	self.add_child(new_label)

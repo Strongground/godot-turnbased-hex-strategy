@@ -69,40 +69,10 @@ func _get_primary_layer_node():
 			return child
 	return null
 
-# Compatibility wrapper for legacy code paths that used TileMap.get_cell_size().
-func get_cell_size():
-	if tile_set != null:
-		return Vector2(tile_set.tile_size)
-	return Vector2(128, 128)
-
-# Compatibility wrapper for Godot 2/3 API.
-func world_to_map(world_pos):
-	var layer = _get_primary_layer_node()
-	if layer != null:
-		return layer.local_to_map(layer.to_local(world_pos))
-	return local_to_map(to_local(world_pos))
-
-# Compatibility wrapper for Godot 2/3 API.
-func map_to_world(grid_pos):
-	var layer = _get_primary_layer_node()
-	if layer != null:
-		return layer.to_global(layer.map_to_local(Vector2i(grid_pos)))
-	return to_global(map_to_local(Vector2i(grid_pos)))
-
-# Compatibility wrapper that also supports converted TileMapLayer children.
-func get_used_cells_compat(layer = 0):
-	var cells = super.get_used_cells(layer)
-	if cells.size() > 0:
-		return cells
-	var layer_node = _get_primary_layer_node()
-	if layer_node != null:
-		return layer_node.get_used_cells()
-	return cells
-
-# Compatibility wrapper for Godot 2/3 API.
-func get_cell(x, y):
-	var coords = Vector2i(int(x), int(y))
-	var source_id = super.get_cell_source_id(0, coords)
+# Return the tile index used by the game logic for the given grid position.
+func get_tile_index(grid_pos: Vector2i, layer = 0) -> int:
+	var coords = Vector2i(int(grid_pos.x), int(grid_pos.y))
+	var source_id = super.get_cell_source_id(layer, coords)
 	var atlas_coords = Vector2i(-1, -1)
 	if source_id == -1:
 		var layer_node = _get_primary_layer_node()
@@ -112,7 +82,7 @@ func get_cell(x, y):
 		if source_id == -1:
 			return -1
 	else:
-		atlas_coords = super.get_cell_atlas_coords(0, coords)
+		atlas_coords = super.get_cell_atlas_coords(layer, coords)
 	if atlas_coords.x >= 0:
 		return atlas_coords.x
 	return source_id

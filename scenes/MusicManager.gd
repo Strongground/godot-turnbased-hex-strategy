@@ -71,3 +71,9 @@ func play_next():
 # Automatically play next song after one has finished
 func _on_AudioStreamPlayer_finished():
 	self.play_next()
+
+func _exit_tree():
+	if streamPlayer != null:
+		streamPlayer.stop()
+		streamPlayer.stream = null
+	playlist = []

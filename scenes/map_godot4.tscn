@@ -26,7 +26,7 @@
 [node name="Game" type="Node2D" unique_id=2078416644]
 script = ExtResource("1_shlmr")
 grid_visible = true
-debug_sprite_loading = false
+debug_logging = false
 
 [node name="SettingsManager" type="Node2D" parent="." unique_id=1478852362]
 position = Vector2(-447, 761)
@@ -36,7 +36,7 @@ musicVolume = 1.0
 [node name="ThemeManager" type="Node2D" parent="." unique_id=1347171064]
 position = Vector2(-443, 653)
 script = ExtResource("3_8na6e")
-debug_sprite_loading = false
+debug_logging = false
 
 [node name="PlayerManager" type="Node2D" parent="." unique_id=2061554447]
 position = Vector2(-447, 529)

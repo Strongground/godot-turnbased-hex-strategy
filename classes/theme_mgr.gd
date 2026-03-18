@@ -15,7 +15,7 @@ var standard_unit_sprites_path = 'units'
 var standard_sounds_path = 'sounds'
 var standard_sprite_format = 'png'
 var fallback_unit_sprite_path = 'res://assets/images/humvee_placeholder_d.png'
-@export var debug_sprite_loading = true
+@export var debug_logging = true
 var theme_object = {}
 var theme_path = ''
 @onready var default_sounds = {} 
@@ -33,7 +33,7 @@ func load_theme(theme_name):
 	theme_path = standard_themes_path + '/' + theme_name
 	var config_file = theme_path + '/config.json'
 	var file_content = _read_json(config_file)
-	_debug_sprite("load_theme(): loading '" + theme_name + "' from " + config_file)
+	_debug_log("load_theme(): loading '" + theme_name + "' from " + config_file)
 	var data_files = _get_data_files(file_content)
 	theme_object['base_path'] = theme_path
 	theme_object['display_name'] = file_content['display_name']
@@ -53,7 +53,7 @@ func load_theme(theme_name):
 		var data_file = data_files[data_filename]
 		var file_path = theme_path + '/' + str(data_file)
 		theme_object[data_filename] = _read_json(file_path)
-	_debug_sprite("load_theme(): loaded data files " + str(data_files))
+	_debug_log("load_theme(): loaded data files " + str(data_files))
 	self.theme_object = theme_object
 	# Fill default sounds
 	default_sounds = {
@@ -61,7 +61,7 @@ func load_theme(theme_name):
 		'tank': load(theme_path+'/'+standard_sounds_path+'/default_tank_drive.wav'),
 		'infantry': load(theme_path+'/'+standard_sounds_path+'/default_marching.wav')
 	}
-	_debug_sprite("load_theme(): active theme='" + get_current_theme_name() + "', units=" + str(theme_object.get("units", {}).size()))
+	_debug_log("load_theme(): active theme='" + get_current_theme_name() + "', units=" + str(theme_object.get("units", {}).size()))
 	return theme_object
 
 # Public getter for theme name string
@@ -181,13 +181,13 @@ func get_unit_sprites(unit_id):
 	if _is_theme_loaded():
 		var units = theme_object['units']
 		var unit_id_key = str(unit_id)
-		_debug_sprite("get_unit_sprites(): request for unit_id='" + unit_id_key + "'")
+		_debug_log("get_unit_sprites(): request for unit_id='" + unit_id_key + "'")
 		if unit_id_key in units:
 			if not units[unit_id_key].has('unit_sprites'):
 				push_warning("ThemeManager: Unit '" + unit_id_key + "' has no unit_sprites definition.")
 				return [fallback_unit_sprite_path]
 			var unit_sprites_content = units[unit_id_key]['unit_sprites']
-			_debug_sprite("get_unit_sprites(): raw unit_sprites type=" + str(typeof(unit_sprites_content)) + " value=" + str(unit_sprites_content))
+			_debug_log("get_unit_sprites(): raw unit_sprites type=" + str(typeof(unit_sprites_content)) + " value=" + str(unit_sprites_content))
 			var selected_sprites = []
 			if typeof(unit_sprites_content) == TYPE_STRING:
 				# If only a single image is given as hexUnit sprite, flip it and save it as asset. If this asset
@@ -210,7 +210,7 @@ func get_unit_sprites(unit_id):
 			else:
 				push_warning("ThemeManager: Unsupported unit_sprites type for hexUnit '" + unit_id_key + "'.")
 				return [fallback_unit_sprite_path]
-			_debug_sprite("get_unit_sprites(): selected sprite entries=" + str(selected_sprites))
+			_debug_log("get_unit_sprites(): selected sprite entries=" + str(selected_sprites))
 
 			var resolved_sprites = []
 			for sprite_entry in selected_sprites:
@@ -221,16 +221,16 @@ func get_unit_sprites(unit_id):
 					resolved_sprites.append(sprite_path)
 				else:
 					push_warning("ThemeManager: Missing hexUnit sprite '" + sprite_path + "' for hexUnit '" + unit_id_key + "'.")
-					_debug_sprite("get_unit_sprites(): MISSING '" + sprite_path + "'")
+					_debug_log("get_unit_sprites(): MISSING '" + sprite_path + "'")
 			if resolved_sprites.is_empty():
 				resolved_sprites.append(fallback_unit_sprite_path)
-				_debug_sprite("get_unit_sprites(): using fallback sprite '" + fallback_unit_sprite_path + "'")
-			_debug_sprite("get_unit_sprites(): resolved=" + str(resolved_sprites))
+				_debug_log("get_unit_sprites(): using fallback sprite '" + fallback_unit_sprite_path + "'")
+			_debug_log("get_unit_sprites(): resolved=" + str(resolved_sprites))
 			return resolved_sprites
-		_debug_sprite("get_unit_sprites(): unit_id not found in theme units: '" + unit_id_key + "'")
+		_debug_log("get_unit_sprites(): unit_id not found in theme units: '" + unit_id_key + "'")
 	else:
-		_debug_sprite("get_unit_sprites(): theme not loaded yet.")
-	_debug_sprite("get_unit_sprites(): returning fallback '" + fallback_unit_sprite_path + "'")
+		_debug_log("get_unit_sprites(): theme not loaded yet.")
+	_debug_log("get_unit_sprites(): returning fallback '" + fallback_unit_sprite_path + "'")
 	return [fallback_unit_sprite_path]
 
 # Public getter for scale information on sprites for specific hexUnit.
@@ -248,7 +248,7 @@ func _generate_flipped_version(sprite_path, target_path):
 	if _is_theme_loaded():
 		var source_path = _to_theme_resource_path(sprite_path)
 		var target_resource_path = _to_theme_resource_path(target_path)
-		_debug_sprite("_generate_flipped_version(): source=" + source_path + ", target=" + target_resource_path)
+		_debug_log("_generate_flipped_version(): source=" + source_path + ", target=" + target_resource_path)
 		var texture = load(source_path) as Texture2D
 		if texture == null:
 			push_warning("ThemeManager: Could not load sprite for flip generation: " + source_path)
@@ -262,7 +262,7 @@ func _generate_flipped_version(sprite_path, target_path):
 		if result != OK:
 			push_warning("ThemeManager: Failed to save flipped sprite '" + target_resource_path + "' (error " + str(result) + ").")
 		else:
-			_debug_sprite("_generate_flipped_version(): wrote flipped sprite successfully.")
+			_debug_log("_generate_flipped_version(): wrote flipped sprite successfully.")
 
 func _build_flipped_sprite_path(sprite_path):
 	var extension = '.' + standard_sprite_format
@@ -311,6 +311,6 @@ func _is_theme_loaded():
 		return false
 	return true
 
-func _debug_sprite(message):
-	if debug_sprite_loading:
-		print("[SpriteDebug][ThemeMgr] " + message)
+func _debug_log(message):
+	if debug_logging:
+		print("[Debug][ThemeMgr] " + message)
