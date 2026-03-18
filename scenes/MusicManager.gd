@@ -12,15 +12,15 @@ extends Node2D
 # Also define and utilize music volume but get it - like all settings - from SettingsMgr.
 
 # member vars here
-@onready var game = get_node('/root/Game')
-@onready var settingsMgr = $"/root/Game/SettingsManager"
+@export var game: Node
+@export var settingsMgr: Node
 var standard_themes_path = 'res://themes'
 var standard_music_path = 'music'
 var playlist = null
 var iterator = 0
 var musicVolume = 1
 var generalVolume = 1
-@onready var streamPlayer = get_node_or_null("/root/Game/BackgroundMusicPlayer")
+@export var streamPlayer: AudioStreamPlayer
 # public members
 
 func _ready():
@@ -37,7 +37,7 @@ func _loadMusic():
 	self.playlist = []
 	for entry in raw_playlist:
 		var songfile = raw_playlist[entry]
-		var theme_name = $"/root/Game/ThemeManager".get_current_theme_name()
+		var theme_name = game.themeMgr.get_current_theme_name()
 		# print(standard_themes_path+'/'+theme_name+'/'+standard_music_path+'/'+songfile)
 		self.playlist.append(load(standard_themes_path+'/'+theme_name+'/'+standard_music_path+'/'+songfile))
 

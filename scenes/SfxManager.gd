@@ -4,6 +4,8 @@ extends Node2D
 # manages the correction creation, lifetime and destruction and removal of
 # special effects nodes.
 
+@export var themeMgr: Node
+
 func _ready():
 	pass
 
@@ -21,6 +23,7 @@ func create_effect(grid_position, id, type, permanent=false):
 	if game_node == null:
 		return null
 	game_node.add_child(sfx_instance)
+	sfx_instance.themeMgr = themeMgr
 	if permanent:
 		sfx_instance.initialize(grid_position, id, type, -1)
 	else:

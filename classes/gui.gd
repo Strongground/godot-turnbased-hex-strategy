@@ -1,13 +1,12 @@
 extends Control
 
-@onready var hexmap = $"/root/Game/MapZones"
-@onready var game = $"/root/Game"
+@export var hexmap: TileMapLayer
+@export var game: Node
 @export var tile_info: RichTextLabel = null
 @export var move_button: TextureButton = null
 @export var attack_button: TextureButton = null
 @export var supply_button: TextureButton = null
 
-var camera = null
 var root = null
 var tile_info_popup = null
 var tile_info_popup_text = null
@@ -55,7 +54,6 @@ func disable_supply_button(disabled) -> void:
 func _ready() -> void:
 	set_process_input(true)
 	root = get_tree().current_scene
-	camera = root.find_child('MainCamera', true, false)
 	tile_info_popup = root.find_child('Tile_Info', true, false)
 	tile_info_popup_text = tile_info_popup.find_child('Tile_Text', true, false)
 	shown_unit_name = root.find_child('UnitName', true, false)
@@ -83,7 +81,7 @@ func _unhandled_input(_event):
 # Show a popup window with information about the selected tile
 # @input {Object} the tile object which information should be shown
 func _show_tile_info_popup(tile_object) -> void:
-	var popup_pos = camera.get_screen_center()
+	var popup_pos = get_viewport().get_visible_rect().size * 0.5
 	tile_info_popup.set_position(popup_pos)
 	tile_info_popup_text.set_text(str(tile_object))
 	if tile_info_popup.has_method("popup"):
@@ -118,7 +116,7 @@ func update_tile_info(tile) -> void:
 	tile_info.text = str(tile.name)
 
 func _physics_process(_delta) -> void:
-	var popup_pos = camera.get_screen_center()
+	var popup_pos = get_viewport().get_visible_rect().size * 0.5
 	tile_info_popup.set_position(popup_pos)
 
 # If MoveButton in GUI pressed, and a unit is selected,
@@ -140,9 +138,9 @@ func _on_SupplyButton_pressed() -> void:
 		root.resupply_selection = true
 
 func _on_UnitInfoButton_pressed() -> void:
-	if $"/root/Game".selected_unit != null:
-		var selected_unit_id = $"/root/Game".selected_unit
-		var selected_unit = $"/root/Game"._get_entity_by_id(selected_unit_id).node
+	if game.selected_unit != null:
+		var selected_unit_id = game.selected_unit
+		var selected_unit = game._get_entity_by_id(selected_unit_id).node
 		var popup_pos = selected_unit.get_global_transform().get_origin()
 		var movement_points = str(selected_unit.get_movement_points())
 		$UnitInfo.set_position(popup_pos)

@@ -36,16 +36,16 @@ extends Node2D
 # unused members are commented out, but left here for later use
 # onready var camera = find_child('MainCamera')
 # onready var root = get_node('/root')
-@onready var globals = get_node('/root/globals')
-@onready var hexmap = get_node('MapZones')
-@onready var marker = get_node('RedDot')
-@onready var hex_grid = get_node('HexGridOverlay')
-@onready var rect = get_node('SizeRect')
+@export var globals: Node
+@export var hexmap: TileMapLayer
+@export var marker: Node2D
+@export var hex_grid: Node2D
+@export var rect: Control
 @onready var hex_marker = find_child('HexMarker')
 @onready var hex_fill = find_child('Hex_Fill')
 @onready var arrow_marker = find_child('Arrow')
 @onready var GUI = find_child('GUI')
-@onready var hex_highlight = $HexOutline
+@export var hex_highlight: Node2D
 # var tiles = null
 var tile_list = null
 var hex_offset = null
@@ -76,15 +76,17 @@ var player_rotation = []
 var players = {}
 var _last_mouse_pos = Vector2(INF, INF)
 ## Game Ressource Managers
-@onready var playerMgr = $PlayerManager
-@onready var factionMgr = $FactionManager
-@onready var themeMgr = $ThemeManager
-@onready var musicMgr = $MusicManager
+@export var playerMgr: Node
+@export var factionMgr: Node
+@export var themeMgr: Node
+@export var musicMgr: Node
 ## debug labels
 @onready var label_player = find_child('CurrentPlayer')
 @onready var label_turn = find_child('CurrentTurn')
 
 func _ready():
+	if globals == null:
+		globals = get_node_or_null("/root/globals")
 	_debug_log("_ready(): start")
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
@@ -323,6 +325,9 @@ func _create_entity_list():
 		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
 			node.initialize()
+			if node is entity:
+				node.game = self
+				node.globals = globals
 			var hex_object = self._get_hex_object_from_global_pos(node.get_global_position())
 			var grid_pos = null
 			if hex_object == null:

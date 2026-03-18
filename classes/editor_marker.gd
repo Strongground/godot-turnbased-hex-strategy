@@ -13,8 +13,8 @@ var village_icon = null
 var reinforcements_icon = null
 var victory_icon = null
 # References to manager classes
-@onready var playerMgr =  $'/root/Game/PlayerManager'
-@onready var themeMgr =  $'/root/Game/ThemeManager'
+@export var playerMgr: Node
+@export var themeMgr: Node
 
 func _ready():
 	# Initialization here

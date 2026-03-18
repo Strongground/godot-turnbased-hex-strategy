@@ -5,7 +5,6 @@ extends Node2D
 # once multiplayer is a viable concern.
 
 # member vars here
-@onready var root = get_node('/root')
 var players = {}
 
 func _ready():

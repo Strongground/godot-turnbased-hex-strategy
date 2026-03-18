@@ -230,9 +230,10 @@ var state_save = {}
 
 @onready var sound_emitter = $'SoundEmitter'
 @onready var attack_delay_timer = $'AttackEffectDelay'
-@onready var settingsMgr = $'/root/Game/SettingsManager'
-@onready var themeMgr =  $'/root/Game/ThemeManager'
-@onready var gui = $'/root/Game/MainCamera/CanvasLayer/GUI'
+@export var settingsMgr: Node
+@export var themeMgr: Node
+@export var gui: Node
+@export var sfxMgr: Node
 
 # This function simply is a getter for the unit_id string, corresponding to
 # one entry in the theme files.
@@ -662,7 +663,8 @@ func _process_attack_finish():
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 	var _attacking_unit = state_save['attacking_unit']
 
-	$"/root/Game/SfxManager".create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
+	if sfxMgr != null:
+		sfxMgr.create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
 	defending_unit._play_sound('hit', attacking_unit_weapon)
 
 	# If attacker has attack value greater zero...
@@ -736,29 +738,34 @@ func update_timed_modifiers():
 # It must be passed so it can be used in a callback later.
 func animate_path(path_array, moving_entity):
 	self.entity_representation = moving_entity
-	animation_path_array = path_array
-	_animate_step(path_array[0], 0, path_array.size())
+	animation_path_array = path_array.duplicate()
+	if animation_path_array.is_empty():
+		return
+	var current_grid = hexmap.global_to_map(self.global_position)
+	if animation_path_array[0].grid_pos == current_grid:
+		animation_path_array.remove_at(0)
+	if animation_path_array.is_empty():
+		return
+	_animate_step(animation_path_array[0], 0, animation_path_array.size())
 
 ##### Internal methods
+
+# Animate each step of the path, this is called recursively until the whole path is animated. It also updates the movement points of the entity after each step.
+# @input current_tile {Object} the tile which is the target of the current step
+# @input step {int} the current step in the path, starting with 0 for the first step
+# @input max_steps {int} the total number of steps in the path
 func _animate_step(current_tile, step, max_steps):
 	var easing = Tween.EASE_IN_OUT
 	var timing = Tween.TRANS_LINEAR
-	if step > 0:
-		self._update_movement_points(current_tile)
+	self._update_movement_points(current_tile)
 	animation_step_active = true
 	animation_step = step
 	self.direction = self._get_direction(rad_to_deg(self.get_angle_to(_get_centered_grid_pos(current_tile['grid_pos'], self.offset))))
-	if step == 0:
-		timing = Tween.TRANS_SINE
-	elif step == max_steps-1:
-		timing = Tween.TRANS_QUAD
-		easing = Tween.EASE_OUT
-	else:
-		timing = Tween.TRANS_LINEAR
 	var move_tween = create_tween()
 	move_tween.set_trans(timing)
 	move_tween.set_ease(easing)
-	move_tween.tween_property(self, "global_position", _get_centered_grid_pos(current_tile['grid_pos'], self.offset), 1.0)
+	var step_duration = clampf(0.6 * float(current_tile.move_cost), 0.2, 2.0)
+	move_tween.tween_property(self, "global_position", _get_centered_grid_pos(current_tile['grid_pos'], self.offset), step_duration)
 	move_tween.finished.connect(_on_move_tween_finished, CONNECT_ONE_SHOT)
 	
 # From the last movements angle, get the direction mapped, so it references

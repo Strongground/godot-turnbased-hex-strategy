@@ -4,9 +4,8 @@ extends Node2D
 # player can manipulate.
 
 # member vars here
-@onready var game = $"/root/Game"
-@onready var musicManager = $"/root/Game/MusicManager"
-@onready var sfxManager = $"/root/Game/SfxManager"
+@export var musicManager: Node
+@export var sfxManager: Node
 var scene_loaded = false
 # public members
 @export var generalVolume = 1.0

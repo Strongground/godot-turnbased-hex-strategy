@@ -6,8 +6,8 @@ class_name entity
 
 ### internal class member variables
 @onready var root = get_tree().current_scene
-@onready var game = $"/root/Game"
-@onready var globals = get_node("/root/globals")
+@export var game: Node
+@export var globals: Node
 @onready var hex_outline = find_child("HexOutline", true, false)
 @onready var hexmap = root.find_child("MapZones", true, false)
 @onready var red_dot = root.find_child("RedDot", true, false) #Debug
