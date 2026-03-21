@@ -5,6 +5,7 @@ extends Control
 @export var start_button: Button = null
 @export var message_label: Label = null
 @export var quit_button: Button = null
+@export var menu_background: TextureRect = null
 
 var _themes: Array = []
 var _scenarios: Array = []
@@ -79,11 +80,19 @@ func _load_scenarios(theme_folder: String) -> void:
 		_set_message("")
 		_start_enabled(true)
 
+func _set_background(theme_folder : String):
+	var background_path = "res://themes/" + theme_folder + "/theme-bg.png"
+	if not FileAccess.file_exists(background_path):
+		return
+	var theme_bg = load(background_path)
+	menu_background.set_texture(theme_bg)
+
 func _theme_select_apply(index: int) -> void:
 	if index < 0 or index >= _themes.size():
 		return
 	var theme_folder = str(_themes[index]["folder"])
 	_load_scenarios(theme_folder)
+	_set_background(theme_folder)
 
 func _on_theme_selected(index: int) -> void:
 	_theme_select_apply(index)

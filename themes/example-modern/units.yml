@@ -111,7 +111,7 @@ us_infantry_rifles:
   can_traverse: ['land']
   movement_points: 3
   fuel: -1
-  weapons: ['assault_rifles']
+  weapons: ['assault_rifles', 'grenades']
   ammo: 6
   attack_bonus: 0
   is_supplier: false
@@ -131,7 +131,7 @@ us_marines_javelin:
   can_traverse: ['land']
   movement_points: 2
   fuel: -1
-  weapons: ['javelin']
+  weapons: ['assault_rifles', 'javelin']
   ammo: 4
   attack_bonus: 0
   is_supplier: false
@@ -151,7 +151,7 @@ m2a3_bradley:
   can_traverse: ['land','river']
   movement_points: 4
   fuel: 28
-  weapons: ['m242_cannon']
+  weapons: ['m242_cannon', 'tank_machinegun', 'tow']
   ammo: 8
   attack_bonus: 0
   is_supplier: false
@@ -194,7 +194,7 @@ militia_rifles:
   can_traverse: ['land', 'mountain']
   movement_points: 3
   fuel: -1
-  weapons: ['irregular_rifles']
+  weapons: ['irregular_rifles', 'grenades']
   ammo: 3
   attack_bonus: 0
   is_supplier: false
@@ -214,7 +214,7 @@ taliban_heavy_weapons:
   can_traverse: ['land']
   movement_points: 2
   fuel: -1
-  weapons: ['irregular_heavy']
+  weapons: ['irregular_heavy', 'irregular_rifles', 'grenades']
   ammo: 5
   attack_bonus: 0
   is_supplier: false
@@ -235,7 +235,7 @@ taliban_heavy_tank:
   can_traverse: ['land']
   movement_points: 3
   fuel: 18
-  weapons: ['irregular_tank_cannon_he', 'irregular_tank_cannon_at']
+  weapons: ['irregular_tank_cannon_he', 'irregular_tank_cannon_at', 'tank_machinegun']
   ammo: 3
   attack_bonus: 0
   is_supplier: false

@@ -201,6 +201,13 @@ extends "res://classes/entity.gd"
 # in which case the game automatically creates a mirrored version to have at least two
 # directional graphics) up to 6 images for each possible direction.
 @export var unit_sprites = []
+# Optional list of destroyed/debris sprites for this unit.
+@export var destroyed_sprites = []
+# Optional scale override for destroyed sprites.
+@export var destroyed_sprite_scale = null
+# Temporary combat modifiers (reset each turn)
+@export var temp_attack_bonus = 0
+@export var temp_defense_bonus = 0
 
 # Modifiers
 # This array contains the IDs of all modifiers that should be applied to the entity.
@@ -222,6 +229,17 @@ var max_movement_points = 0
 var experience_definitions = null
 var active_modifiers = {}
 var state_save = {}
+enum UnitState { IDLE, SELECTED, MOVING, ATTACKING, SPENT }
+var state: int = UnitState.IDLE
+var is_destroyed = false
+var last_grid_pos = null
+var stationary_turns = 0
+var last_attacked_turn = null
+var attack_streak = 0
+var suppression_turns = 0
+const DAMAGE_VARIANCE = 0.2
+const GRAZE_CHANCE = 0.2
+const GRAZE_MULTIPLIER = 0.3
 @export_group("Internal Node References")
 @export var unit_quick_panel: Control
 @export var qp_strength_text: RichTextLabel
@@ -253,6 +271,8 @@ func get_unit_name():
 # @input entity {Object} This is a reference to the entity in-game representing
 # this entity and is needed to be passed back to a callback.
 func move_unit(start_point, end_point, moving_entity):
+	if not can_receive_orders():
+		return false
 	var new_path = game.find_path(start_point, end_point, self)
 	if new_path.is_empty():
 		print("No valid path found from " + str(start_point) + " to " + str(end_point))
@@ -269,6 +289,7 @@ func move_unit(start_point, end_point, moving_entity):
 	# This is a debug method to visualize the path found by the pathfinding
 	# game._show_path(new_path)
 	self._play_sound('move')
+	set_state(UnitState.MOVING)
 	self.animate_path(new_path, moving_entity)
 	self.deselect()
 	# Update movement points display
@@ -337,10 +358,39 @@ func _set_sprite(dir):
 		$UnitImage.scale = Vector2(sprite_scale, sprite_scale)
 		_debug_log("_set_sprite(): applied sprite_scale=" + str(sprite_scale))
 
+func _resolve_theme_sprite_path(sprite_path: String) -> String:
+	if sprite_path.begins_with("res://"):
+		return sprite_path
+	if themeMgr != null and themeMgr.has_method("get_theme_base_path"):
+		return themeMgr.get_theme_base_path() + "/" + sprite_path
+	var theme_name = themeMgr.get_current_theme_name()
+	return "res://themes/%s/%s" % [theme_name, sprite_path]
+
+func _apply_destroyed_sprite(sprite_path: String) -> void:
+	var resolved = _resolve_theme_sprite_path(sprite_path)
+	var texture = load(resolved) as Texture2D
+	if texture == null:
+		return
+	$UnitImage.texture = texture
+	if destroyed_sprite_scale:
+		$UnitImage.scale = Vector2(destroyed_sprite_scale, destroyed_sprite_scale)
+
+func _play_death_animation() -> void:
+	hide_quick_panel()
+	var sprite_path = destroyed_sprites[randi() % destroyed_sprites.size()]
+	var tween = create_tween()
+	tween.tween_property($UnitImage, "modulate:a", 0.0, 0.2)
+	tween.tween_callback(func():
+		_apply_destroyed_sprite(sprite_path)
+	)
+	tween.tween_property($UnitImage, "modulate:a", 1.0, 0.2)
+
 # This resets movement points to original value (e.g. when turn ends)
 func reset_movement_points():
 	self.movement_points = self.max_movement_points
 	self._update_movementpoints_indicator()
+	if self.movement_points > 0 and state == UnitState.SPENT:
+		set_state(UnitState.IDLE)
 
 # Public getter for the experience value. Returns a dictionary with all information
 # about the current level of experience, like display_name of rank, multiplier (maybe
@@ -349,7 +399,7 @@ func reset_movement_points():
 func get_experience():
 	for exp_level in self.experience_definitions:
 		if self.experience >= self.experience_definitions[exp_level]['range'][0] \
-		or self.experience < self.experience_definitions[exp_level]['range'][1]:
+		and self.experience < self.experience_definitions[exp_level]['range'][1]:
 			return self.experience_definitions[exp_level]
 
 # Public getter for the simple raw experience value. It just returns a float.
@@ -393,6 +443,8 @@ func can_resupply():
 # by this entity, will be resupplied.
 # @input {Vector2} Grid pos to check for entity
 func resupply(grid_pos):
+	if not can_receive_orders():
+		return false
 	# Check if entity exists at position
 	var is_unit = game._is_unit(grid_pos, true)
 	if is_unit != null:
@@ -466,9 +518,18 @@ func can_move():
 # Public method to kill this entity. It removes this node from the games entities list,
 # so after this it will not be considered by the game.
 func kill():
-	# - play death animation
-	# - on animation finished, remove entity
-	# for now, just remove node to show attack worked
+	if is_destroyed:
+		return
+	# If destroyed sprites are defined, keep a debris/remains version on the map.
+	if destroyed_sprites != null and destroyed_sprites.size() > 0:
+		is_destroyed = true
+		self.set_selectable(false)
+		self.set_container(true)
+		self.type = "debris"
+		game.remove_entity_from_list(self)
+		_play_death_animation()
+		return
+	# Fallback: remove node
 	game.remove_entity_from_list(self)
 	call_deferred('free')
 
@@ -537,16 +598,21 @@ func get_weapon(weapon_id):
 # is rotated. This is only cosmetic at the moment, but may
 # be extended to allow for "attack from behind" bonus etc.
 func turn_towards(_grid_pos):
-	# get direction of target grid_pos relative to this entity
-	if self.unit_sprites.size() == 2:
-		# determine how we should rotate, just towards x axis if only two sprites exist?
-		pass
-	elif self.unit_sprites.size() == 6:
-		# ...or fully featured rotation if all six directional sprites exist
-		pass
+	var target_global = Vector2.ZERO
+	if typeof(_grid_pos) == TYPE_VECTOR2I:
+		target_global = _get_centered_grid_pos(_grid_pos, self.offset)
+	elif typeof(_grid_pos) == TYPE_VECTOR2:
+		target_global = _grid_pos
+	else:
+		return
+	var angle = rad_to_deg(self.get_angle_to(target_global))
+	self.direction = self._get_direction(angle)
+	self._set_sprite(self.direction)
 
 # Attack a entity/entity
 func attack(target_entity, weapon=null):
+	if not can_receive_orders():
+		return false
 	if weapon == null:
 		weapon = _get_weapon_in_range(target_entity.get_global_position())
 		if weapon == null:
@@ -556,6 +622,8 @@ func attack(target_entity, weapon=null):
 		if not _is_weapon_in_range(weapon, target_entity.get_global_position()):
 			print("Cannot comply, target out of range for selected weapon.")
 			return false
+	set_state(UnitState.ATTACKING)
+	turn_towards(target_entity.get_global_position())
 	# Play sound
 	self._play_sound('attack', weapon)
 	
@@ -569,15 +637,17 @@ func attack(target_entity, weapon=null):
 	print('Attacking entity is ',attacking_unit['display_name'],' (',attacking_unit.get_experience()['display_name'],')')
 	
 	# find out basic attributes
-	defender_effective_strength = defending_unit['unit_strength'] + (defending_unit['unit_strength'] * (defending_unit['base_defense']/10))
-	print('Defending entity has strength of ',defending_unit['unit_strength'],', effective strength of ',defender_effective_strength,' (',defending_unit['unit_strength'],'+',defending_unit['unit_strength'] * (defending_unit['base_defense']/10),')')
+	var defender_base_defense = defending_unit['base_defense'] + defending_unit.temp_defense_bonus
+	defender_effective_strength = defending_unit['unit_strength'] + (defending_unit['unit_strength'] * (defender_base_defense/10))
+	print('Defending entity has strength of ',defending_unit['unit_strength'],', effective strength of ',defender_effective_strength,' (',defending_unit['unit_strength'],'+',defending_unit['unit_strength'] * (defender_base_defense/10),')')
 	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10)
 	print('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10),')')
-	
+		
 	# adding attack_bonus
-	if attacking_unit['attack_bonus'] != 0:
-		attacker_effective_attack += attacking_unit['attack_bonus']
-		print('Attacker has attack modifier of ',attacking_unit['attack_bonus'],' resulting in effective attack value change to: ',attacker_effective_attack)
+	var total_attack_bonus = attacking_unit['attack_bonus'] + attacking_unit.temp_attack_bonus
+	if total_attack_bonus != 0:
+		attacker_effective_attack += total_attack_bonus
+		print('Attacker has attack modifier of ',total_attack_bonus,' resulting in effective attack value change to: ',attacker_effective_attack)
 
 	## Armor piercing weapon & armor effects
 	if defending_unit['armor'] > 0:
@@ -631,6 +701,16 @@ func attack(target_entity, weapon=null):
 		hit = true
 	else:
 		print("Attacker misses and the attack nds.")
+	# Track that the defender was attacked (for suppression).
+	defending_unit.register_attacked()
+
+	# Apply damage variance/graze only on hit.
+	if hit:
+		var variance = randf_range(1.0 - DAMAGE_VARIANCE, 1.0 + DAMAGE_VARIANCE)
+		var graze = 1.0
+		if randf() <= GRAZE_CHANCE:
+			graze = GRAZE_MULTIPLIER
+		attacker_effective_attack = float("%.1f" % (attacker_effective_attack * variance * graze))
 
 	# Update base stats, ragardless of hit or miss
 	if attacking_unit_weapon['use_ammo']:
@@ -647,6 +727,8 @@ func attack(target_entity, weapon=null):
 			'attacking_unit': attacking_unit
 		}
 		self.attack_delay_timer.start()
+	else:
+		_finalize_action_state()
 		# Hit
 		# All this stuff about luck and random events and chance feels still way too uncontrollable. Not in a good way.
 		# I am leaving this commented out until I can work on it.
@@ -685,6 +767,7 @@ func _process_attack_finish():
 				defending_unit.damage(new_defender_strength)
 		else:
 			prints('Attack did not manage to get trough to defenders base strength.')
+	_finalize_action_state()
 
 # Function to fill the attributes of the entity from the themes data object
 # corresponding to it. If a value was filled by the level editor with a non-
@@ -711,6 +794,81 @@ func _fill_mods():
 		self.active_modifiers[modifier_id] = themeMgr.get_modifier(modifier_id)
 		self.active_modifiers[modifier_id]['applied'] = false
 
+func _add_dynamic_modifier(modifier_id: String) -> void:
+	if themeMgr == null:
+		return
+	var modifier = themeMgr.get_modifier(modifier_id)
+	if modifier == null:
+		return
+	self.active_modifiers[modifier_id] = modifier
+	self.active_modifiers[modifier_id]['applied'] = false
+
+func _update_stationary_state() -> void:
+	if hexmap == null:
+		return
+	var current_grid = hexmap.global_to_map(self.global_position)
+	if last_grid_pos == null:
+		last_grid_pos = current_grid
+		stationary_turns = 0
+		return
+	if current_grid == last_grid_pos:
+		stationary_turns += 1
+	else:
+		last_grid_pos = current_grid
+		stationary_turns = 0
+
+func _apply_cover_modifier() -> void:
+	if game == null:
+		return
+	var tile = game._get_hex_object_from_grid_pos(Vector2i(hexmap.global_to_map(self.global_position)))
+	if tile == null or not tile.has("name"):
+		return
+	var tile_name = str(tile["name"]).to_lower()
+	var rule = _get_cover_rule(tile_name)
+	if rule.is_empty():
+		return
+	if stationary_turns < int(rule["min_stay"]):
+		return
+	if randf() <= float(rule["chance"]):
+		_add_dynamic_modifier(str(rule["modifier"]))
+
+func _get_cover_rule(tile_name: String) -> Dictionary:
+	# Defaults: high cover in forest/village/city, medium in mountains, low in open terrain after 1 turn.
+	if tile_name.find("forest") >= 0:
+		return {"modifier": "cover_heavy", "chance": 0.9, "min_stay": 0}
+	if tile_name.find("village") >= 0 or tile_name.find("city") >= 0:
+		return {"modifier": "cover_heavy", "chance": 0.85, "min_stay": 0}
+	if tile_name.find("mountain") >= 0:
+		return {"modifier": "cover_medium", "chance": 0.7, "min_stay": 0}
+	if tile_name.find("swamp") >= 0:
+		return {"modifier": "cover_medium", "chance": 0.6, "min_stay": 0}
+	if tile_name.find("river") >= 0:
+		return {"modifier": "cover_light", "chance": 0.3, "min_stay": 1}
+	if tile_name.find("desert") >= 0 or tile_name.find("plain") >= 0 or tile_name.find("road") >= 0:
+		return {"modifier": "cover_light", "chance": 0.2, "min_stay": 1}
+	return {}
+
+func register_attacked():
+	if game == null:
+		return
+	var current_turn = game.turn_counter
+	if last_attacked_turn == null:
+		attack_streak = 1
+	elif last_attacked_turn == current_turn or last_attacked_turn == current_turn - 1:
+		attack_streak += 1
+	else:
+		attack_streak = 1
+	last_attacked_turn = current_turn
+	if attack_streak >= 2:
+		var exp_multiplier = 0.0
+		var exp_def = get_experience()
+		if exp_def != null and exp_def.has("multiplier"):
+			exp_multiplier = float(exp_def["multiplier"])
+		var base_chance = 0.6
+		var chance = clampf(base_chance * (1.0 - exp_multiplier), 0.1, 0.9)
+		if randf() <= chance:
+			suppression_turns = 1
+
 # Apply modifier changes to entity stats, also deletes mods if their max duration is reached.
 func _apply_mods():
 	var delete_mods = []
@@ -730,6 +888,18 @@ func _apply_mods():
 # Public function to count down all active mods with duration. This is to be called
 # every time a turn ends.
 func update_timed_modifiers():
+	# Reset temporary combat modifiers each turn.
+	temp_attack_bonus = 0
+	temp_defense_bonus = 0
+	# Update stationary state and apply cover modifiers.
+	_update_stationary_state()
+	_apply_cover_modifier()
+	# Apply suppression if active.
+	if suppression_turns > 0:
+		_add_dynamic_modifier("suppressed")
+		suppression_turns -= 1
+	# Apply any newly added modifiers.
+	_apply_mods()
 	for mod in self.active_modifiers:
 		var active_mod = active_modifiers[mod]
 		if active_mod['duration'] > 0:
@@ -765,6 +935,8 @@ func _animate_step(current_tile, step, _max_steps):
 	animation_step_active = true
 	animation_step = step
 	self.direction = self._get_direction(rad_to_deg(self.get_angle_to(_get_centered_grid_pos(current_tile['grid_pos'], self.offset))))
+	# Face the direction before moving this step.
+	self._set_sprite(self.direction)
 	var move_tween = create_tween()
 	move_tween.set_trans(timing)
 	move_tween.set_ease(easing)
@@ -846,6 +1018,7 @@ func _get_weapon_range(weapon) -> int:
 func _is_weapon_in_range(weapon, target_global_pos: Vector2) -> bool:
 	var distance = _get_distance_to_target(target_global_pos)
 	if distance < 0:
+		print("Weapon " + weapon.display_name + " is out of range.")
 		return false
 	return distance <= _get_weapon_range(weapon)
 
@@ -879,6 +1052,7 @@ func _ready():
 	set_process_input(true)
 	# Mark entity as selectable
 	self.set_selectable(true)
+	set_state(UnitState.IDLE)
 	_debug_log("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
 
 func _input(_event):
@@ -901,6 +1075,7 @@ func _on_move_tween_finished():
 		# ...then call global update
 		# Global update is for udpating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)
+	_finalize_action_state()
 
 func _on_MoveTween_tween_completed(_object, _key):
 	_on_move_tween_finished()
@@ -910,10 +1085,30 @@ func _on_AttackEffectDelay_timeout():
 	self._process_attack_finish()
 
 func _on_selected():
+	set_state(UnitState.SELECTED)
 	self.show_quick_panel()
 	
 func _on_deselected():
+	if state == UnitState.SELECTED:
+		set_state(UnitState.IDLE)
 	self.hide_quick_panel()
+
+func set_state(new_state: int) -> void:
+	if state == new_state:
+		return
+	state = new_state
+
+func get_state() -> int:
+	return state
+
+func can_receive_orders() -> bool:
+	return state == UnitState.IDLE or state == UnitState.SELECTED
+
+func _finalize_action_state() -> void:
+	if self.get_movement_points() <= 0:
+		set_state(UnitState.SPENT)
+	else:
+		set_state(UnitState.IDLE)
 
 func _debug_log(message):
 	if debug_logging:

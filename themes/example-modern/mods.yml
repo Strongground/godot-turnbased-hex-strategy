@@ -17,6 +17,8 @@
 # are:
 # base_defense
 # attack_bonus
+# temp_defense_bonus
+# temp_attack_bonus
 # armored
 # movement_points
 #
@@ -66,3 +68,35 @@ terrain_knowledge:
   modifiers:
     attack_bonus: 1
     base_defense: 2
+
+cover_light:
+  display_name: 'Light Cover'
+  description: 'Some light cover gained from terrain or dug in positions.'
+  duration: 1
+  icon: ''
+  modifiers:
+    temp_defense_bonus: 1
+
+cover_medium:
+  display_name: 'Cover'
+  description: 'Good cover from terrain, foliage or shallow fortifications.'
+  duration: 1
+  icon: ''
+  modifiers:
+    temp_defense_bonus: 2
+
+cover_heavy:
+  display_name: 'Heavy Cover'
+  description: 'Excellent cover from structures or dense terrain.'
+  duration: 1
+  icon: ''
+  modifiers:
+    temp_defense_bonus: 3
+
+suppressed:
+  display_name: 'Suppressed'
+  description: 'Unit is pinned and less effective at fighting.'
+  duration: 1
+  icon: ''
+  modifiers:
+    temp_attack_bonus: -1

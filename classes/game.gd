@@ -295,15 +295,15 @@ func _update_units():
 # @returns {Boolean}
 func _is_valid_destination(click_pos):
 	var clicked_hex_object = self._get_hex_object_from_global_pos(click_pos)
-	print("Checking if clicked position is valid destination. Clicked hex object: " + str(clicked_hex_object))
+	# print("Checking if clicked position is valid destination. Clicked hex object: " + str(clicked_hex_object))
 	# Find out if there is a entity on the clicked tile that blocks movement.
 	for current_entity in entities:
 		if current_entity.grid_pos == clicked_hex_object.grid_pos and not current_entity.node.is_container():
 			return false
 	var target_terrain = clicked_hex_object.terrain
-	print("Clicked terrain: " + str(target_terrain))
+	# print("Clicked terrain: " + str(target_terrain))
 	var unit_can_traverse = _get_entity_by_id(self.selected_unit).node.can_traverse
-	print("Unit can traverse: " + str(unit_can_traverse))
+	# print("Unit can traverse: " + str(unit_can_traverse))
 	if not target_terrain in unit_can_traverse:
 		return false
 	return true
@@ -647,16 +647,16 @@ func _is_tilemap(given_position, strict_mode=false):
 	var current_entity = _get_entity_by_pos(given_position)
 	# Tilemap at given position
 	if tile != null and tile.size() > 1:
-		print("Found tilemap at given coords")
+		# print("Found tilemap at given coords")
 		# If a entity was found at the given coords
 		if current_entity:
 			# If strict mode enabled, return 'false' if any entity exists at given coords.
 			# Per default, only return 'false' if a entity of type 'entity' is found.
 			if strict_mode:
-				print("Found entity in strict mode, no tilemap hit.")
+				# print("Found entity in strict mode, no tilemap hit.")
 				return false
 			else:
-				print("Did I find a entity?" + str(!(current_entity.node.get_type() == 'entity')))
+				# print("Did I find a entity?" + str(!(current_entity.node.get_type() == 'entity')))
 				return !(current_entity.node.get_type() == 'entity')
 		return true
 	return false
@@ -672,8 +672,8 @@ func _is_unit(given_position, return_unit=false):
 		if every_entity.node.get_type() == 'entity':
 			if every_entity.grid_pos == grid_position:
 				if return_unit == true:
-					print("Found entity at location "+str(every_entity.node.get_global_position()))
-					print(every_entity)
+					# print("Found entity at location "+str(every_entity.node.get_global_position()))
+					# print(every_entity)
 					return every_entity
 				else:
 					return true

@@ -30,7 +30,6 @@ func initialize(position, id, effect_type, effect_lifetime=self.lifetime):
 	if frames == null or frames.is_empty():
 		call_deferred('free')
 		return
-	frames.reverse()
 	for frame in frames:
 		var tex = load(frame)
 		sprite_frames.add_frame(id, tex)

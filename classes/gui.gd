@@ -156,4 +156,5 @@ func _on_toggle_grid_button_pressed() -> void:
 	pass # Replace with function body.
 
 func _on_end_turn_button_pressed() -> void:
-	pass # Replace with function body.
+	if game != null:
+		game._end_turn()
