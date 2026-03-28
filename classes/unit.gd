@@ -229,7 +229,20 @@ var max_movement_points = 0
 var experience_definitions = null
 var active_modifiers = {}
 var state_save = {}
-enum UnitState { IDLE, SELECTED, MOVING, ATTACKING, SPENT }
+enum UnitState {
+	IDLE,
+	SELECTED,
+	MOVING,
+	ATTACKING,
+	GARRISONING,
+	UNGARRISONING,
+	GARRISONED,
+	DYING,
+	DEAD,
+	BEING_SUPPLIED,
+	SUPPLYING,
+	SPENT
+}
 var state: int = UnitState.IDLE
 var is_destroyed = false
 var last_grid_pos = null
@@ -242,6 +255,7 @@ const GRAZE_CHANCE = 0.2
 const GRAZE_MULTIPLIER = 0.3
 @export_group("Internal Node References")
 @export var unit_quick_panel: Control
+@export var qp_state_text: RichTextLabel
 @export var qp_strength_text: RichTextLabel
 @export var qp_movement_text: RichTextLabel
 @export var qp_ammo_text: RichTextLabel
@@ -277,14 +291,17 @@ func move_unit(start_point, end_point, moving_entity):
 	if new_path.is_empty():
 		print("No valid path found from " + str(start_point) + " to " + str(end_point))
 		return false
+	var start_grid = hexmap.global_to_map(start_point)
+	while not new_path.is_empty() and new_path[0]["grid_pos"] == start_grid:
+		new_path.remove_at(0)
+	if new_path.is_empty():
+		return false
 	var path_cost = 0
-	for i in range(new_path.size()):
-		var tile = new_path[i]
-		if i > 0:
-			if path_cost + tile.move_cost > self.movement_points:
-				print("This movement would be too expensive: "+str(path_cost + tile.move_cost))
-				return false
-			path_cost += tile.move_cost
+	for tile in new_path:
+		if path_cost + tile.move_cost > self.movement_points:
+			print("This movement would be too expensive: "+str(path_cost + tile.move_cost))
+			return false
+		path_cost += tile.move_cost
 	self.set_move_path(new_path)
 	# This is a debug method to visualize the path found by the pathfinding
 	# game._show_path(new_path)
@@ -297,18 +314,51 @@ func move_unit(start_point, end_point, moving_entity):
 
 func show_quick_panel() -> void:
 	# Figure out entities position + offset so panel is above it
-	var grid_coords = hexmap.global_to_map(self.get_global_position())
 	unit_quick_panel.show()
-	unit_quick_panel.set_global_position(self._get_centered_grid_pos(grid_coords, Vector2(-100,50)))
+	_update_quick_panel_transform()
 	_update_quick_panel()
 	
 func hide_quick_panel() -> void:
 	unit_quick_panel.hide()
 	
 func _update_quick_panel() -> void:
+	if qp_state_text != null:
+		qp_state_text.text = _get_state_emoji(state)
 	qp_strength_text.text = str(self.get_strength_points())
 	qp_movement_text.text = str(self.get_movement_points())
 	qp_ammo_text.text = str(self.get_ammo())
+
+# Return emoji indicator for a given unit state.
+# @input {int} current_state - state enum value from UnitState
+# @returns {String} emoji representing the state
+func _get_state_emoji(current_state: int) -> String:
+	match current_state:
+		UnitState.IDLE:
+			return "😴"
+		UnitState.SELECTED:
+			return "🎯"
+		UnitState.MOVING:
+			return "🚶"
+		UnitState.ATTACKING:
+			return "⚔️"
+		UnitState.GARRISONING:
+			return "🏠"
+		UnitState.UNGARRISONING:
+			return "🚪"
+		UnitState.GARRISONED:
+			return "🛡️"
+		UnitState.DYING:
+			return "💥"
+		UnitState.DEAD:
+			return "☠️"
+		UnitState.BEING_SUPPLIED:
+			return "📦"
+		UnitState.SUPPLYING:
+			return "⛽"
+		UnitState.SPENT:
+			return "🥵"
+		_:
+			return "❓"
 
 # Set crest icon based on faction of entity
 func _set_faction_icon():
@@ -465,11 +515,6 @@ func update():
 	self._update_unitstrength_indicator()
 	self._update_movementpoints_indicator()
 	self._update_unitammo_indicator()
-	if self.get_movement_points() <= 0:
-		gui.disable_movement_button(true)
-		gui.disable_attack_button(true)
-	if self.get_ammo() <= 0:
-		gui.disable_attack_button(true)
 
 # Public getter for movement points of this entity.
 # @returns {int} Movement points of this entity
@@ -520,6 +565,11 @@ func can_move():
 func kill():
 	if is_destroyed:
 		return
+	if root != null and root.selected_unit == self.id:
+		self.deselect()
+		if root.has_method("_refresh_selected_unit_ui"):
+			root._refresh_selected_unit_ui()
+	set_state(UnitState.DYING)
 	# If destroyed sprites are defined, keep a debris/remains version on the map.
 	if destroyed_sprites != null and destroyed_sprites.size() > 0:
 		is_destroyed = true
@@ -528,8 +578,10 @@ func kill():
 		self.type = "debris"
 		game.remove_entity_from_list(self)
 		_play_death_animation()
+		set_state(UnitState.DEAD)
 		return
 	# Fallback: remove node
+	set_state(UnitState.DEAD)
 	game.remove_entity_from_list(self)
 	call_deferred('free')
 
@@ -552,7 +604,7 @@ func can_attack_unit(enemy_unit):
 		return self.combat_ready()
 	if not self.combat_ready():
 		return false
-	return _get_weapon_in_range(enemy_unit.get_global_position()) != null
+	return _get_weapon_in_range(enemy_unit.get_global_position(), enemy_unit) != null
 
 # Public getter for general combat readiness. This definition will likely
 # change later, as this can be different for different types of units as
@@ -594,6 +646,22 @@ func get_weapon(weapon_id):
 	if weapon_id in weapons:
 		return self.weapons[weapon_id]
 
+# Returns all unique attack ranges across this units weapons.
+# @returns {Array} sorted unique integer ranges
+func get_attack_ranges() -> Array:
+	var result: Array = []
+	var weapons_dict = _get_weapons_dict()
+	for weapon_id in weapons_dict:
+		var weapon = weapons_dict[weapon_id]
+		if weapon == null:
+			continue
+		if weapon.has("range"):
+			var weapon_range = int(weapon["range"])
+			if weapon_range > 0 and not result.has(weapon_range):
+				result.append(weapon_range)
+	result.sort()
+	return result
+
 # Public function to control the direction the entity grapic
 # is rotated. This is only cosmetic at the moment, but may
 # be extended to allow for "attack from behind" bonus etc.
@@ -614,7 +682,7 @@ func attack(target_entity, weapon=null):
 	if not can_receive_orders():
 		return false
 	if weapon == null:
-		weapon = _get_weapon_in_range(target_entity.get_global_position())
+		weapon = _get_weapon_in_range(target_entity.get_global_position(), target_entity)
 		if weapon == null:
 			print("Cannot comply, no weapon in range for this target.")
 			return false
@@ -638,7 +706,8 @@ func attack(target_entity, weapon=null):
 	
 	# find out basic attributes
 	var defender_base_defense = defending_unit['base_defense'] + defending_unit.temp_defense_bonus
-	defender_effective_strength = defending_unit['unit_strength'] + (defending_unit['unit_strength'] * (defender_base_defense/10))
+	var defense_factor = maxf(0.1, 1.0 + (defender_base_defense / 10.0))
+	defender_effective_strength = defending_unit['unit_strength'] * defense_factor
 	print('Defending entity has strength of ',defending_unit['unit_strength'],', effective strength of ',defender_effective_strength,' (',defending_unit['unit_strength'],'+',defending_unit['unit_strength'] * (defender_base_defense/10),')')
 	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10)
 	print('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10),')')
@@ -700,7 +769,7 @@ func attack(target_entity, weapon=null):
 		print("Attacker scores a hit.")
 		hit = true
 	else:
-		print("Attacker misses and the attack nds.")
+		print("Attacker misses and the attack ends.")
 	# Track that the defender was attacked (for suppression).
 	defending_unit.register_attacked()
 
@@ -722,6 +791,7 @@ func attack(target_entity, weapon=null):
 		state_save = {
 			'defending_unit': defending_unit,
 			'defender_effective_strength': defender_effective_strength,
+			'defender_defense_factor': defense_factor,
 			'attacking_unit_weapon': attacking_unit_weapon,
 			'attacker_effective_attack': attacker_effective_attack,
 			'attacking_unit': attacking_unit
@@ -745,6 +815,7 @@ func attack(target_entity, weapon=null):
 func _process_attack_finish():
 	var defending_unit = state_save['defending_unit']
 	var defender_effective_strength = state_save['defender_effective_strength']
+	var defender_defense_factor = state_save.get('defender_defense_factor', 1.0)
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 	var _attacking_unit = state_save['attacking_unit']
@@ -757,9 +828,10 @@ func _process_attack_finish():
 	if attacker_effective_attack > 0:
 		prints('Defending entity strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))
 		# Calculate how much strength is left after attack
-		var new_defender_strength = float("%.1f" % ((defender_effective_strength - attacker_effective_attack)))
+		var new_effective_strength = float("%.1f" % (defender_effective_strength - attacker_effective_attack))
+		var new_defender_strength = float("%.1f" % (new_effective_strength / maxf(defender_defense_factor, 0.1)))
 		# Has attack managed to overcome effective defense boost?
-		if new_defender_strength < defender_effective_strength:
+		if new_effective_strength < defender_effective_strength:
 			if float(new_defender_strength) <= 0:
 				prints('Defending unit is destroyed!')
 				defending_unit.kill()
@@ -940,7 +1012,7 @@ func _animate_step(current_tile, step, _max_steps):
 	var move_tween = create_tween()
 	move_tween.set_trans(timing)
 	move_tween.set_ease(easing)
-	var step_duration = clampf(0.6 * float(current_tile.move_cost), 0.2, 2.0)
+	var step_duration = clampf(1 * float(current_tile.move_cost), 0.2, 2.0)
 	move_tween.tween_property(self, "global_position", _get_centered_grid_pos(current_tile['grid_pos'], self.offset), step_duration)
 	move_tween.finished.connect(_on_move_tween_finished, CONNECT_ONE_SHOT)
 	
@@ -1022,20 +1094,46 @@ func _is_weapon_in_range(weapon, target_global_pos: Vector2) -> bool:
 		return false
 	return distance <= _get_weapon_range(weapon)
 
-func _get_weapon_in_range(target_global_pos: Vector2):
+func _get_weapon_in_range(target_global_pos: Vector2, target_unit = null):
 	var weapons_dict = _get_weapons_dict()
 	if weapons_dict.is_empty():
 		return null
+	var best_weapon = null
+	var best_score = -INF
 	for weapon_id in weapons_dict:
 		var weapon = weapons_dict[weapon_id]
 		if weapon == null:
 			continue
-		if _is_weapon_in_range(weapon, target_global_pos):
+		if not _is_weapon_in_range(weapon, target_global_pos):
+			continue
+		if target_unit == null:
 			return weapon
-	return null
+		var score = _estimate_weapon_effective_attack(weapon, target_unit)
+		if score > best_score:
+			best_score = score
+			best_weapon = weapon
+	return best_weapon
 
 func _is_in_range(target_global_pos: Vector2) -> bool:
 	return _get_weapon_in_range(target_global_pos) != null
+
+func _estimate_weapon_effective_attack(weapon, target_unit) -> float:
+	if weapon == null or target_unit == null:
+		return -INF
+	var attack_strength = float(weapon.get("attack_strength", 0))
+	var attack = attack_strength + (attack_strength * (self.unit_strength / 10.0))
+	attack += float(self.attack_bonus) + float(self.temp_attack_bonus)
+	var target_armor = float(target_unit.armor)
+	if target_armor > 0:
+		var armor_piercing = float(weapon.get("armor_piercing", 0))
+		if armor_piercing <= 0:
+			attack *= 0.1
+		else:
+			attack += target_armor / armor_piercing
+	elif float(weapon.get("explosive", 0)) > 0:
+		attack *= float(weapon.get("explosive", 0)) * 0.5
+		attack -= float(target_unit.base_defense)
+	return attack
 
 # Internal function to populate weapon list with actual theme objects
 func _populate_weapons():
@@ -1059,7 +1157,23 @@ func _input(_event):
 	pass
 
 func _process(_delta):
-	pass
+	if unit_quick_panel != null and unit_quick_panel.visible:
+		_update_quick_panel_transform()
+
+func _update_quick_panel_transform() -> void:
+	if unit_quick_panel == null or hexmap == null:
+		return
+	# Keep the panel anchored above the unit in world space.
+	var grid_coords = hexmap.global_to_map(self.get_global_position())
+	unit_quick_panel.set_global_position(self._get_centered_grid_pos(grid_coords, Vector2(-100,50)))
+	# Counter camera zoom so the panel stays a consistent size on screen.
+	var camera := get_viewport().get_camera_2d()
+	if camera != null:
+		var zoom := camera.zoom
+		if zoom.x != 0 and zoom.y != 0:
+			unit_quick_panel.scale = Vector2(1.0 / zoom.x, 1.0 / zoom.y)
+	# Scale around center to avoid drifting when zoom changes.
+	unit_quick_panel.pivot_offset = unit_quick_panel.size * 0.5
 
 func _on_move_tween_finished():
 	animation_step_active = false
@@ -1097,6 +1211,8 @@ func set_state(new_state: int) -> void:
 	if state == new_state:
 		return
 	state = new_state
+	if unit_quick_panel != null and unit_quick_panel.visible:
+		_update_quick_panel()
 
 func get_state() -> int:
 	return state
@@ -1104,7 +1220,28 @@ func get_state() -> int:
 func can_receive_orders() -> bool:
 	return state == UnitState.IDLE or state == UnitState.SELECTED
 
+# Returns true if the unit is in a blocking action/death state.
+# @returns {Boolean}
+func is_busy_state() -> bool:
+	return state in [
+		UnitState.MOVING,
+		UnitState.ATTACKING,
+		UnitState.GARRISONING,
+		UnitState.UNGARRISONING,
+		UnitState.BEING_SUPPLIED,
+		UnitState.SUPPLYING,
+		UnitState.DYING,
+		UnitState.DEAD
+	]
+
+# Returns state enum key as readable string.
+# @returns {String}
+func get_state_name() -> String:
+	return UnitState.keys()[state]
+
 func _finalize_action_state() -> void:
+	if state == UnitState.DEAD or state == UnitState.DYING:
+		return
 	if self.get_movement_points() <= 0:
 		set_state(UnitState.SPENT)
 	else:

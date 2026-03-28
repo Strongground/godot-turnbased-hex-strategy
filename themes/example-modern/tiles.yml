@@ -12,7 +12,7 @@
   move_cost: 0.5
   terrain: 'land'
 - name: 'Mountains'
-  move_cost: 5.0
+  move_cost: 3.0
   terrain: 'land'
 - name: 'Village'
   move_cost: 1.5

@@ -43,6 +43,7 @@ extends Node2D
 @export var rect: Control
 @onready var hex_marker = find_child('HexMarker')
 @onready var hex_fill = find_child('Hex_Fill')
+@onready var range_overlay = find_child('RangeOverlay')
 @onready var arrow_marker = find_child('Arrow')
 @onready var GUI = find_child('GUI')
 @export var hex_highlight: Node2D
@@ -64,12 +65,14 @@ var factions = null
 var movement_selection = false
 var attack_selection = false
 var resupply_selection = false
+const RANGE_VIS_NODE_NAME = "range_vis"
 # Track whether the active player has attacked this turn.
 var attack_made_this_turn = false
 # Options
 @export var grid_visible = false
 @export var city_names_visible = true
 @export var debug_logging = true
+@export var debug_show_move_costs = false
 ## Loop vars
 var turn_counter = 0
 var active_player = null
@@ -146,6 +149,8 @@ func _ready():
 	_debug_log("_ready(): tile_list built, size=" + str(tile_list.size()))
 	self._build_astar_grid()
 	_debug_log("_ready(): astar_grid built")
+	if debug_show_move_costs:
+		_display_move_costs()
 	# Place the units according to their ID and fill attributes.
 	# Create a global list of all entities on the map, their type, positions and nodes
 	entities = self._create_entity_list()
@@ -498,8 +503,9 @@ func _handle_primary_click(click_pos):
 			# the click sets the movement destination and triggers pathfinding to it.
 			if self.movement_selection == true and self._is_valid_destination(click_pos) == true:
 				var selected_entity = _get_entity_by_id(self.selected_unit)
-				selected_entity.node.move_unit(selected_entity.node.get_global_position(), click_pos, selected_entity)
-				self.movement_selection = false
+				if selected_entity and selected_entity.node != null:
+					selected_entity.node.move_unit(selected_entity.node.get_global_position(), click_pos, selected_entity)
+				_clear_action_selection_modes()
 	# if clicked on entity
 	elif unit_click and not gui_click:
 		var current_entity = self._is_unit(click_pos, true).node
@@ -509,18 +515,13 @@ func _handle_primary_click(click_pos):
 				var player_unit = _get_entity_by_id(self.selected_unit).node
 				# Check if, for the player entity, resupplying the click pos is possible, and if yes, do it.
 				player_unit.resupply(click_pos)
-				self.resupply_selection = false
+				_clear_action_selection_modes()
 			elif self.attack_selection == true:
-				self.attack_selection = false
+				_clear_action_selection_modes()
 			else:
-				self.selected_unit = current_entity
-				self.selected_unit.select()
-				# Update entity stats in GUI
-				GUI.update_unit_info(current_entity.get_unit_name(), current_entity.get_strength_points(), current_entity.get_movement_points(), current_entity.get_ammo())
-				# Enable or disable action buttons based on units attributes
-				GUI.disable_movement_button(not current_entity.can_move())
-				GUI.disable_attack_button((not current_entity.combat_ready() or not current_entity.can_move()))
-				GUI.disable_supply_button(not current_entity.can_resupply())
+				_clear_action_selection_modes()
+				current_entity.select()
+				_refresh_selected_unit_ui()
 		else:
 			# if clicked entity is not owned by player, see if a player-owned entity is selected...
 			if self.selected_unit != null:
@@ -532,7 +533,7 @@ func _handle_primary_click(click_pos):
 							var enemy_unit = self._is_unit(click_pos, true).node
 							player_unit.attack(enemy_unit)
 							self.register_attack(player_unit)
-							self.attack_selection = false
+							_clear_action_selection_modes()
 							# Deselect all selectable entities
 							self.deselect_all_entities()
 
@@ -624,10 +625,267 @@ func _advance_player_rotation():
 func _physics_process(_delta):
 	_poll_input_actions()
 	_update_mouse_hover()
+	_refresh_selected_unit_ui()
 	if active_player != null:
 		label_player.set_text(str(active_player.get_id()))
 	if turn_counter:
 		label_turn.set_text(str(turn_counter))
+
+func _clear_action_selection_modes() -> void:
+	movement_selection = false
+	attack_selection = false
+	resupply_selection = false
+	_clear_range_highlights()
+
+# Enable/disable movement targeting mode and render possible movement range.
+# @input {Boolean} enabled - true to activate movement mode, false to disable
+# @returns {Void}
+func set_movement_selection_mode(enabled: bool) -> void:
+	if not enabled:
+		movement_selection = false
+		_clear_range_highlights()
+		return
+	if self.selected_unit == null:
+		return
+	movement_selection = true
+	attack_selection = false
+	resupply_selection = false
+	_show_movement_range_for_selected()
+
+# Enable/disable attack targeting mode and render attack range.
+# @input {Boolean} enabled - true to activate attack mode, false to disable
+# @returns {Void}
+func set_attack_selection_mode(enabled: bool) -> void:
+	if not enabled:
+		attack_selection = false
+		_clear_range_highlights()
+		return
+	if self.selected_unit == null:
+		return
+	movement_selection = false
+	attack_selection = true
+	resupply_selection = false
+	_show_attack_range_for_selected()
+
+# Enable/disable resupply targeting mode.
+# @input {Boolean} enabled - true to activate resupply mode, false to disable
+# @returns {Void}
+func set_resupply_selection_mode(enabled: bool) -> void:
+	if not enabled:
+		resupply_selection = false
+		_clear_range_highlights()
+		return
+	movement_selection = false
+	attack_selection = false
+	resupply_selection = true
+	_clear_range_highlights()
+
+# Remove all temporary range highlight markers from the scene.
+# @returns {Void}
+func _clear_range_highlights() -> void:
+	if range_overlay != null and range_overlay.has_method("clear_highlights"):
+		range_overlay.clear_highlights()
+		return
+	_delete_all_nodes_with(RANGE_VIS_NODE_NAME)
+
+# Render range highlights for a list of grid positions.
+# @input {Array} grid_positions - grid local tile positions
+# @input {String} color_name - named color for highlight
+# @input {float} opacity - fill opacity from 0.0 to 1.0
+# @returns {Void}
+func _render_range_highlights(grid_positions: Array, color_name: String, opacity: float = 0.35) -> void:
+	if range_overlay != null and range_overlay.has_method("set_highlight_tiles"):
+		range_overlay.set_highlight_tiles(grid_positions, hexmap, hex_offset, globals, color_name, opacity)
+		return
+	for grid_pos in grid_positions:
+		_set_hex_fill(hexmap.map_to_global(grid_pos), color_name, RANGE_VIS_NODE_NAME, opacity)
+
+# Render movement range for currently selected unit.
+# @returns {Void}
+func _show_movement_range_for_selected() -> void:
+	_clear_range_highlights()
+	if self.selected_unit == null:
+		return
+	var selected_entity = _get_entity_by_id(self.selected_unit)
+	if not selected_entity or selected_entity.node == null:
+		return
+	var selected_unit_node = selected_entity.node
+	if not selected_unit_node.can_move():
+		return
+	var reachable_tiles = _get_reachable_movement_tiles(selected_entity)
+	_render_range_highlights(reachable_tiles, "blue", 0.0)
+
+# Render attack range for currently selected unit.
+# For multiple weapons, the highlighted range is the union of all weapon ranges.
+# @returns {Void}
+func _show_attack_range_for_selected() -> void:
+	_clear_range_highlights()
+	if self.selected_unit == null:
+		return
+	var selected_entity = _get_entity_by_id(self.selected_unit)
+	if not selected_entity or selected_entity.node == null:
+		return
+	var selected_unit_node = selected_entity.node
+	if not selected_unit_node.combat_ready():
+		return
+	var ranges: Array = []
+	if selected_unit_node.has_method("get_attack_ranges"):
+		ranges = selected_unit_node.get_attack_ranges()
+	if ranges.is_empty():
+		return
+	var attack_tiles: Array = []
+	for tile in tile_list:
+		if tile["grid_pos"] == selected_entity.grid_pos:
+			continue
+		var distance = get_hex_distance(selected_entity.grid_pos, tile["grid_pos"])
+		for weapon_range in ranges:
+			if distance <= int(weapon_range):
+				if not attack_tiles.has(tile["grid_pos"]):
+					attack_tiles.append(tile["grid_pos"])
+				break
+	_render_range_highlights(attack_tiles, "red", 0.0)
+
+# Calculate all reachable movement target tiles in one pass.
+# Uses a Dijkstra-style traversal over hex neighbours and movement costs.
+# @input {Object} selected_entity - selected entity object from entities list
+# @returns {Array} array of reachable grid positions (Vector2i)
+func _get_reachable_movement_tiles(selected_entity) -> Array:
+	var result: Array = []
+	if selected_entity == null or selected_entity.node == null:
+		return result
+	var selected_unit_node = selected_entity.node
+	var max_points = float(selected_unit_node.get_movement_points())
+	if max_points <= 0:
+		return result
+
+	var tile_by_pos = {}
+	for tile in tile_list:
+		tile_by_pos[tile["grid_pos"]] = tile
+
+	var blocked_path_positions = _get_blocked_path_positions(selected_unit_node)
+	var occupied_target_positions = _get_occupied_target_positions(selected_unit_node)
+
+	var best_cost = {}
+	var open_list: Array = [{"pos": selected_entity.grid_pos, "cost": 0.0}]
+	best_cost[selected_entity.grid_pos] = 0.0
+
+	while not open_list.is_empty():
+		var best_index = 0
+		for i in range(1, open_list.size()):
+			if float(open_list[i]["cost"]) < float(open_list[best_index]["cost"]):
+				best_index = i
+		var current = open_list[best_index]
+		open_list.remove_at(best_index)
+
+		var current_pos: Vector2i = current["pos"]
+		var current_cost = float(current["cost"])
+		if current_cost > float(best_cost.get(current_pos, current_cost)):
+			continue
+
+		var open_tile = tile_by_pos.get(current_pos, null)
+		if open_tile == null:
+			continue
+
+		for neighbour_key in open_tile["neighbours"]:
+			var neighbour_grid = open_tile["neighbours"][neighbour_key]
+			if neighbour_grid == null:
+				continue
+			var neighbour_pos = Vector2i(neighbour_grid)
+			var neighbour_tile = tile_by_pos.get(neighbour_pos, null)
+			if neighbour_tile == null:
+				continue
+			if not selected_unit_node.can_traverse.has(neighbour_tile["terrain"]):
+				continue
+			if blocked_path_positions.has(neighbour_pos):
+				continue
+
+			var next_cost = current_cost + float(neighbour_tile["move_cost"])
+			if next_cost > max_points:
+				continue
+			if best_cost.has(neighbour_pos) and float(best_cost[neighbour_pos]) <= next_cost:
+				continue
+
+			best_cost[neighbour_pos] = next_cost
+			open_list.append({"pos": neighbour_pos, "cost": next_cost})
+
+			if neighbour_pos != selected_entity.grid_pos and not occupied_target_positions.has(neighbour_pos):
+				if not result.has(neighbour_pos):
+					result.append(neighbour_pos)
+
+	return result
+
+# Build set of blocked positions for movement pathing.
+# Blocks enemy entities but allows traversal through allies (existing gameplay behavior).
+# @input {Object} selected_unit_node - currently selected unit node
+# @returns {Dictionary} map of blocked grid positions -> true
+func _get_blocked_path_positions(selected_unit_node) -> Dictionary:
+	var blocked_positions = {}
+	for current_entity in entities:
+		if current_entity.type != "entity":
+			continue
+		if current_entity.node == selected_unit_node:
+			continue
+		if current_entity.node.is_container():
+			continue
+		if current_entity.node.has_method("get_unit_stance"):
+			if current_entity.node.get_unit_stance() == "enemy":
+				blocked_positions[current_entity.grid_pos] = true
+		else:
+			blocked_positions[current_entity.grid_pos] = true
+	return blocked_positions
+
+# Build set of occupied target positions that cannot be move destinations.
+# @input {Object} selected_unit_node - currently selected unit node
+# @returns {Dictionary} map of occupied grid positions -> true
+func _get_occupied_target_positions(selected_unit_node) -> Dictionary:
+	var occupied_positions = {}
+	for current_entity in entities:
+		if current_entity.type != "entity":
+			continue
+		if current_entity.node == selected_unit_node:
+			continue
+		if current_entity.node.is_container():
+			continue
+		occupied_positions[current_entity.grid_pos] = true
+	return occupied_positions
+
+# Keep GUI values and action button states synced to selected unit.
+# @returns {Void}
+func _refresh_selected_unit_ui() -> void:
+	if GUI == null:
+		return
+	if self.selected_unit == null:
+		_clear_range_highlights()
+		GUI.disable_movement_button(true)
+		GUI.disable_attack_button(true)
+		GUI.disable_supply_button(true)
+		GUI.update_unit_info("", "", "", "")
+		return
+	var selected_entity = _get_entity_by_id(self.selected_unit)
+	if not selected_entity or selected_entity.node == null:
+		_clear_range_highlights()
+		GUI.disable_movement_button(true)
+		GUI.disable_attack_button(true)
+		GUI.disable_supply_button(true)
+		GUI.update_unit_info("", "", "", "")
+		return
+	var current_unit = selected_entity.node
+	GUI.update_unit_info(
+		current_unit.get_unit_name(),
+		current_unit.get_strength_points(),
+		current_unit.get_movement_points(),
+		current_unit.get_ammo()
+	)
+	var is_busy = false
+	if current_unit.has_method("is_busy_state"):
+		is_busy = current_unit.is_busy_state()
+	elif current_unit.has_method("can_receive_orders"):
+		is_busy = not current_unit.can_receive_orders()
+	if is_busy:
+		_clear_action_selection_modes()
+	GUI.disable_movement_button(is_busy or not current_unit.can_move())
+	GUI.disable_attack_button(is_busy or (not current_unit.combat_ready() or not current_unit.can_move()))
+	GUI.disable_supply_button(is_busy or not current_unit.can_resupply())
 
 # Check if there is a tilemap at the given position.
 # Use this to wrap up input loop, to avoid NPE when clicked outside tilemap.
@@ -691,6 +949,7 @@ func deselect_all_entities():
 				GUI.update_unit_info("","","","")
 			every_entity.node.deselect()
 			self.selected_unit = null
+	_clear_action_selection_modes()
 
 # Getter for unit_selected. This is faster than iterating over all
 # units and check each for its 'selected' states
@@ -738,24 +997,79 @@ func get_center_of_hex(given_position):
 # @input {Vector2} target_position, from this the target tile is derived
 # @returns {Array} path to the target tile
 func find_path(start_position, target_position, moving_unit = null) -> Array:
-	if astar_grid == null:
-		_build_astar_grid()
-	if astar_grid == null:
-		return []
-	_apply_astar_unit_constraints(moving_unit)
 	var start_grid = hexmap.global_to_map(start_position)
 	var target_grid = hexmap.global_to_map(target_position)
-	var start_tile = self._get_hex_object_from_grid_pos(start_grid)
-	var target_tile = self._get_hex_object_from_grid_pos(target_grid)
-	if start_tile == null or target_tile == null:
-		return []
-	var id_path = astar_grid.get_id_path(start_grid, target_grid)
-	if id_path.is_empty():
-		return []
+	return _find_path_on_hex(start_grid, target_grid, moving_unit)
+
+# Pathfinding over the same hex adjacency used for range finding.
+# @input {Vector2i} start_grid
+# @input {Vector2i} target_grid
+# @input {Object} moving_unit
+# @returns {Array} tile objects for the path (including start + target)
+func _find_path_on_hex(start_grid: Vector2i, target_grid: Vector2i, moving_unit = null) -> Array:
 	var path: Array = []
-	for grid_pos in id_path:
-		var grid_pos_i = Vector2i(int(grid_pos.x), int(grid_pos.y))
-		var tile = self._get_hex_object_from_grid_pos(grid_pos_i)
+	if start_grid == target_grid:
+		return path
+	var tile_by_pos = {}
+	for tile in tile_list:
+		tile_by_pos[tile["grid_pos"]] = tile
+	if not tile_by_pos.has(start_grid) or not tile_by_pos.has(target_grid):
+		return path
+	var blocked_positions = {}
+	if moving_unit != null:
+		blocked_positions = _get_blocked_path_positions(moving_unit)
+	var can_traverse: Array = []
+	if moving_unit != null and moving_unit.can_traverse != null:
+		can_traverse = moving_unit.can_traverse
+
+	var open_list: Array = [{"pos": start_grid, "cost": 0.0}]
+	var best_cost = {start_grid: 0.0}
+	var came_from: Dictionary = {}
+
+	while not open_list.is_empty():
+		var best_index = 0
+		for i in range(1, open_list.size()):
+			if float(open_list[i]["cost"]) < float(open_list[best_index]["cost"]):
+				best_index = i
+		var current = open_list[best_index]
+		open_list.remove_at(best_index)
+		var current_pos: Vector2i = current["pos"]
+		if current_pos == target_grid:
+			break
+		var current_tile = tile_by_pos.get(current_pos, null)
+		if current_tile == null:
+			continue
+		for neighbour_key in current_tile["neighbours"]:
+			var neighbour_grid = current_tile["neighbours"][neighbour_key]
+			if neighbour_grid == null:
+				continue
+			var neighbour_pos = Vector2i(neighbour_grid)
+			var neighbour_tile = tile_by_pos.get(neighbour_pos, null)
+			if neighbour_tile == null:
+				continue
+			if not can_traverse.is_empty() and not can_traverse.has(neighbour_tile["terrain"]):
+				continue
+			if blocked_positions.has(neighbour_pos):
+				continue
+			var next_cost = float(best_cost.get(current_pos, 0.0)) + float(neighbour_tile["move_cost"])
+			if not best_cost.has(neighbour_pos) or next_cost < float(best_cost[neighbour_pos]):
+				best_cost[neighbour_pos] = next_cost
+				came_from[neighbour_pos] = current_pos
+				open_list.append({"pos": neighbour_pos, "cost": next_cost})
+
+	if not came_from.has(target_grid):
+		return []
+	var grid_path: Array = []
+	var cursor = target_grid
+	grid_path.append(cursor)
+	while cursor != start_grid:
+		if not came_from.has(cursor):
+			return []
+		cursor = came_from[cursor]
+		grid_path.append(cursor)
+	grid_path.reverse()
+	for grid_pos in grid_path:
+		var tile = tile_by_pos.get(grid_pos, null)
 		if tile != null:
 			path.append(tile)
 	return path
@@ -802,12 +1116,15 @@ func _show_path(path, mark_start_tile=true):
 
 
 # Helper to delete all nodes that start with a certain string.
-# This will search for given name_fragment plus @-sign in front because
-# dynamically added nodes are auto-prefixed by this sign by Godot.
-# @input {String} Nodes that contain this in their names, will get deleted
+# Handles both prefixed ("@name") and plain runtime node names.
+# @input {String} name_fragment - nodes with matching prefix are deleted
+# @returns {Void}
 func _delete_all_nodes_with(name_fragment):
+	print("Deleting all nodes with name starting with '" + name_fragment + "'")
 	for node in self.get_children():
-		if node.get_name().begins_with('@'+name_fragment):
+		var node_name = str(node.get_name())
+		if node_name.begins_with('@' + name_fragment) or node_name.begins_with(name_fragment):
+			print("Deleting node: " + node_name)
 			node.queue_free()
 
 # Debug Logger that does not overflow like a %$§#"§$%&#%$§"*#+ every time more than one
@@ -867,15 +1184,17 @@ func highlight_every_hex(given_position, marker_color, show_coords):
 # This looks different than the hex highlight in that it
 # overlays the whole hex with a transparent colored fill
 # @input {Vector2} global position of the hex tile
-# @input {Color} Color of the markers created
+# @input {String} Color name of the marker
 # @input {String} (optional) Name of the marker node
-func _set_hex_fill(hex_world_pos, marker_color, opt_name=null):
+# @input {float} (optional) Opacity from 0.0 to 1.0
+# @returns {Void}
+func _set_hex_fill(hex_world_pos, marker_color, opt_name=null, opt_opacity=1.0):
 	var highlight_pos = get_center_of_hex(hex_world_pos)
 	# duplicate the highlight
 	var new_hex_fill = hex_fill.duplicate()
 	if opt_name != null:
 		new_hex_fill.set_name(opt_name)
-	new_hex_fill.set_modulate(globals.getColor(str(marker_color)))
+	new_hex_fill.set_modulate(globals.getColor(str(marker_color), float(opt_opacity)))
 	# position the highlight
 	new_hex_fill.set_position(highlight_pos)
 	# add the highlight to scene
@@ -1002,6 +1321,19 @@ func _display_terrain_type(grid_coordinates):
 	# Attach label
 	self.add_child(new_label)
 	new_label.set_owner(get_tree().get_edited_scene_root())
+
+# Debug helper: render movement costs on every tile.
+func _display_move_costs() -> void:
+	_delete_all_nodes_with("move_cost_label")
+	for tile in tile_list:
+		var new_label = Label.new()
+		new_label.set_text(str(tile["move_cost"]))
+		new_label.set_name("move_cost_label")
+		var tile_world_pos = get_center_of_hex(hexmap.map_to_global(tile["grid_pos"]))
+		tile_world_pos.y += hexmap.get_cell_size().y * 0.15
+		new_label.set_position(tile_world_pos)
+		self.add_child(new_label)
+		new_label.set_owner(get_tree().get_edited_scene_root())
 
 ##########################################################################
 # Automatically created methods for signalling

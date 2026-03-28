@@ -1,144 +1,56 @@
-# ToDo & Documentation
-
-## ToDo
-
-[x] Implement turnbased game loop as described further below
-[x] Fix that a unit can only be moved once (bug?)
-[x] Figure out how to use tool scripts to load all units from the theme when a mission is opened and update units in editor according to its attributes
-[ ] Implement some kind of UI lock state, where any action that is uninterruptible should lock any input from player until completion.
-Camera movement should be independent of this (or maybe just automatic camera movement?)
-[ ] Implement range finder method from red blob games blog to determine firing range, movement range etc. of entities.
-[ ] Add animations to the attack-mechanic.
-[ ] Make attacks reduce movement points and ammo of attacker.
-[ ] Implement effect on attacked unit
-[ ] Show useful information in GUI at all times.
-[ ] Fix or re-implement useful popup to show information (About units, tiles, ...)
-[ ] Implement attributes and logic to allow units to supply other units with ammo and fuel.
-[ ] Implement static units that can be walked onto (trenches, bridges) and that can have modifiers affect units inside/on them
-
-## Themes
-Since a theme is at its core designed to represent a specific time in human history or a specific theatre of conflict, it is appropriate to think of a theme as an "era". 
-
-Technically speaking, a theme is a folder containing multiple files, with a structure that is imposed by convention.
-
-## Theme Manager
-The theme manager is supposed to provide a Class of getters that provide the information inside a `XML` which is created out of a `YAML` file - which by design is structured to be easily edited and read, e.g. by a level designer - for the classes in the game, like "unit", to consume.
-
-### Theme format
-A theme consists of some basic information like "name" and maybe a short "description", "author" or a picture to show in some future implementation of an ingame "theme manager GUI".
-
-But, maybe most important, is the reference to the YAML-files, that contain all theme specific data.
-
-Following is a draft of the contained files inside a themes folder and their contents:
-
-* `config.yaml`
-    * name
-    * description
-    * picture
-    * icon
-    * data_files
-        * units file name
-        * weapons file name
-        * factions file name
-        * modifiers file name
-* `units.yaml`
-    * example unit 1
-        * unit_id
-        * display_name
-        * description
-        * unit_faction
-        * unit_sprites
-        * base_defense
-        * armored
-        * can_traverse
-        * movement_points
-        * main_weapon
-        * main_ammo
-    * example unit 2
-        * ...
-* `weapons.yaml`
-    * weapon_id
-    * display_name
-    * description
-    * attack_strength
-    * armor_piercing
-    * attacks_units
-    * area_of_effect
-    * range
-    * effect
-        * spritesheet_1
-        * (spritesheet_2)
-        * ...
-    * sound
-        * sound_1
-        * (sound 2)
-        * ...
-* `factions.yaml`
-    * faction_id
-    * display_name
-    * description
-* `modifiers.yaml`
-    * mod_id
-    * display_name
-    * description
-    * duration
-    * modifiers
-        * stat_1, modifier_1
-        * (stat_2, modifier_2)
-        * ...
-* `graphics/`
-    * `units/`
-        `unit_id1-0.png` // Corresponds to unit with same id described in `units.yaml`, has only one direction
-        `unit_id2-0.png` // This unit has only full 6 directions support
-        `unit_id2-1.png`
-        `unit_id2-2.png`
-        `unit_id2-3.png`
-        `unit_id2-4.png`
-        `unit_id2-5.png`
-
-### TODO and open questions
-* Are maps, campaigns and missions somehow bound to a theme?
-    * Maybe only via dependencies (Campaign X, Mission Y depends on Theme Z, you need it to play them)
-
-## Game core mechanics
-### Turnbased behaviour
-[x] Implement some kind of 'game' class (refactor current `map.gd` class?) that controls turns and players and so on. Basic idea: The game class keeps track of number of turns and Array of players. A player is a simple object that is bound to a faction and has an ID. Units in the game are "owned" by a player who exlusively can fully interact with them (e.g. issue move orders, attack orders etc.)
-
-In the first turn of the game, an Array is populated with the IDs of players. This is used to determine the order of players turns.
-
-The effect of actions is immedietly visible in game. An attack on another unit instantly yields the result. If an attacked unit is destroyed, it will no longer be available for commands for the owning player in his turn. However a unit with higher "initiative" value than the attacker will be able to shoot first, when attacked. Movement to another tile is irreversible.
-
-##### Ideas for the game loop
-UI has a button "end turn", which sends a signal to trigger a method `end_turn()`. 
-This method then does the turn processing - set current player inactive, set next player active and so on.
-This method is called `advance_turn()`. It can also be called if a turn change is desirable outside the regular "User ends turn"-pattern.
-
-The input-handler compares ID of `active_player` with the clicked units `unit_owner` attribute before acting on the supposed action of the player, e.g. moving, attack etc.
-
-## Line Of Sight / Fog Of War
-An Array of visibility information must be kept somewhere. For each tile on the map, there must be a value for each player
-if the tile and its contents are visible. This central array is then updated according to unit movement.
-Maybe save this information in global "tile_list" for each tile so it is easily accessible.
-
-## Workflow of scenario editing
-a) User creates a new scene for the scenario.
-b) It must contain a node instance of map-class, allowing for attribtues like 'map image', 'description', 'name' etc. to be set.
-c) A toolscript _once_ creates associated nodes in hierarchy under the map node (tilemap, camera-boundary, etc.), which are then customized by the User (sizing and positioning of the camera-boundary node, painting of the tilemap, etc.)
-d) The map node has a attribute 'theme', which is filled with the name of the theme to be used. (Make this easier somehow? Detect all themes and offer selection?)
-e) A tool script will then trigger the parsing of the theme's files and populate lists of the contained entities (e.g. units).
-f) Entities are placed
-    i) For unit-entities, one of the theme-contained unit-types can be selected via `unit_id`-attribute from a dropdown containing all available `unit_id`s from the theme. 
-    ii) A tool script is triggered by the selection and updates the entity (appearance, orientation etc.)
-g) The map node has a attribute 'player_number'.
-    i) This number serves as iterator count for a tool script to create attributes for each supposed player.
-    ii) Attributes created for each player are 'name', 'faction' (gotten from theme), etc.
-h) Map node attributes like 'name', 'author', 'image' etc. are used in a future implementation of a theme-change-UI.
-
-## Workflow of selecting themes / scenarios depending on them ingame (far off)
-*Specifics of the UI will not be discussed as this is still ages away.*
-The User can select a scenario. A scenario (a.k.a map) has a dependency for a specific theme.
-So actually a theme is never loaded in the main menu, only in a scenario. And thus can't be selected.
-But maybe installed/deinstalled? Central repo?
+# TODO and ideas for the project
+# Separated into sections for better organization
+## General TODOs
+- [ ] Implement generic attributes for the existing "entity" class (which parents all units), that can be used for many different things.
+    - "Can_Hold_Garrison:Boolean" can be used for buildings, trenches, etc. that can hold a unit inside of them.
+    - "Garrison_Modifier:String" the ID of the modifier applied to the units that is garrisoned inside this entity. Garrison differs from cover in that it takes one turn to garrison and that turn is used by the action. Same for ungarrison.
+    - "Is_Obstacle:Boolean" determines if other units can move through/over this entity. Can be dynamically switched to have destructable bridges e.g.
+    - "Obstacle_Ignores_Terrain:Boolean" If true, this entity will allow units to move through it regardless of terrain. This can be used for things like trenches that allow movement through them even if the terrain is normally impassable.
+    - "Is_Destructible:Boolean" determines if this entity can be destroyed by attacks. This can be used for things like buildings that can be destroyed to create new paths, or for destructible cover.
+    - "Is_Cover:Boolean" determines if this entity provides cover for units inside of it. This can be used for things like buildings, trenches, etc. that provide cover.
+    - "Cover_Modifier:String" the ID of the modifier applied to the units that are in cover inside this entity. This can be used to apply different modifiers for different types of cover, e.g. a building might provide better cover than a trench.
+    - "Static:Boolean" This effectively only hides the display of movement points. They still need to be set to 0 for the entity to be immobile.
 
 
-(how trigger any method on attribute change inside editor? This was answered somewhere already...)
+- [ ] Add a "Gaia" player for entities that are not controlled by any player. This can be used for things like neutral buildings, destructible cover, etc. that are not owned by any player but still need to be represented in the game.
+- [ ] UI for selected units or units affected by an action.
+    - Modifers should always be visible at a unit, even if only by a tiny marker. Details can be shown in a tooltip or a unit detail window.
+    - Selected unit that is about to start an action should have clear visual indicators of movement range, attack range etc.
+    - The UI (also the current part showing stats) must be made smaller, less obtrusive, and most importantly: scale with zoom level.  
+- [ ] State machine for units - if already implemented - should be extended. Possible states/actions for units should be:
+    - Idle
+    - Moving
+    - Attacking
+    - Garrisoning
+    - Ungarrisoning
+    - Garrisoned
+    - Dying
+    - Dead
+    - Being supplied
+    - Supplying
+- [ ] Find out how this state machine stuff helps me. :P
+
+- [ ] Experience system is currently static. If a unit is given a certain level, it will keep that level forever. Make it dynamic?
+    - Maybe units can gain experience by attacking and being attacked, and lose experience by being repaired or supplied? This would make the game more dynamic and give players more incentive to keep their units alive and in good condition.
+    - Maybe allow the scenario creator to control if units can gain experience or not? This would allow for more static scenarios where the player is supposed to use specific units with specific levels, and more dynamic scenarios where the player can level up their units as they play.
+    - Also plan for a way to have units gain experience during a scenario but are only able to be levelled up between scenarios in a campaign - like classic PanzerGeneral with core army.
+
+- [ ] Eye Candy: Add particle system for each unit that displays little smoke puffs when they move on certain tiles (where configureable?).
+- [ ] Eye Candy: Add a moving cloud shadow effect to the map. This can be done by having a cloud texture that moves across the map, and using a shader to darken the tiles that are under the clouds. This would add some visual interest to the map and make it feel more dynamic.
+- [ ] Eye Candy: Add simple weather system that can display sunny, cloudy, rainy and snowy weather. Could be enhanced by shaders in the future. Also may affect gameplay by giving modifiers.
+- [ ] Eye Candy: Evaluate particle systems for all the effects instead of spritesheet animations - since they are hard to find in good quality and for free. This would also allow to have things like lingering smoke chimneys for destroyed units etc.
+- [ ] Add a entity with attributes "Is_Cover"=true "Cover_Modifier"=1.5 and "Static"=true with a random crater image variation shown for each spawn, after an explosive attack misses or hits a non-cover entity. Add "craters" attribute to weapons.yaml.
+
+- [ ] Prepare for a campaign system. This is a long-term goal. 
+    - Scenarios can be linked together in a campaign, and the player's progress through the campaign can be tracked.
+    - Make "Player_Has_Core_Army" a possible attribute for a campaign, which allows the player to keep their units and their experience between scenarios.
+    - Allow for campaigns to have branching paths, where the player's choices in one scenario can affect which scenario they play next.
+    - A scenario must have a briefing screen before it starts, and a debriefing screen after it ends. These screens can be used to provide story and context for the scenario, as well as to show the player's performance and rewards.
+    - Briefings must be encoded in a simple way at first, allowing for a picture and text. Maybe allow a soundfile to be played for spoken briefings.
+
+- [ ] Implement a simple save/load system for the game. This can be used to save the player's progress in a campaign, as well as to save the state of a scenario in case the player wants to quit and come back later.
+
+- [ ] Implement a simple AI for the enemy units. This can be used to provide a challenge for the player in single-player scenarios. The AI can be as simple or as complex as desired, but it should at least be able to move and attack with its units.
+    - For a simple AI, units can just move towards the nearest player unit and attack if they are in range. For a more complex AI, units can have different behaviors based on their type and the situation, e.g. a tank might try to flank the player's units, while an artillery unit might try to stay back and provide support.
+    - The scenario designer should be able to optionally control the AI behavior of enemy units in a scenario. 
+    - Maybe also plan for a simple scripting system for scenarios, so that certain events like reinforcements, retreats etc. can be triggered by player actions.

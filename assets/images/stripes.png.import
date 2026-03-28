@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c7cu6u7wrnu0d"
-path="res://.godot/imported/mandel.png-2afe9944e51fe3e746a9d94abb0a44b8.ctex"
+uid="uid://c4h0c7hja04q4"
+path="res://.godot/imported/stripes.png-3529fe79c03fd9c4a2a30b9017bcf4f5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/images/mandel.png"
-dest_files=["res://.godot/imported/mandel.png-2afe9944e51fe3e746a9d94abb0a44b8.ctex"]
+source_file="res://assets/images/stripes.png"
+dest_files=["res://.godot/imported/stripes.png-3529fe79c03fd9c4a2a30b9017bcf4f5.ctex"]
 
 [params]
 
@@ -25,7 +25,7 @@ compress/normal_map=0
 compress/channel_pack=0
 mipmaps/generate=false
 mipmaps/limit=-1
-roughness/mode=1
+roughness/mode=0
 roughness/src_normal=""
 process/channel_remap/red=0
 process/channel_remap/green=1

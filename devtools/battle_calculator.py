@@ -238,7 +238,7 @@ if rand >= (0.45 - get_experience_multiplier(attacking_unit)):
     print('Attacker scores a hit.')
     hit = True
 else:
-    print('Attacker misses and the attack nds.')
+    print('Attacker misses and the attack ends.')
     hit = False
 
 if hit:

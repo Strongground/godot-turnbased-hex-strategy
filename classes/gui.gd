@@ -54,12 +54,13 @@ func disable_supply_button(disabled) -> void:
 func _ready() -> void:
 	set_process_input(true)
 	root = get_tree().current_scene
-	tile_info_popup = root.find_child('Tile_Info', true, false)
-	tile_info_popup_text = tile_info_popup.find_child('Tile_Text', true, false)
-	shown_unit_name = root.find_child('UnitName', true, false)
-	unit_info_strength = root.find_child('UnitStrength', true, false)
-	unit_info_actionpoints = root.find_child('UnitActionPoints', true, false)
-	unit_info_ammo = root.find_child('UnitAmmo', true, false)
+	tile_info_popup = get_node_or_null("Tile_Info")
+	if tile_info_popup != null:
+		tile_info_popup_text = tile_info_popup.get_node_or_null("Tile_Text")
+	shown_unit_name = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/UnitName")
+	unit_info_strength = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer/UnitStrength")
+	unit_info_actionpoints = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2/UnitActionPoints")
+	unit_info_ammo = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3/UnitAmmo")
 	##### Panel
 	panel = find_child('Panel', true, false)
 	panel_pos = panel.position
@@ -98,19 +99,23 @@ func update_unit_info(unit_name, strength, actionpoints, ammo) -> void:
 
 # Public setter for unit name in GUI
 func update_unit_name(value) -> void:
-	shown_unit_name.text = str(value)
+	if shown_unit_name != null and is_instance_valid(shown_unit_name):
+		shown_unit_name.text = str(value)
 
 # Public setter for unit strength indicator in GUI
 func update_unit_strength(value) -> void:
-	unit_info_strength.text = str(value)
+	if unit_info_strength != null and is_instance_valid(unit_info_strength):
+		unit_info_strength.text = str(value)
 
 # Public setter for unit action points indicator in GUI
 func update_unit_actionpoints(value) -> void:
-	unit_info_actionpoints.text = str(value)
+	if unit_info_actionpoints != null and is_instance_valid(unit_info_actionpoints):
+		unit_info_actionpoints.text = str(value)
 
 # Public setter for unit ammo indicator in GUI
 func update_unit_ammo(value) -> void:
-	unit_info_ammo.text = str(value)
+	if unit_info_ammo != null and is_instance_valid(unit_info_ammo):
+		unit_info_ammo.text = str(value)
 
 func update_tile_info(tile) -> void:
 	tile_info.text = str(tile.name)
@@ -123,19 +128,34 @@ func _physics_process(_delta) -> void:
 # set movement selection
 func _on_MoveButton_pressed() -> void:
 	if root.selected_unit != null:
-		root.movement_selection = true
+		if root.has_method("set_movement_selection_mode"):
+			root.set_movement_selection_mode(true)
+		else:
+			root.movement_selection = true
+			root.attack_selection = false
+			root.resupply_selection = false
 
 # If AttackButton in GUI pressed, and a unit is selected,
 # set attack selection
 func _on_AttackButton_pressed() -> void:
 	if root.selected_unit != null:
-		root.attack_selection = true
+		if root.has_method("set_attack_selection_mode"):
+			root.set_attack_selection_mode(true)
+		else:
+			root.movement_selection = false
+			root.attack_selection = true
+			root.resupply_selection = false
 
 # If SupplyButton in GUI pressed, and a capable unit is selected,
 # set resupply selection
 func _on_SupplyButton_pressed() -> void:
 	if root.selected_unit != null:
-		root.resupply_selection = true
+		if root.has_method("set_resupply_selection_mode"):
+			root.set_resupply_selection_mode(true)
+		else:
+			root.movement_selection = false
+			root.attack_selection = false
+			root.resupply_selection = true
 
 func _on_UnitInfoButton_pressed() -> void:
 	if game.selected_unit != null:

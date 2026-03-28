@@ -187,12 +187,12 @@ func get_sound(unit_id, keyword, info=null):
 						return self.default_sounds[units[unit_id]['move_sound']]
 			if keyword == 'attack' and info != null:
 				if units[unit_id]['weapons'].size() > 0:
-					var sound_path = theme_path + '/' + info['sound']
+					var sound_path = theme_path + '/sounds/sfx/weapons/' + info['sound']
 					if ResourceLoader.exists(sound_path):
 						return load(sound_path)
 					return null
 			if keyword == 'hit':
-				var impact_path = theme_path + '/' + info['sound_impact']
+				var impact_path = theme_path + '/sounds/sfx/weapons/' + info['sound_impact']
 				if ResourceLoader.exists(impact_path):
 					return load(impact_path)
 				return null

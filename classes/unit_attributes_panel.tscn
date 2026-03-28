@@ -8,7 +8,7 @@
 layout_mode = 3
 anchor_right = 0.19500001
 anchor_bottom = 0.41700003
-offset_right = 0.31999207
+offset_right = 60.319992
 offset_bottom = -200.20001
 grow_horizontal = 2
 grow_vertical = 2
@@ -35,6 +35,19 @@ theme_override_constants/margin_bottom = 15
 
 [node name="VBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer" unique_id=413823024]
 layout_mode = 2
+
+[node name="HBoxContainer1" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=226118501]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="UnitState" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer1" unique_id=2083051176]
+clip_contents = false
+custom_minimum_size = Vector2(30, 0)
+layout_mode = 2
+theme_override_font_sizes/normal_font_size = 32
+text = "😴"
+fit_content = true
+scroll_active = false
 
 [node name="HBoxContainer2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer" unique_id=1910058540]
 layout_mode = 2
