@@ -1,6 +1,8 @@
 extends TileMapLayer
 
 # class member variables
+# Fallback terrain definition. This will only be used if the theme has
+# no tile definitions.
 var tile_types = [
 	{"name": "Plain Grass", "move_cost": 1.0, "terrain": "land"},
 	{"name": "Forest", "move_cost": 2.0, "terrain": "land"},

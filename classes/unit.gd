@@ -447,10 +447,45 @@ func reset_movement_points():
 # icon in the future?)
 # @returns {Dictionary} see description above
 func get_experience():
-	for exp_level in self.experience_definitions:
-		if self.experience >= self.experience_definitions[exp_level]['range'][0] \
-		and self.experience < self.experience_definitions[exp_level]['range'][1]:
-			return self.experience_definitions[exp_level]
+	if experience_definitions == null:
+		return null
+	var definitions: Array = []
+	if typeof(experience_definitions) == TYPE_ARRAY:
+		for entry in experience_definitions:
+			if typeof(entry) != TYPE_DICTIONARY:
+				continue
+			# Support list entries as direct definitions or keyed by rank id.
+			if entry.has("range"):
+				definitions.append(entry)
+			else:
+				for key in entry.keys():
+					var exp_def = entry[key]
+					if typeof(exp_def) == TYPE_DICTIONARY:
+						definitions.append(exp_def)
+	elif typeof(experience_definitions) == TYPE_DICTIONARY:
+		for exp_level in experience_definitions:
+			var exp_def = experience_definitions[exp_level]
+			if typeof(exp_def) == TYPE_DICTIONARY:
+				definitions.append(exp_def)
+	for exp_def in definitions:
+		if exp_def != null and exp_def.has("range"):
+			var low = float(exp_def["range"][0])
+			var high = float(exp_def["range"][1])
+			if self.experience >= low and self.experience < high:
+				return exp_def
+	return null
+
+func _get_experience_multiplier() -> float:
+	var exp_def = get_experience()
+	if exp_def == null:
+		return 0.0
+	return float(exp_def.get("multiplier", 0.0))
+
+func _get_experience_display_name() -> String:
+	var exp_def = get_experience()
+	if exp_def == null:
+		return "Unknown"
+	return str(exp_def.get("display_name", "Unknown"))
 
 # Public getter for the simple raw experience value. It just returns a float.
 # @returns {Float}
@@ -698,42 +733,42 @@ func attack(target_entity, weapon=null):
 	# Set some environmental parameters
 	var defending_unit = target_entity
 	var defender_effective_strength
-	print('Defending entity is ',defending_unit['display_name'],' (',defending_unit.get_experience()['display_name'],')')
+	print('Defending entity is ',defending_unit.display_name,' (',defending_unit._get_experience_display_name(),')')
 	var attacking_unit = self
 	var attacker_effective_attack
 	var attacking_unit_weapon = weapon
-	print('Attacking entity is ',attacking_unit['display_name'],' (',attacking_unit.get_experience()['display_name'],')')
+	print('Attacking entity is ',attacking_unit.display_name,' (',attacking_unit._get_experience_display_name(),')')
 	
 	# find out basic attributes
-	var defender_base_defense = defending_unit['base_defense'] + defending_unit.temp_defense_bonus
+	var defender_base_defense = defending_unit.base_defense + defending_unit.temp_defense_bonus
 	var defense_factor = maxf(0.1, 1.0 + (defender_base_defense / 10.0))
-	defender_effective_strength = defending_unit['unit_strength'] * defense_factor
-	print('Defending entity has strength of ',defending_unit['unit_strength'],', effective strength of ',defender_effective_strength,' (',defending_unit['unit_strength'],'+',defending_unit['unit_strength'] * (defender_base_defense/10),')')
-	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10)
-	print('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit['unit_strength']/10),')')
+	defender_effective_strength = defending_unit.unit_strength * defense_factor
+	print('Defending entity has strength of ',defending_unit.unit_strength,', effective strength of ',defender_effective_strength,' (',defending_unit.unit_strength,'+',defending_unit.unit_strength * (defender_base_defense/10),')')
+	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10)
+	print('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10),')')
 		
 	# adding attack_bonus
-	var total_attack_bonus = attacking_unit['attack_bonus'] + attacking_unit.temp_attack_bonus
+	var total_attack_bonus = attacking_unit.attack_bonus + attacking_unit.temp_attack_bonus
 	if total_attack_bonus != 0:
 		attacker_effective_attack += total_attack_bonus
 		print('Attacker has attack modifier of ',total_attack_bonus,' resulting in effective attack value change to: ',attacker_effective_attack)
 
 	## Armor piercing weapon & armor effects
-	if defending_unit['armor'] > 0:
-		print('Defender has armor value of ',defending_unit['armor'])
+	if defending_unit.armor > 0:
+		print('Defender has armor value of ',defending_unit.armor)
 		if attacking_unit_weapon['armor_piercing'] <= 0:
 			attacker_effective_attack = attacker_effective_attack * 0.1
 			print('Thus, the attacker is ineffective, will only deal ',attacker_effective_attack,' damage.')
 		elif attacking_unit_weapon['armor_piercing'] >= 0:
-			var at_factor = defending_unit['armor'] / attacking_unit_weapon['armor_piercing']
+			var at_factor = defending_unit.armor / attacking_unit_weapon['armor_piercing']
 			attacker_effective_attack = attacker_effective_attack + at_factor
 			print('But attackers weapons are armor piercing, dealing additional damage of ',at_factor,' totalling ',attacker_effective_attack,' attack value.')
 
 	## Area of effect weapon
-	if defending_unit['armor'] <= 0 and attacking_unit_weapon['explosive'] > 0:
+	if defending_unit.armor <= 0 and attacking_unit_weapon['explosive'] > 0:
 		attacker_effective_attack = attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)
 		var he_factor = ((attacker_effective_attack * (attacking_unit_weapon['explosive'])) - attacker_effective_attack) / 0.75
-		attacker_effective_attack -= defending_unit['base_defense']
+		attacker_effective_attack -= defending_unit.base_defense
 		print('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack,' attack value.')
 
 	# #### Finally, battling it out
@@ -765,7 +800,7 @@ func attack(target_entity, weapon=null):
 	# Determine if hit or miss, based on experience of entity
 	var rand = randf()
 	var hit = false
-	if rand >= (0.45 - get_experience()['multiplier']):
+	if rand >= (0.45 - _get_experience_multiplier()):
 		print("Attacker scores a hit.")
 		hit = true
 	else:
@@ -779,7 +814,12 @@ func attack(target_entity, weapon=null):
 		var graze = 1.0
 		if randf() <= GRAZE_CHANCE:
 			graze = GRAZE_MULTIPLIER
-		attacker_effective_attack = float("%.1f" % (attacker_effective_attack * variance * graze))
+		var pre_variance_attack = attacker_effective_attack
+		var post_variance_attack = attacker_effective_attack * variance
+		var post_graze_attack = post_variance_attack * graze
+		prints("Damage variance:", "%.2f" % variance, "Graze multiplier:", "%.2f" % graze)
+		prints("Damage after variance:", "%.2f" % post_variance_attack, "Damage after graze:", "%.2f" % post_graze_attack)
+		attacker_effective_attack = float("%.1f" % post_graze_attack)
 
 	# Update base stats, ragardless of hit or miss
 	if attacking_unit_weapon['use_ammo']:
@@ -932,10 +972,7 @@ func register_attacked():
 		attack_streak = 1
 	last_attacked_turn = current_turn
 	if attack_streak >= 2:
-		var exp_multiplier = 0.0
-		var exp_def = get_experience()
-		if exp_def != null and exp_def.has("multiplier"):
-			exp_multiplier = float(exp_def["multiplier"])
+		var exp_multiplier = _get_experience_multiplier()
 		var base_chance = 0.6
 		var chance = clampf(base_chance * (1.0 - exp_multiplier), 0.1, 0.9)
 		if randf() <= chance:

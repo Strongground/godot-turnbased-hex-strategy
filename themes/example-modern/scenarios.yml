@@ -1,4 +1,36 @@
-skirmish:
+### Definition of scenarios in this theme
+# First basic implementation, this will likely be extended a lot later on to accomodate complex
+# scenario flows.
+### Data description
+# id: string | can be anything, will enumerate for now but branching paths may make this obsolete later
+# display_name: string
+# description: string
+# scene: string | path to scene file
+# environment: dict
+# time_of_day: int | 0-24, hour of the day. Influences the visual lighting and maybe modifiers.
+# day_night_cycle: boolean | If 'false', time of day won't change. If 'true', each turn will forward the
+# 							 time by one hour, changing "time_of_day" gradually.
+# weather: string | One of 'sunny', 'cloudy', 'overcast', 'rain', 'snow'. May influence unit performance
+#										through modifiers.
+# random_weather: dict | A dictionary containing the weather types that should appear during the scenario. Must
+#												 either be empty (no random weather) or contain one or more of the types from "weather",
+#												 followed by a float value between 0 and 1. All values in this dict added together must
+#												 equal 1.
+# max_temp: int | The peak temperature in degrees Celsius during the day. If "day_night_cycle" is 'true', the actual
+#									temperature each turn will be calculated using a curve between min and max temperature.
+#									If "day_night_cycle" is 'false', the temperature will be calculated by dividing the difference
+#									between min and max temperature into 24 values and then taking the "time_of_day"-nth value.
+# min_temp: int | The minimum temperature in degrees Celsius during the night.
+scenario_1:
   display_name: 'Skirmish'
   description: 'Default test scenario.'
   scene: 'res://scenes/map_godot4.tscn'
+  environment:
+    time_of_day: 12
+    day_night_cycle: false
+    weather: 'sunny'
+    random_weather:
+      - sunny: 0.7
+      - cloudy: 0.3
+    max_temp: 35
+    min_temp: 5

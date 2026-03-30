@@ -6,7 +6,7 @@ uniform float frequency = 5.0;
 uniform float amplitude = 50.0;
 uniform float inclination = 0.1;
 
-uniform sampler2D tex: hint_albedo;
+uniform sampler2D tex: hint_screen_texture;
 
 void fragment(){
 	vec4 albedo_tex = texture(tex, UV);

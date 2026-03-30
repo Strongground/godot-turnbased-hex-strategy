@@ -1,0 +1,20 @@
+[gd_scene format=3 uid="uid://bqn0a5tvjl262"]
+
+[ext_resource type="Script" uid="uid://cb5whdqyipr8q" path="res://scenes/WeatherOverlay.gd" id="1_swwkb"]
+[ext_resource type="Material" uid="uid://kr31fh7hscyo" path="res://assets/shaders/cloud_shadows.tres" id="2_7glov"]
+
+[node name="WeatherOverlay" type="Node2D" unique_id=1994887789]
+script = ExtResource("1_swwkb")
+
+[node name="ColorRect" type="ColorRect" parent="." unique_id=387217238]
+z_index = 99
+material = ExtResource("2_7glov")
+offset_right = 2000.0
+offset_bottom = 2000.0
+size_flags_horizontal = 3
+size_flags_vertical = 3
+color = Color(1, 1, 1, 0)
+
+[node name="WeatherSounds" type="AudioStreamPlayer2D" parent="." unique_id=1024541862]
+
+[node name="Sprite2D" type="Sprite2D" parent="WeatherSounds" unique_id=2077028911]

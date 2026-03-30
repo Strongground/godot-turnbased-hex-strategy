@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://kr31fh7hscyo"]
+
+[ext_resource type="Shader" uid="uid://k1nm5f46kkxf" path="res://assets/shaders/cloud_shadows.gdshader" id="1_6766n"]
+
+[resource]
+shader = ExtResource("1_6766n")
+shader_parameter/noise_scale = 10.0
+shader_parameter/scroll_speed = 0.50000002375
+shader_parameter/shadow_darkness = 0.2630000124925
+shader_parameter/cloud_softness = 1.0
+shader_parameter/cloud_threshold = 0.6930000329175

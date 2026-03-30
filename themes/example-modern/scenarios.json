@@ -1,1 +1,1 @@
-{"skirmish": {"display_name": "Skirmish", "description": "Default test scenario.", "scene": "res://scenes/map_godot4.tscn"}}
+{"scenario_1": {"display_name": "Skirmish", "description": "Default test scenario.", "scene": "res://scenes/map_godot4.tscn", "environment": {"time_of_day": 12, "day_night_cycle": false, "weather": "sunny", "random_weather": {"sunny": 0.7, "cloudy": 0.3, "max_temp": 35, "min_temp": 5}}}}

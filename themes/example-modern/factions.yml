@@ -9,19 +9,19 @@ usarmy:
   description: "We're the good guys!"
   icon: 'graphics/faction_icons/us.jpg'
   experience:
-    untrained:
+  - untrained:
       display_name: 'Private'
       range: [0, 0.35]
       multiplier: 0
-    regular:
+  - regular:
       display_name: 'Specialist'
       range: [0.35, 0.65]
       multiplier: 0.5
-    veteran:
+  - veteran:
       display_name: 'Corporal'
       range: [0.65, 0.90]
       multiplier: 0.75
-    elite: 
+  - elite:
       display_name: 'Sergeant'
       range: [0.90, 1]
       multiplier: 0.9
@@ -31,19 +31,19 @@ taliban:
   description: 'These are the real bad guys...'
   icon: 'graphics/faction_icons/afgh_3.png'
   experience:
-    untrained:
+  - untrained:
       display_name: 'Farmer'
       range: [0, 0.35]
       multiplier: 0
-    regular:
+  - regular:
       display_name: 'Tribal Warrior'
       range: [0.35, 0.65]
       multiplier: 0.5
-    veteran:
+  - veteran:
       display_name: 'Hunter'
       range: [0.65, 0.90]
       multiplier: 0.75
-    elite: 
+  - elite: 
       display_name: 'Warlords Bodyguard'
       range: [0.90, 1]
       multiplier: 0.9
@@ -53,7 +53,7 @@ civilians:
   description: 'Protect us, we are unarmed.'
   icon: 'graphics/faction_icons/civ.png'
   experience:
-    untrained:
+  - untrained:
       display_name: 'Civilians'
       range: [0, 1]
       multiplier: 0
