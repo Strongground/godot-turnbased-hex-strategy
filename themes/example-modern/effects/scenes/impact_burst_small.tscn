@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://classes/effect_scene.gd" id="1"]
+
+[sub_resource type="Gradient" id="1"]
+offsets = PackedFloat32Array(0, 0.45, 1)
+colors = PackedColorArray(1, 0.862745, 0.470588, 0.95, 0.647059, 0.54902, 0.392157, 0.55, 0.470588, 0.470588, 0.470588, 0)
+
+[sub_resource type="GradientTexture2D" id="2"]
+gradient = SubResource("1")
+width = 28
+height = 28
+
+[sub_resource type="ParticleProcessMaterial" id="3"]
+direction = Vector3(0, -1, 0)
+spread = 180.0
+gravity = Vector3(0, 120, 0)
+initial_velocity_min = 65.0
+initial_velocity_max = 115.0
+scale_min = 0.4
+scale_max = 0.9
+color = Color(0.901961, 0.760784, 0.470588, 1)
+emission_shape = 1
+emission_sphere_radius = 3.0
+
+[node name="ImpactBurstSmall" type="Node2D"]
+script = ExtResource("1")
+duration_override = 0.28
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="DustParticles" type="GPUParticles2D" parent="."]
+amount = 18
+lifetime = 0.28
+one_shot = true
+explosiveness = 1.0
+local_coords = false
+process_material = SubResource("3")
+texture = SubResource("2")
+emitting = false

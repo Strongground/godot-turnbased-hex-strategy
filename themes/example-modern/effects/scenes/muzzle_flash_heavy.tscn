@@ -1,0 +1,40 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://classes/effect_scene.gd" id="1"]
+
+[sub_resource type="Gradient" id="1"]
+offsets = PackedFloat32Array(0, 0.35, 1)
+colors = PackedColorArray(1, 0.980392, 0.823529, 1, 1, 0.611765, 0.164706, 0.862745, 0.580392, 0.560784, 0.560784, 0)
+
+[sub_resource type="GradientTexture2D" id="2"]
+gradient = SubResource("1")
+width = 32
+height = 32
+
+[sub_resource type="ParticleProcessMaterial" id="3"]
+direction = Vector3(1, 0, 0)
+spread = 20.0
+gravity = Vector3(0, 0, 0)
+initial_velocity_min = 150.0
+initial_velocity_max = 250.0
+scale_min = 0.5
+scale_max = 1.2
+color = Color(1, 0.788235, 0.321569, 1)
+emission_shape = 1
+emission_sphere_radius = 4.0
+
+[node name="MuzzleFlashHeavy" type="Node2D"]
+script = ExtResource("1")
+duration_override = 0.24
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="."]
+
+[node name="FlashParticles" type="GPUParticles2D" parent="."]
+amount = 22
+lifetime = 0.24
+one_shot = true
+explosiveness = 1.0
+local_coords = false
+process_material = SubResource("3")
+texture = SubResource("2")
+emitting = false

@@ -1,6 +1,44 @@
 # Effects
 
+mg_fire:
+  scene: 'effects/scenes/muzzle_flash_small.tscn'
+  duration: 0.18
+
+mg_impact:
+  scene: 'effects/scenes/impact_burst_small.tscn'
+  duration: 0.28
+
+missile_fire:
+  scene: 'effects/scenes/muzzle_flash_heavy.tscn'
+  duration: 0.24
+
+cannon_fire:
+  scene: 'effects/scenes/muzzle_flash_heavy.tscn'
+  duration: 0.24
+
+heavy_weapons_fire:
+  scene: 'effects/scenes/muzzle_flash_heavy.tscn'
+  duration: 0.24
+
+tank-cannon_fire:
+  scene: 'effects/scenes/muzzle_flash_heavy.tscn'
+  duration: 0.24
+
+cannon_impact:
+  scene: 'effects/scenes/explosion_medium.tscn'
+  duration: 4.0
+
+heavy_weapons_impact:
+  scene: 'effects/scenes/explosion_medium.tscn'
+  duration: 4.0
+
+tank-cannon_impact:
+  scene: 'effects/scenes/explosion_medium.tscn'
+  duration: 4.0
+
 missile_impact:
+  scene: 'effects/scenes/explosion_medium.tscn'
+  duration: 4.0
   sprites: [
     'explosion0001.png',
     'explosion0002.png',

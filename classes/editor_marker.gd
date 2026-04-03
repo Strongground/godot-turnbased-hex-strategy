@@ -70,7 +70,7 @@ func _create_map_text(text):
 	# add to scene
 	root.call_deferred('add_child', new_label)
 
-func set_location_owner(owner_id):
+func set_location_owner(owner_id: String):
 	if playerMgr.get_player_by_id(owner_id):
 		self.location_owner = owner_id
 		return true

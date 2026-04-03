@@ -16,12 +16,10 @@ var standard_sounds_path = 'sounds'
 var standard_sprite_format = 'png'
 var fallback_unit_sprite_path = 'res://assets/images/humvee_placeholder_d.png'
 @export var debug_logging = true
+@export var weather_mgr: Node
 var theme_object = {}
 var theme_path = ''
 @onready var default_sounds = {} 
-
-func _ready():
-	pass
 
 # Main function to get a theme from the standard themes folder. It reads the config.json
 # which contains the references to all contained data files which in turn contain the 
@@ -64,7 +62,8 @@ func load_theme(theme_name):
 		'tank': load(theme_path+'/'+standard_sounds_path+'/default_tank_drive.wav'),
 		'infantry': load(theme_path+'/'+standard_sounds_path+'/default_marching.wav')
 	}
-	_debug_log("load_theme(): active theme='" + get_current_theme_name() + "', units=" + str(theme_object.get("units", {}).size()))
+	# _debug_log("load_theme(): active theme='" + get_current_theme_name() + "', units=" + str(theme_object.get("units", {}).size()))
+	weather_mgr.init_weather_system(theme_object.get("scenarios")["scenario_1"]["environment"]) # @TODO Maybe put this and other initis in dedicated method later and call dedicated getters?
 	return theme_object
 
 # Public getter for theme name string
@@ -75,6 +74,9 @@ func get_current_theme_name():
 # Public getter for active theme base path.
 func get_theme_base_path():
 	return theme_path
+
+func resolve_theme_resource_path(path):
+	return _to_theme_resource_path(path)
 
 func get_music_list():
 	return self.theme_object.get("music", {})
@@ -119,6 +121,14 @@ func get_scenarios():
 	if _is_theme_loaded():
 		return theme_object.get("scenarios", {})
 
+# Private getter for scenario data. This contains information about weather, mission goals, 
+# factions, scenario specific modifiers, etc.
+func _get_current_scenario():
+	if _is_theme_loaded():
+		# @TODO Dynamically get the correct scneario information for the current scenario.
+		# Currently the loaded scenario does not know which one in the scenario list it is - add some kind of link.
+		return theme_object.get("scenarios")["scenario_1"]
+
 # Public getter for specific hexUnit object
 # @input {String} id of the hexUnit to get
 # @returns {Array} Attributes of the hexUnit
@@ -127,6 +137,12 @@ func get_unit(unit_id):
 		var units = theme_object['units']
 		if unit_id in units:
 			return units[str(unit_id)]
+
+# Public getter for specific weather information for this scenario.
+func get_weather():
+	if _is_theme_loaded():
+		# @TODO Replace this call by the more specific "_get_current_scenario()" 
+		return theme_object.get("scenarios")["scenario_1"]["environment"]
 
 # Public getter for table of experience levels 
 # for this faction, with according display names, 
@@ -138,21 +154,31 @@ func get_faction_experience_definitions(faction_id):
 		if faction_id in theme_object['factions']:
 			return theme_object['factions'][faction_id]['experience']
 
+# Public getter for an effect definition.
+# @input {String} effect_id
+# @returns {Dictionary}
+func get_effect(effect_id):
+	if _is_theme_loaded():
+		var effects = theme_object.get('effects', {})
+		if effect_id in effects:
+			return effects[effect_id]
+	return {}
+
 # Public getter for the sprites/frames of an effect defined in the theme.
 # @input {String} Effect ID
 # @input {String} Effect Type, used to specify the folder
 # @returns {Array} Object with all effect sprite names
 func get_effect_sprites(effect_id, effect_type):
-	if _is_theme_loaded():
-		if effect_id in theme_object.get('effects', {}):
-			var sprite_array = theme_object['effects'][effect_id].get('sprites', [])
-			var i = 0
-			# Add full res: path to frame image for SpriteFrames object to consume
-			for element in sprite_array:
-				sprite_array[i] = self.get_sprite_path() + '/sfx/' + effect_type + '/' + effect_id + '/' + sprite_array[i]
-				i += 1
-			return Array(sprite_array)
+	var effect_definition = get_effect(effect_id)
+	if effect_definition.is_empty():
 		return []
+	var sprite_entries = effect_definition.get('sprites', [])
+	if typeof(sprite_entries) != TYPE_ARRAY or sprite_entries.is_empty():
+		return []
+	var sprite_array = []
+	for sprite_name in sprite_entries:
+		sprite_array.append(self.get_sprite_path() + '/sfx/' + effect_type + '/' + effect_id + '/' + str(sprite_name))
+	return sprite_array
 
 # Public getter for a units weapon object
 # @input {String} Id of the hexUnit

@@ -41,6 +41,7 @@ extends Node2D
 @export var marker: Node2D
 @export var hex_grid: Node2D
 @export var rect: Control
+@export var weatherMgr: Node
 @onready var hex_marker = find_child('HexMarker')
 @onready var hex_fill = find_child('Hex_Fill')
 @onready var range_overlay = find_child('RangeOverlay')
@@ -619,6 +620,7 @@ func _advance_player_rotation():
 		self.active_player.set_active(false)
 		self.active_player = playerMgr.get_player_by_id(self.player_rotation[self.active_player_rot_index]).node
 		self.active_player.set_active(true)
+		weatherMgr.process_turn()
 		print('Round ended. Current player is now ' + str(self.active_player.get_player_name()))
 		return true
 

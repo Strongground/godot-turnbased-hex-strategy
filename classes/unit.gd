@@ -205,6 +205,13 @@ extends "res://classes/entity.gd"
 @export var destroyed_sprites = []
 # Optional scale override for destroyed sprites.
 @export var destroyed_sprite_scale = null
+# Optional anchor definitions for spawning effects. Each anchor can define
+# either a fixed offset or six direction-specific offsets.
+@export var effect_anchors = {}
+# Optional effect id used while this unit moves. If empty, the game falls back
+# to a shared default movement effect.
+@export var move_effect = ""
+@export var move_effect_anchor = "center"
 # Temporary combat modifiers (reset each turn)
 @export var temp_attack_bonus = 0
 @export var temp_defense_bonus = 0
@@ -253,6 +260,8 @@ var suppression_turns = 0
 const DAMAGE_VARIANCE = 0.2
 const GRAZE_CHANCE = 0.2
 const GRAZE_MULTIPLIER = 0.3
+const DEFAULT_MOVEMENT_EFFECT_ID = "default_move_dust"
+const DEFAULT_MOVEMENT_EFFECT_SCENE = "res://effects/core/move_dust_small.tscn"
 @export_group("Internal Node References")
 @export var unit_quick_panel: Control
 @export var qp_state_text: RichTextLabel
@@ -261,6 +270,7 @@ const GRAZE_MULTIPLIER = 0.3
 @export var qp_ammo_text: RichTextLabel
 
 @onready var sound_emitter = $'SoundEmitter'
+@onready var move_particles = $MoveParticles
 @onready var attack_delay_timer = $'AttackEffectDelay'
 @export var settingsMgr: Node
 @export var themeMgr: Node
@@ -493,9 +503,9 @@ func get_experience_points():
 	return self.experience
 
 # Public getter for owning players ID
-# @returns {Int} ID of owning player
-func get_owner_id():
-	return self.unit_owner
+# @returns {String} ID of owning player
+func get_owner_id() -> String:
+	return str(self.unit_owner)
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this entity.
@@ -712,6 +722,112 @@ func turn_towards(_grid_pos):
 	self.direction = self._get_direction(angle)
 	self._set_sprite(self.direction)
 
+func _start_move_particles() -> void:
+	if move_particles == null:
+		return
+	var particles = move_particles.get_node_or_null("DustParticles")
+	if particles != null:
+		particles.restart()
+		particles.emitting = true
+
+func _stop_move_particles() -> void:
+	if move_particles == null:
+		return
+	var particles = move_particles.get_node_or_null("DustParticles")
+	if particles != null:
+		particles.emitting = false
+
+func _spawn_weapon_fire_effect(target_entity, weapon) -> void:
+	if sfxMgr == null or weapon == null:
+		return
+	var effect_id = str(weapon.get("effect", ""))
+	if effect_id.is_empty():
+		return
+	var target_position = target_entity.get_global_position()
+	var anchor_id = str(weapon.get("effect_anchor", "center"))
+	var effect_position = get_effect_anchor_global_position(anchor_id, target_position)
+	var effect_rotation = _resolve_effect_rotation(str(weapon.get("effect_rotation_mode", "target")), effect_position, target_position)
+	sfxMgr.create_effect(effect_position, effect_id, "weapons", false, {"rotation": effect_rotation})
+
+func _spawn_weapon_impact_effect(target_entity, weapon) -> void:
+	if sfxMgr == null or weapon == null or target_entity == null:
+		return
+	var effect_id = str(weapon.get("effect_impact", ""))
+	if effect_id.is_empty():
+		return
+	var anchor_id = str(weapon.get("effect_impact_anchor", "center"))
+	var effect_position = target_entity.get_global_position()
+	if target_entity.has_method("get_effect_anchor_global_position"):
+		effect_position = target_entity.get_effect_anchor_global_position(anchor_id, self.get_global_position())
+	var effect_rotation = _resolve_effect_rotation(str(weapon.get("effect_impact_rotation_mode", "none")), effect_position, self.get_global_position())
+	sfxMgr.create_effect(effect_position, effect_id, "weapons", false, {"rotation": effect_rotation})
+
+func get_effect_anchor_global_position(anchor_id: String = "center", look_at_position: Vector2 = Vector2.ZERO) -> Vector2:
+	if anchor_id.is_empty() or anchor_id == "center":
+		return self.get_global_position()
+	return self.get_global_position() + _get_effect_anchor_offset(anchor_id, look_at_position)
+
+func _get_effect_anchor_offset(anchor_id: String, _look_at_position: Vector2 = Vector2.ZERO) -> Vector2:
+	if typeof(effect_anchors) != TYPE_DICTIONARY or not effect_anchors.has(anchor_id):
+		return Vector2.ZERO
+	var anchor_definition = effect_anchors[anchor_id]
+	if _is_directional_anchor_definition(anchor_definition):
+		var directional_offsets = anchor_definition
+		if typeof(anchor_definition) == TYPE_DICTIONARY:
+			directional_offsets = anchor_definition.get("by_direction", [])
+		var dir_index = clampi(self.direction, 0, directional_offsets.size() - 1)
+		return _coerce_vector2(directional_offsets[dir_index])
+	if typeof(anchor_definition) == TYPE_DICTIONARY:
+		if anchor_definition.has("offset"):
+			return _coerce_vector2(anchor_definition["offset"])
+		if anchor_definition.has("default"):
+			return _coerce_vector2(anchor_definition["default"])
+	return _coerce_vector2(anchor_definition)
+
+func _is_directional_anchor_definition(anchor_definition) -> bool:
+	if typeof(anchor_definition) == TYPE_DICTIONARY:
+		var directional_offsets = anchor_definition.get("by_direction", [])
+		return typeof(directional_offsets) == TYPE_ARRAY and directional_offsets.size() >= 6
+	return typeof(anchor_definition) == TYPE_ARRAY and anchor_definition.size() >= 6 and (typeof(anchor_definition[0]) == TYPE_ARRAY or typeof(anchor_definition[0]) == TYPE_VECTOR2 or typeof(anchor_definition[0]) == TYPE_VECTOR2I or typeof(anchor_definition[0]) == TYPE_DICTIONARY)
+
+func _coerce_vector2(value) -> Vector2:
+	if typeof(value) == TYPE_VECTOR2:
+		return value
+	if typeof(value) == TYPE_VECTOR2I:
+		return Vector2(value)
+	if typeof(value) == TYPE_ARRAY and value.size() >= 2:
+		return Vector2(float(value[0]), float(value[1]))
+	if typeof(value) == TYPE_DICTIONARY and value.has("x") and value.has("y"):
+		return Vector2(float(value["x"]), float(value["y"]))
+	return Vector2.ZERO
+
+func _resolve_effect_rotation(mode: String, effect_position: Vector2, reference_position: Vector2) -> float:
+	match mode:
+		"target", "from_source":
+			if effect_position.is_equal_approx(reference_position):
+				return 0.0
+			return effect_position.angle_to_point(reference_position)
+		"unit_direction":
+			return _get_direction_rotation()
+		_:
+			return 0.0
+
+func _get_direction_rotation() -> float:
+	match self.direction:
+		0:
+			return deg_to_rad(150.0)
+		1:
+			return deg_to_rad(-150.0)
+		2:
+			return deg_to_rad(-90.0)
+		3:
+			return deg_to_rad(-30.0)
+		4:
+			return deg_to_rad(30.0)
+		5:
+			return deg_to_rad(90.0)
+	return 0.0
+
 # Attack a entity/entity
 func attack(target_entity, weapon=null):
 	if not can_receive_orders():
@@ -727,6 +843,7 @@ func attack(target_entity, weapon=null):
 			return false
 	set_state(UnitState.ATTACKING)
 	turn_towards(target_entity.get_global_position())
+	_spawn_weapon_fire_effect(target_entity, weapon)
 	# Play sound
 	self._play_sound('attack', weapon)
 	
@@ -860,8 +977,7 @@ func _process_attack_finish():
 	var attacker_effective_attack = state_save['attacker_effective_attack']
 	var _attacking_unit = state_save['attacking_unit']
 
-	if sfxMgr != null:
-		sfxMgr.create_effect(defending_unit.get_global_position(), attacking_unit_weapon.effect_impact, 'weapons', true)
+	_spawn_weapon_impact_effect(defending_unit, attacking_unit_weapon)
 	defending_unit._play_sound('hit', attacking_unit_weapon)
 
 	# If attacker has attack value greater zero...
@@ -1029,6 +1145,7 @@ func animate_path(path_array, moving_entity):
 		animation_path_array.remove_at(0)
 	if animation_path_array.is_empty():
 		return
+	_start_move_particles()
 	_animate_step(animation_path_array[0], 0, animation_path_array.size())
 
 ##### Internal methods
@@ -1226,6 +1343,7 @@ func _on_move_tween_finished():
 		# ...then call global update
 		# Global update is for udpating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)
+		_stop_move_particles()
 	_finalize_action_state()
 
 func _on_MoveTween_tween_completed(_object, _key):

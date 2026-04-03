@@ -1,42 +1,40 @@
 extends Node2D
 
-# This is a simple manager class for special effects nodes of all kinds. It 
-# manages the correction creation, lifetime and destruction and removal of
+# This is a simple manager class for special effects nodes of all kinds. It
+# manages the correct creation, lifetime and destruction and removal of
 # special effects nodes.
 
 @export var themeMgr: Node
+@export var game: Node
 
-func _ready():
-	pass
-
-# Instanciate a special effect node based on the effect ID given.
-# @input {Vector2} global grid position of the effect
-# @input {String} name of the id of the special effect
+# Instantiate a special effect node based on the effect ID given.
+# @input {Vector2} global position of the effect
+# @input {String} name of the id of the effect
 # @input {String} type of effect, e.g. "weapons" or "ambient"
-# @input {Boolean} permanent Determine if the effect is permanent (i.e. the last frame will stay indefinitely) or will disappear (i.e. explosion)
-# @TODO Refactor so that the value is translated to rounds, so giving "2" means the effect will be deleted after 2 rounds have passed.
+# @input {Boolean} permanent Determine if the effect should remain until manually removed
+# @input {Dictionary} options Optional transform/playback hints such as rotation or scale
 # @returns {Object} node that was created
-func create_effect(grid_position, id, type, permanent=false):
+func create_effect(world_position, id, type, permanent=false, options: Dictionary = {}):
+	if id == null:
+		return null
+	var effect_id = str(id)
+	if effect_id.is_empty():
+		return null
 	var sfx = load("res://classes/sfx.tscn")
 	var sfx_instance = sfx.instantiate()
-	var game_node = get_node_or_null("/root/Game")
-	if game_node == null:
-		return null
-	game_node.add_child(sfx_instance)
+	game.add_child(sfx_instance)
+	# Pass down themeManager to instanciated sfx
 	sfx_instance.themeMgr = themeMgr
 	if permanent:
-		sfx_instance.initialize(grid_position, id, type, -1)
+		sfx_instance.initialize(world_position, effect_id, type, -1, options)
 	else:
-		sfx_instance.initialize(grid_position, id, type)
+		sfx_instance.initialize(world_position, effect_id, type, 0, options)
 	return sfx_instance
 
 func adjust_volume(volume):
-	var game_node = get_node_or_null("/root/Game")
-	if game_node == null:
-		return false
-	for child in game_node.get_children():
+	for child in game.get_children():
 		if child.has_node("SoundEmitter"):
 			var emitter = child.get_node("SoundEmitter")
 			if emitter is AudioStreamPlayer:
-				emitter.volume_db = volume * 80 - 80
+				emitter.volume_db = volume * 80 - 80 # @TODO Get rid of magic numbers
 	return true

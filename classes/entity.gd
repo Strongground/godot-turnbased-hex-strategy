@@ -10,7 +10,6 @@ class_name entity
 @export var globals: Node
 @onready var hex_outline = find_child("HexOutline", true, false)
 @onready var hexmap = root.find_child("MapZones", true, false)
-@onready var red_dot = root.find_child("RedDot", true, false) #Debug
 var selected = null
 var type = null
 var path = null

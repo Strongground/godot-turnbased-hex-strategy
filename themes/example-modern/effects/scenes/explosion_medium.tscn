@@ -1,0 +1,124 @@
+[gd_scene format=3 uid="uid://b78vr3ueaew0a"]
+
+[ext_resource type="Script" uid="uid://dfwsurvn6jqyl" path="res://classes/effect_scene.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cfncboscdx1so" path="res://themes/example-modern/effects/sprites/explosion_particle_1.png" id="2_58wgf"]
+[ext_resource type="Texture2D" uid="uid://cjpkkay4ityds" path="res://themes/example-modern/effects/sprites/generic_particle_1.png" id="3_qddel"]
+
+[sub_resource type="Animation" id="Animation_58wgf"]
+resource_name = "default"
+length = 3.0
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_qddel"]
+_data = {
+&"default": SubResource("Animation_58wgf")
+}
+
+[sub_resource type="Curve" id="Curve_50s0q"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.20962201, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_nk7jo"]
+curve = SubResource("Curve_50s0q")
+
+[sub_resource type="Gradient" id="Gradient_58wgf"]
+colors = PackedColorArray(1, 1, 1, 1, 0.97054154, 0.66814154, 0.52467996, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_qddel"]
+gradient = SubResource("Gradient_58wgf")
+
+[sub_resource type="Curve" id="Curve_nk7jo"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_8t2hw"]
+curve = SubResource("Curve_nk7jo")
+
+[sub_resource type="ParticleProcessMaterial" id="3"]
+emission_shape = 1
+emission_sphere_radius = 1.0
+angle_min = -720.0
+angle_max = 1.0728835e-05
+velocity_pivot = Vector3(0.5, 0.5, 0.5)
+direction = Vector3(0, 1, 0)
+spread = 180.0
+initial_velocity_min = 10.0
+initial_velocity_max = 30.0
+radial_velocity_min = -2.1500223
+radial_velocity_max = 115.49998
+gravity = Vector3(0, 0, 0)
+scale_min = 0.049999997
+scale_max = 0.19999999
+scale_curve = SubResource("CurveTexture_8t2hw")
+color_ramp = SubResource("GradientTexture1D_qddel")
+alpha_curve = SubResource("CurveTexture_nk7jo")
+
+[sub_resource type="Curve" id="Curve_8t2hw"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.1305842, 0.5161517), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_08fj1"]
+curve = SubResource("Curve_8t2hw")
+
+[sub_resource type="Gradient" id="Gradient_08fj1"]
+colors = PackedColorArray(1, 1, 1, 1, 0, 0, 0, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_hlb63"]
+gradient = SubResource("Gradient_08fj1")
+
+[sub_resource type="Curve" id="Curve_8cvh6"]
+_data = [Vector2(0, 0.5070225), 0.0, 0.0, 0, 0, Vector2(1, 1), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_0babu"]
+curve = SubResource("Curve_8cvh6")
+
+[sub_resource type="ParticleProcessMaterial" id="4"]
+emission_shape = 1
+emission_sphere_radius = 2.0
+direction = Vector3(0, -16, 0)
+spread = 20.0
+initial_velocity_min = 50.0
+initial_velocity_max = 50.0
+gravity = Vector3(0, -100, 0)
+scale_min = 0.01
+scale_max = 0.25
+scale_curve = SubResource("CurveTexture_0babu")
+color = Color(0.056291588, 0.056291603, 0.056291595, 1)
+color_ramp = SubResource("GradientTexture1D_hlb63")
+alpha_curve = SubResource("CurveTexture_08fj1")
+turbulence_enabled = true
+turbulence_noise_strength = 0.25
+turbulence_noise_scale = 2.185
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_l3nj1"]
+particle_flag_disable_z = true
+gravity = Vector3(0, 98, 0)
+
+[node name="ExplosionMedium" type="Node2D" unique_id=1990608910]
+script = ExtResource("1")
+autoplay_animation = &"default"
+duration_override = 3.0
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=377166946]
+libraries/ = SubResource("AnimationLibrary_qddel")
+
+[node name="FlashParticles" type="GPUParticles2D" parent="." unique_id=100375626]
+emitting = false
+amount = 4
+texture = ExtResource("2_58wgf")
+lifetime = 0.32
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("3")
+
+[node name="SmokeParticles" type="GPUParticles2D" parent="." unique_id=708783142]
+emitting = false
+amount = 32
+texture = ExtResource("3_qddel")
+lifetime = 3.0
+one_shot = true
+process_material = SubResource("4")
+
+[node name="DustPlume" type="GPUParticles2D" parent="." unique_id=2078683618]
+visible = false
+process_material = SubResource("ParticleProcessMaterial_l3nj1")

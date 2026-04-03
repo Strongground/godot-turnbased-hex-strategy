@@ -1,4 +1,4 @@
-[gd_scene format=4 uid="uid://2q0cbqs70qpe"]
+[gd_scene format=4 uid="uid://xa0eghafxh0"]
 
 [ext_resource type="Script" uid="uid://dpr2kqisrg4hu" path="res://classes/game.gd" id="1_shlmr"]
 [ext_resource type="Script" uid="uid://c8b74t5l5mp8y" path="res://scenes/SettingsMgr.gd" id="2_0mmhl"]
@@ -7,7 +7,7 @@
 [ext_resource type="Script" uid="uid://b5w1i0nts6lkb" path="res://scenes/FactionManager.gd" id="5_6ptp3"]
 [ext_resource type="Script" uid="uid://di0axlrmnflr0" path="res://scenes/MusicManager.gd" id="6_1wmah"]
 [ext_resource type="Script" uid="uid://8s2ksxfalie8" path="res://scenes/SfxManager.gd" id="7_xxf0i"]
-[ext_resource type="PackedScene" uid="uid://bqn0a5tvjl262" path="res://scenes/WeatherOverlay.tscn" id="8_8pvrq"]
+[ext_resource type="PackedScene" uid="uid://bqn0a5tvjl262" path="res://scenes/WeatherManager.tscn" id="8_8pvrq"]
 [ext_resource type="Script" uid="uid://cknoac1letoo8" path="res://addons/carmel4a97.RTS_Camera2D/RTS-Camera2D.gd" id="8_77437"]
 [ext_resource type="PackedScene" uid="uid://d13fmt3mmejd7" path="res://scenes/GUI.tscn" id="11_wrybb"]
 [ext_resource type="Texture2D" uid="uid://c4h0c7hja04q4" path="res://assets/images/stripes.png" id="17_wrybb"]
@@ -24,14 +24,15 @@
 [ext_resource type="Texture2D" uid="uid://cj0j6nd0d21hp" path="res://assets/images/arrow.png" id="39_0hx81"]
 [ext_resource type="Texture2D" uid="uid://c7cu6u7wrnu0d" path="res://assets/images/mandel.png" id="40_wa06u"]
 [ext_resource type="Script" uid="uid://dhyj551s877lb" path="res://classes/tilemap_layer.gd" id="41_6f1pm"]
-[ext_resource type="Script" uid="uid://bogwne1n16yck" path="res://classes/range_overlay.gd" id="42_range"]
+[ext_resource type="Script" path="res://classes/range_overlay.gd" id="42_range"]
 
-[node name="Game" type="Node2D" unique_id=2078416644 node_paths=PackedStringArray("hexmap", "marker", "hex_grid", "rect", "hex_highlight", "playerMgr", "factionMgr", "themeMgr", "musicMgr")]
+[node name="Game" type="Node2D" unique_id=2078416644 node_paths=PackedStringArray("hexmap", "marker", "hex_grid", "rect", "weatherMgr", "hex_highlight", "playerMgr", "factionMgr", "themeMgr", "musicMgr")]
 script = ExtResource("1_shlmr")
 hexmap = NodePath("MapZones")
 marker = NodePath("RedDot")
 hex_grid = NodePath("HexGridOverlay")
 rect = NodePath("SizeRect")
+weatherMgr = NodePath("WeatherManager")
 hex_highlight = NodePath("HexOutline")
 grid_visible = true
 debug_logging = false
@@ -47,10 +48,11 @@ musicManager = NodePath("../MusicManager")
 sfxManager = NodePath("../SfxManager")
 musicVolume = 1.0
 
-[node name="ThemeManager" type="Node2D" parent="." unique_id=1347171064]
+[node name="ThemeManager" type="Node2D" parent="." unique_id=1347171064 node_paths=PackedStringArray("weather_mgr")]
 position = Vector2(-443, 653)
 script = ExtResource("3_8na6e")
 debug_logging = false
+weather_mgr = NodePath("../WeatherManager")
 
 [node name="PlayerManager" type="Node2D" parent="." unique_id=2061554447]
 position = Vector2(-447, 529)
@@ -67,16 +69,16 @@ script = ExtResource("6_1wmah")
 game = NodePath("..")
 settingsMgr = NodePath("../SettingsManager")
 
-[node name="SfxManager" type="Node2D" parent="." unique_id=642894840 node_paths=PackedStringArray("themeMgr")]
+[node name="SfxManager" type="Node2D" parent="." unique_id=642894840 node_paths=PackedStringArray("themeMgr", "game")]
 position = Vector2(-443, 309)
 script = ExtResource("7_xxf0i")
 themeMgr = NodePath("../ThemeManager")
+game = NodePath("..")
 
-[node name="WeatherOverlay" parent="." unique_id=1994887789 node_paths=PackedStringArray("game", "ThemeMgr") instance=ExtResource("8_8pvrq")]
+[node name="WeatherManager" parent="." unique_id=1994887789 node_paths=PackedStringArray("game") instance=ExtResource("8_8pvrq")]
 visible = false
 position = Vector2(1223, 1113)
 game = NodePath("..")
-ThemeMgr = NodePath("../ThemeManager")
 
 [node name="MapGraphic" type="Sprite2D" parent="." unique_id=389715334]
 position = Vector2(1672.2795, 1718.37)
@@ -525,5 +527,6 @@ offset_bottom = 25.0
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/EndTurnButton" to="UI/GUI" method="_on_end_turn_button_pressed"]
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfoButton" to="UI/GUI" method="_on_UnitInfoButton_pressed"]
 
+[editable path="WeatherManager"]
 [editable path="UI/GUI"]
 [editable path="UI/GUI/UnitQuickPanel"]

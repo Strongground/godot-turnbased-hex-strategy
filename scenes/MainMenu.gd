@@ -51,11 +51,14 @@ func _load_scenarios(theme_folder: String) -> void:
 	if scenario_select != null:
 		scenario_select.clear()
 	var scenarios_path = "res://themes/" + theme_folder + "/scenarios.json"
-	if not FileAccess.file_exists(scenarios_path):
+	var scenario_scenes_path = "res://themes/" + theme_folder + "/scenarios/"
+	# Check if all scenario paths can be accessed
+	if not FileAccess.file_exists(scenarios_path) or not DirAccess.dir_exists_absolute(scenario_scenes_path):
 		_set_message("Theme has no scenarios.json")
 		_start_enabled(false)
 		return
 	var data = _read_json(scenarios_path)
+	# Check if scenario definition file is well-formed
 	if typeof(data) != TYPE_DICTIONARY:
 		_set_message("Invalid scenarios.json format")
 		_start_enabled(false)
@@ -65,7 +68,9 @@ func _load_scenarios(theme_folder: String) -> void:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var display_name = str(entry.get("display_name", scenario_id))
-		var scene_path = str(entry.get("scene", ""))
+		var scene_name = str(entry.get("scene", ""))
+		var scene_path = str("res://themes/" + theme_folder + "/scenarios/" + scene_name + ".tscn")
+		print(scene_path)
 		_scenarios.append({"id": scenario_id, "display_name": display_name, "scene": scene_path})
 	_scenarios.sort_custom(func(a, b): return str(a["display_name"]) < str(b["display_name"]))
 	for i in range(_scenarios.size()):

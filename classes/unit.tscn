@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://ddbb7so5ingjm" path="res://assets/images/hex_outline_white.png" id="3"]
 [ext_resource type="PackedScene" uid="uid://13ycmaxrlj3x" path="res://classes/unit_attributes_panel.tscn" id="5_qujnu"]
 [ext_resource type="PackedScene" path="res://classes/flag.tscn" id="7"]
+[ext_resource type="PackedScene" uid="uid://cj2axa18nqevv" path="res://effects/core/move_dust_small.tscn" id="8"]
 
 [sub_resource type="CircleShape2D" id="1"]
 
@@ -35,6 +36,8 @@ scale = Vector2(6.31008, 6.31008)
 shape = SubResource("1")
 
 [node name="SoundEmitter" type="AudioStreamPlayer" parent="." unique_id=1331105720]
+
+[node name="MoveParticles" parent="." instance=ExtResource("8")]
 
 [node name="AttackEffectDelay" type="Timer" parent="." unique_id=746489775]
 

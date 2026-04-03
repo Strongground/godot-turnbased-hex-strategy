@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://cj2axa18nqevv"]
+
+[ext_resource type="Script" uid="uid://dfwsurvn6jqyl" path="res://classes/effect_scene.gd" id="1"]
+[ext_resource type="Texture2D" uid="uid://cjpkkay4ityds" path="res://themes/example-modern/effects/sprites/generic_particle_1.png" id="2_up5y0"]
+
+[sub_resource type="Animation" id="Animation_xjh7p"]
+resource_name = "play"
+length = 5.0
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_w1js0"]
+_data = {
+&"play": SubResource("Animation_xjh7p")
+}
+
+[sub_resource type="Curve" id="Curve_b7o00"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.18900345, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 3
+
+[sub_resource type="CurveTexture" id="CurveTexture_ihm2j"]
+curve = SubResource("Curve_b7o00")
+
+[sub_resource type="Gradient" id="Gradient_f7tw5"]
+colors = PackedColorArray(0.95519596, 0.9313085, 0.8939295, 1, 0.8883872, 0.83162993, 0.7423808, 1)
+
+[sub_resource type="GradientTexture1D" id="GradientTexture1D_nkdwb"]
+gradient = SubResource("Gradient_f7tw5")
+
+[sub_resource type="Curve" id="Curve_jcms0"]
+_data = [Vector2(0, 0.0049157143), 0.0, 0.0, 0, 0, Vector2(1, 0.3518259), 0.0, 0.0, 0, 0]
+point_count = 2
+
+[sub_resource type="CurveTexture" id="CurveTexture_l4qjx"]
+curve = SubResource("Curve_jcms0")
+
+[sub_resource type="ParticleProcessMaterial" id="3"]
+emission_shape = 1
+emission_sphere_radius = 0.25
+direction = Vector3(0, -1, 0)
+spread = 55.0
+initial_velocity_min = 35.0
+initial_velocity_max = 75.0
+angular_velocity_min = -275.74002
+angular_velocity_max = 153.18999
+gravity = Vector3(0, 1, 0)
+damping_min = 20.669
+damping_max = 20.669
+scale_min = 0.25
+scale_max = 0.5
+scale_curve = SubResource("CurveTexture_l4qjx")
+color = Color(0.91613084, 0.8722102, 0.8033106, 1)
+color_ramp = SubResource("GradientTexture1D_nkdwb")
+alpha_curve = SubResource("CurveTexture_ihm2j")
+
+[node name="MoveDustSmall" type="Node2D" unique_id=2053319796]
+script = ExtResource("1")
+duration_override = 5.0
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=2057776390]
+libraries/ = SubResource("AnimationLibrary_w1js0")
+
+[node name="DustParticles" type="GPUParticles2D" parent="." unique_id=365035191]
+emitting = false
+amount = 32
+texture = ExtResource("2_up5y0")
+lifetime = 5.0
+one_shot = true
+explosiveness = 0.5
+process_material = SubResource("3")
+
+[connection signal="animation_finished" from="AnimationPlayer" to="." method="_on_animation_finished"]

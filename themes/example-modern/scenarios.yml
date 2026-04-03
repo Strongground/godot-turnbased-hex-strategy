@@ -24,7 +24,7 @@
 scenario_1:
   display_name: 'Skirmish'
   description: 'Default test scenario.'
-  scene: 'res://scenes/map_godot4.tscn'
+  scene: 'scenario_1'
   environment:
     time_of_day: 12
     day_night_cycle: false
