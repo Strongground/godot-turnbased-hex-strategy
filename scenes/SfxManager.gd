@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://classes/game_manager.gd"
 
 # This is a simple manager class for special effects nodes of all kinds. It
 # manages the correct creation, lifetime and destruction and removal of
@@ -6,6 +6,18 @@ extends Node2D
 
 @export var themeMgr: Node
 @export var game: Node
+
+func _ready():
+	# Keep empty - initialization happens via initialize() method
+	pass
+
+func _initialize_internal() -> Variant:
+	# SfxManager depends on ThemeManager
+	if themeMgr != null and is_instance_valid(themeMgr):
+		_debug_log("_initialize_internal(): Awaiting themeMgr initialization")
+		await themeMgr.initialize()
+	_debug_log("_initialize_internal(): SfxManager ready")
+	return true
 
 # Instantiate a special effect node based on the effect ID given.
 # @input {Vector2} global position of the effect

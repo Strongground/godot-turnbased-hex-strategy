@@ -1,0 +1,51 @@
+[gd_scene format=3 uid="uid://cnwtwp1bkqsnf"]
+
+[ext_resource type="Texture2D" uid="uid://c5e3c1pm52hkm" path="res://assets/images/tiles.png" id="1_pfv1v"]
+
+[sub_resource type="Animation" id="Animation_pfv1v"]
+length = 0.001
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0),
+"transitions": PackedFloat32Array(1),
+"update": 0,
+"values": [Color(1, 1, 1, 1)]
+}
+
+[sub_resource type="Animation" id="Animation_b74ly"]
+resource_name = "toggle_fade"
+tracks/0/type = "value"
+tracks/0/imported = false
+tracks/0/enabled = true
+tracks/0/path = NodePath(".:modulate")
+tracks/0/interp = 1
+tracks/0/loop_wrap = true
+tracks/0/keys = {
+"times": PackedFloat32Array(0, 1),
+"transitions": PackedFloat32Array(1, 1),
+"update": 0,
+"values": [Color(1, 1, 1, 1), Color(1, 1, 1, 0)]
+}
+
+[sub_resource type="AnimationLibrary" id="AnimationLibrary_8ba4e"]
+_data = {
+&"RESET": SubResource("Animation_pfv1v"),
+&"toggle_fade": SubResource("Animation_b74ly")
+}
+
+[node name="HexGridOverlay" type="Sprite2D" unique_id=1931460765]
+self_modulate = Color(1, 1, 1, 0.16078432)
+texture_repeat = 2
+rotation = 3.1415925
+scale = Vector2(1.01, 1)
+texture = ExtResource("1_pfv1v")
+region_enabled = true
+region_rect = Rect2(0, 0, 3335.036, 3550)
+
+[node name="AnimationPlayer" type="AnimationPlayer" parent="." unique_id=1078027943]
+libraries/ = SubResource("AnimationLibrary_8ba4e")

@@ -6,6 +6,9 @@
 # display_name: string
 # description: string
 # scene: string | path to scene file
+# experience_gain: boolean | If 'true', units can gain experience from actions (getting attacked, attacking) and
+#                            will 'level up' if certain thresholds are reached (defined in factions.yml). If 'false'
+#                            units will always stay at the exp level they start the scenario with.
 # environment: dict
 # time_of_day: int | 0-24, hour of the day. Influences the visual lighting and maybe modifiers.
 # day_night_cycle: boolean | If 'false', time of day won't change. If 'true', each turn will forward the
@@ -23,7 +26,7 @@
 # min_temp: int | The minimum temperature in degrees Celsius during the night.
 scenario_1:
   display_name: 'Skirmish'
-  description: 'Default test scenario.'
+  description: "[b]Welcome to the Skirmish scenario[/b]\n\nThis is a [i]test scenario[/i] with rich text formatting.\n\nYou can include [color=red]colored text[/color], images (when supported), and formatting.\n\nGood luck!"
   scene: 'scenario_1'
   environment:
     time_of_day: 12
@@ -34,3 +37,4 @@ scenario_1:
       - cloudy: 0.3
     max_temp: 35
     min_temp: 5
+  experience_gain: true

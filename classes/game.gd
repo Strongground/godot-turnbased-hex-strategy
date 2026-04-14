@@ -41,32 +41,27 @@ extends Node2D
 @export var marker: Node2D
 @export var hex_grid: Node2D
 @export var rect: Control
-@export var weatherMgr: Node
 @onready var hex_marker = find_child('HexMarker')
 @onready var hex_fill = find_child('Hex_Fill')
 @onready var range_overlay = find_child('RangeOverlay')
 @onready var arrow_marker = find_child('Arrow')
 @onready var GUI = find_child('GUI')
 @export var hex_highlight: Node2D
-# var tiles = null
+@export var map_graphic: Sprite2D
+var map_size = null
 var tile_list = null
 var hex_offset = null
 var current_tile = null
-# var counter = 0
 var hex_directions = null
 var all_tiles = null
 var astar_grid: AStarGrid2D = null
 var entities = []
-# var click_counter = 0
-# var start_position = null
-# var target_position = null
 var selected_unit = null
 var theme = null
 var factions = null
 var movement_selection = false
 var attack_selection = false
 var resupply_selection = false
-const RANGE_VIS_NODE_NAME = "range_vis"
 # Track whether the active player has attacked this turn.
 var attack_made_this_turn = false
 # Options
@@ -81,12 +76,16 @@ var active_player_rot_index = null
 var player_rotation = []
 var players = {}
 var _last_mouse_pos = Vector2(INF, INF)
-## Game Ressource Managers
+## Game Resource Managers
 @export var playerMgr: Node
 @export var factionMgr: Node
 @export var themeMgr: Node
 @export var musicMgr: Node
+@export var settingsMgr: Node
+@export var sfxMgr: Node
+@export var weatherMgr: Node
 ## debug labels
+const RANGE_VIS_NODE_NAME = "range_vis"
 @onready var label_player = find_child('CurrentPlayer')
 @onready var label_turn = find_child('CurrentTurn')
 
@@ -94,81 +93,24 @@ func _ready():
 	if globals == null:
 		globals = get_node_or_null("/root/globals")
 	_debug_log("_ready(): start")
-	# Set hex grid to not visible
-	hex_grid.modulate.a = 0
-	# Define players, this should later be done either in the scenario
-	# or the pre-scenario settings for multiplayer matches.
-	var registered_players = [
-		{'id': 0, 'name': 'Human Tester', 'factionID': 'usarmy', 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
-		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
-		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
-		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
-	]
-	players = playerMgr.create_players(registered_players)
-	_debug_log("_ready(): players created=" + str(players.size()))
-	# Load theme
-	var theme_name = "example-modern"
-	if globals != null:
-		var selected_theme_folder = globals.get("selected_theme_folder")
-		if typeof(selected_theme_folder) == TYPE_STRING and selected_theme_folder != "":
-			theme_name = selected_theme_folder
-		else:
-			var selected_theme = globals.get("selected_theme")
-			if typeof(selected_theme) == TYPE_STRING and selected_theme != "":
-				theme_name = selected_theme
-	if not FileAccess.file_exists("res://themes/" + theme_name + "/config.json"):
-		theme_name = _find_first_theme_folder()
-	themeMgr.load_theme(theme_name)
-	_debug_log("_ready(): theme loaded='" + str(theme_name) + "'")
-	# Apply tile definitions from theme (if provided)
-	var theme_tiles = themeMgr.get_tiles()
-	if typeof(theme_tiles) == TYPE_ARRAY and not theme_tiles.is_empty():
-		hexmap.set_tile_types(theme_tiles)
-	# Create factions
-	factionMgr.load_factions()
-	_debug_log("_ready(): factions loaded=" + str(factionMgr.factions.size()))
-	# Load list of music titles to play
-	if DisplayServer.get_name() != "headless":
-		musicMgr.play()
-		_debug_log("_ready(): music manager play() called")
-	else:
-		_debug_log("_ready(): headless run, skipping music playback")
-	hex_offset = Vector2(-6,0)
-	# This table serves as easy shortcut for the grid local coordinate change
-	# that needs to be done when a neighbour of a hex tile has to be found.
-	# The mapping is identical for odd and even, so hex_directions[0] always
-	# gives the northern neighbour.
-	all_tiles = hexmap.get_used_cells()
-	hex_directions = [
-		# Even columns
-		[[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]],
-		# Odd columns
-		[[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
-	]
-	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
-	tile_list = self._build_hex_object_database()
-	_debug_log("_ready(): tile_list built, size=" + str(tile_list.size()))
-	self._build_astar_grid()
-	_debug_log("_ready(): astar_grid built")
-	if debug_show_move_costs:
-		_display_move_costs()
-	# Place the units according to their ID and fill attributes.
-	# Create a global list of all entities on the map, their type, positions and nodes
-	entities = self._create_entity_list()
-	_debug_log("_ready(): entities created, size=" + str(entities.size()))
-	self._place_units()
-	_debug_log("_ready(): _place_units() done")
-	self._update_units()
-	_debug_log("_ready(): _update_units() done")
-	# GUI ready functions
-	GUI.disable_movement_button(true)
-	GUI.disable_attack_button(true)
-	GUI.disable_supply_button(true)
-	# Start first turn
-	self._advance_player_rotation()
-	_debug_log("_ready(): done")
-	# for tile in tile_list:
-	# 	self._render_dot(tile['id'])
+
+	# Determine map size and make it public for easier access
+	self.map_size = map_graphic.get_rect().size * map_graphic.get_scale()
+	
+	# Disable physics during initialization to prevent accessing uninitialized data
+	set_process(false)
+	
+	# Initialize managers in dependency order
+	# This prevents race conditions where one manager calls another before it's ready
+	_debug_log("_ready(): initializing managers...")
+	await _initialize_managers()
+	
+	# Now proceed with game setup
+	_setup_game()
+	
+	# Re-enable physics after setup is complete
+	set_process(true)
+	_debug_log("_ready(): initialization complete")
 
 # "Place" units according to the ID of their placeholder entity. This means:
 # Fill all atributes of the entity with the values of the entity with the given
@@ -308,14 +250,36 @@ func _is_valid_destination(click_pos):
 			return false
 	var target_terrain = clicked_hex_object.terrain
 	# print("Clicked terrain: " + str(target_terrain))
-	var unit_can_traverse = _get_entity_by_id(self.selected_unit).node.can_traverse
+	var unit_can_traverse = get_selected_unit().can_traverse
 	# print("Unit can traverse: " + str(unit_can_traverse))
 	if not target_terrain in unit_can_traverse:
 		return false
 	return true
 
-# Get entity by given id
-# Either returns an entity object or 'false'
+# Public getter for currently selected unit
+func get_selected_unit() -> Node:
+	if self.selected_unit == null:
+		return null
+	var _selected_unit = _get_entity_by_id(self.selected_unit)
+	if _selected_unit and _selected_unit.node and is_instance_valid(_selected_unit.node):
+		return _selected_unit.node
+	return null
+
+# Public setter for selected unit
+# @input entity_id:String The ID of the entity that is currently selected, as stored in the game class.
+func set_selected_unit(entity_id) -> void:
+	if entity_id == null:
+		selected_unit = null
+		return
+	var _selected_unit = _get_entity_by_id(entity_id)
+	if _selected_unit and _selected_unit.node and is_instance_valid(_selected_unit.node):
+		selected_unit = _selected_unit
+	else:
+		selected_unit = null	
+
+# Get entity node by given id
+# @input id:String
+# @returns Node|Boolean 
 func _get_entity_by_id(id):
 	for current_entity in entities:
 		if current_entity.id == id:
@@ -448,6 +412,8 @@ func get_hex_distance(start: Vector2i, target: Vector2i) -> int:
 # @input {Vector2} hex_position - global position of tile
 # @returns {Object} The tile object
 func _get_hex_object_from_global_pos(given_position):
+	if tile_list == null or tile_list.is_empty():
+		return null
 	var grid_position = hexmap.global_to_map(given_position)
 	for tile in tile_list:
 		if tile['grid_pos'] == grid_position:
@@ -483,12 +449,13 @@ func _update_mouse_hover():
 	if mouse_pos == _last_mouse_pos:
 		return
 	_last_mouse_pos = mouse_pos
+	if tile_list == null or tile_list.is_empty():
+		return
 	var tile = self._get_hex_object_from_global_pos(mouse_pos)
 	# If tile is null, mouse was outside play area
 	if tile == null:
 		return
 	hex_highlight.set_position(self.get_center_of_hex(hexmap.map_to_global(tile["grid_pos"])))
-	GUI.update_tile_info(tile)
 
 func _handle_primary_click(click_pos):
 	### If clicked on empty spot on map, not on a entity or GUI
@@ -538,44 +505,12 @@ func _handle_primary_click(click_pos):
 							# Deselect all selectable entities
 							self.deselect_all_entities()
 
-			##### On click on two tiles, flood fill the map and get path from first to second click
-#			if click_counter < 1:
-#				print('First click')
-#				# On first click, determine start position
-#				start_position = click_pos
-#				# increment click counter
-#				click_counter += 1
-#				# color clicked (starting) tile red
-#				var vis_start_tile = self._get_hex_object_from_global_pos(start_position)
-#				self._set_hex_fill(hexmap.map_to_global(vis_start_tile.grid_pos), 'red', 'path_vis')
-#			elif click_counter == 1:
-#				print('Second click')
-#				# On second click, determine target position
-#				# reset counter
-#				click_counter += 1
-#				target_position = click_pos
-#				var path = self.find_path(start_position, target_position)
-#				self._show_path(path)
-#			else:
-#				print('Third click')
-#				# On third click reset click counter
-#				click_counter = 0
-#				# and delete path visualisation
-#				self._delete_all_nodes_with('path_vis')
-			#### END
-
-			# Highlight neighbouring hexes of selected hex
-			# self._highlight_neighbours(click_pos)
-		
-			# Show the popup with tile information
-			GUI._show_tile_info_popup(_get_hex_object_from_global_pos(click_pos))
-			GUI._show_tile_info_popup(current_tile)
-
 # Process the current turn
 func _end_turn():
 	deselect_all_entities()
 	_update_all_entities()
 	_advance_player_rotation()
+	weatherMgr.process_turn()
 	turn_counter += 1
 	attack_made_this_turn = false
 
@@ -584,7 +519,6 @@ func _end_turn():
 # occur globally once in a turn.
 func _update_all_entities():
 	for current_entity in self.entities:
-		print('Check entity: ',current_entity)
 		if current_entity.type == 'entity':
 			current_entity.node.reset_movement_points()
 			current_entity.node.update_timed_modifiers()
@@ -620,7 +554,6 @@ func _advance_player_rotation():
 		self.active_player.set_active(false)
 		self.active_player = playerMgr.get_player_by_id(self.player_rotation[self.active_player_rot_index]).node
 		self.active_player.set_active(true)
-		weatherMgr.process_turn()
 		print('Round ended. Current player is now ' + str(self.active_player.get_player_name()))
 		return true
 
@@ -1341,22 +1274,151 @@ func _display_move_costs() -> void:
 # Automatically created methods for signalling
 ##########################################################################
 
-func _on_ToggleGridButton_pressed():
-	var from_opacity = null
-	var to_opacity = null
-	if self.grid_visible:
-		from_opacity = Color(1, 1, 1, 0.3)
-		to_opacity = Color(1, 1, 1, 0)
-		self.grid_visible = false
-	else:
-		from_opacity = Color(1, 1, 1, 0)
-		to_opacity = Color(1, 1, 1, 0.3)
-		self.grid_visible = true
-	hex_grid.modulate = from_opacity
-	var grid_tween = create_tween()
-	grid_tween.set_trans(Tween.TRANS_LINEAR)
-	grid_tween.set_ease(Tween.EASE_IN_OUT)
-	grid_tween.tween_property(hex_grid, "modulate", to_opacity, 2.0)
-
 func _on_EndTurnButton_pressed():
 	_end_turn()
+
+# Initialize all managers in dependency order.
+# This is the core solution to timing/race condition issues.
+# Each manager's initialize() method will await its dependencies before running.
+func _initialize_managers() -> Variant:
+	_debug_log("_initialize_managers(): starting initialization sequence")
+	
+	# Initialize managers in dependency order:
+	# 1. SettingsManager (no dependencies)
+	# 2. ThemeManager (no dependencies, but provides data to others)
+	# 3. PlayerManager (no dependencies)
+	# 4. WeatherManager (no dependencies)
+	# 5. FactionManager (depends on ThemeManager)
+	# 6. SfxManager (depends on ThemeManager)
+	# 7. MusicManager (depends on SettingsManager, ThemeManager)
+	
+	if settingsMgr != null and is_instance_valid(settingsMgr):
+		_debug_log("_initialize_managers(): initializing SettingsManager")
+		await settingsMgr.initialize()
+		_debug_log("_initialize_managers(): SettingsManager ready")
+	
+	if themeMgr != null and is_instance_valid(themeMgr):
+		_debug_log("_initialize_managers(): initializing ThemeManager")
+		await themeMgr.initialize()
+		_debug_log("_initialize_managers(): ThemeManager ready")
+	
+	if playerMgr != null and is_instance_valid(playerMgr):
+		_debug_log("_initialize_managers(): initializing PlayerManager")
+		await playerMgr.initialize()
+		_debug_log("_initialize_managers(): PlayerManager ready")
+	
+	if weatherMgr != null and is_instance_valid(weatherMgr):
+		_debug_log("_initialize_managers(): initializing WeatherManager")
+		await weatherMgr.initialize()
+		_debug_log("_initialize_managers(): WeatherManager ready")
+	
+	if factionMgr != null and is_instance_valid(factionMgr):
+		_debug_log("_initialize_managers(): initializing FactionManager")
+		await factionMgr.initialize()
+		_debug_log("_initialize_managers(): FactionManager ready")
+	
+	if sfxMgr != null and is_instance_valid(sfxMgr):
+		_debug_log("_initialize_managers(): initializing SfxManager")
+		await sfxMgr.initialize()
+		_debug_log("_initialize_managers(): SfxManager ready")
+	
+	if musicMgr != null and is_instance_valid(musicMgr):
+		_debug_log("_initialize_managers(): initializing MusicManager")
+		await musicMgr.initialize()
+		_debug_log("_initialize_managers(): MusicManager ready")
+	
+	# Now that all managers are initialized, load theme data
+	if themeMgr != null and is_instance_valid(themeMgr):
+		themeMgr.load_theme(_determine_theme_name())
+		_debug_log("_initialize_managers(): theme loaded")
+		
+		# Initialize weather from theme data
+		if weatherMgr != null and is_instance_valid(weatherMgr):
+			themeMgr.initialize_weather_from_theme()
+	
+	_debug_log("_initialize_managers(): all managers initialized")
+	return true
+
+# Get Map size
+func get_map_size() -> Vector2:
+	return self.map_size
+
+# Setup the game after managers are initialized
+func _setup_game():
+	_debug_log("_setup_game(): start")
+	
+	# Set hex grid to not visible
+	hex_grid.modulate.a = 0
+	# Define players, this should later be done either in the scenario
+	# or the pre-scenario settings for multiplayer matches.
+	var registered_players = [
+		{'id': 0, 'name': 'Human Tester', 'factionID': 'usarmy', 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
+		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
+		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
+		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
+	]
+	players = playerMgr.create_players(registered_players)
+	_debug_log("_setup_game(): players created=" + str(players.size()))
+	
+	# Apply tile definitions from theme (if provided)
+	var theme_tiles = themeMgr.get_tiles()
+	if typeof(theme_tiles) == TYPE_ARRAY and not theme_tiles.is_empty():
+		hexmap.set_tile_types(theme_tiles)
+	# Create factions
+	factionMgr.load_factions()
+	_debug_log("_setup_game(): factions loaded=" + str(factionMgr.factions.size()))
+	# Load list of music titles to play
+	if DisplayServer.get_name() != "headless":
+		musicMgr.play()
+		_debug_log("_setup_game(): music manager play() called")
+	else:
+		_debug_log("_setup_game(): headless run, skipping music playback")
+	hex_offset = Vector2(-6,0) # @TODO Magic numbers! Why? How?
+	# This table serves as easy shortcut for the grid local coordinate change
+	# that needs to be done when a neighbour of a hex tile has to be found.
+	# The mapping is identical for odd and even, so hex_directions[0] always
+	# gives the northern neighbour.
+	all_tiles = hexmap.get_used_cells()
+	hex_directions = [
+		# Even columns
+		[[0, -1], [1, -1], [1, 0], [0, 1], [-1, 0], [-1, -1]],
+		# Odd columns
+		[[0, -1], [1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0]]
+	]
+	# Build a database of hex tiles and assorted calculations, a lookup table for easier checks.
+	tile_list = self._build_hex_object_database()
+	_debug_log("_setup_game(): tile_list built, size=" + str(tile_list.size()))
+	self._build_astar_grid()
+	_debug_log("_setup_game(): astar_grid built")
+	if debug_show_move_costs:
+		_display_move_costs()
+	# Place the units according to their ID and fill attributes.
+	# Create a global list of all entities on the map, their type, positions and nodes
+	entities = self._create_entity_list()
+	_debug_log("_setup_game(): entities created, size=" + str(entities.size()))
+	self._place_units()
+	_debug_log("_setup_game(): _place_units() done")
+	self._update_units()
+	_debug_log("_setup_game(): _update_units() done")
+	# GUI ready functions
+	GUI.disable_movement_button(true)
+	GUI.disable_attack_button(true)
+	GUI.disable_supply_button(true)
+	# Start first turn
+	self._advance_player_rotation()
+	_debug_log("_setup_game(): done")
+
+# Helper to determine which theme to load
+func _determine_theme_name() -> String:
+	var theme_name = "example-modern"
+	if globals != null:
+		var selected_theme_folder = globals.get("selected_theme_folder")
+		if typeof(selected_theme_folder) == TYPE_STRING and selected_theme_folder != "":
+			theme_name = selected_theme_folder
+		else:
+			var selected_theme = globals.get("selected_theme")
+			if typeof(selected_theme) == TYPE_STRING and selected_theme != "":
+				theme_name = selected_theme
+	if not FileAccess.file_exists("res://themes/" + theme_name + "/config.json"):
+		theme_name = _find_first_theme_folder()
+	return theme_name

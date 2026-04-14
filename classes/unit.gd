@@ -32,6 +32,7 @@ extends "res://classes/entity.gd"
 
 # For debugging sprite loading in detail
 @export var debug_logging = false
+@export var combat_debug = false
 
 #################################################################################
 # 
@@ -41,17 +42,7 @@ extends "res://classes/entity.gd"
 # know of the existence of each and every attribute that exists. They are 
 # exported here, so that a entity may be edited to be special, via the editor.
 #
-# Questions remaining to be answered: 
-# * How to describe what bonuses are active at a given entity instance?
-# Easiest would be IDs in an array, which is bound to a specific purpose, like
-# containing modifiers to defense value for this entity. This allows to give as
-# many modifiers to a entity as desired.
-# Downside of this approach: Either a lot of Arrays will exist, or modifiers
-# can only be added to some base values. Which probably will be the smallest
-# tradeoff.
-
 # More questions and implementation thoughts:
-# * How does experience works?
 # * Can units be used in multiple connected scenarios? What info is tracked for
 # the entity in this case? Killcount? Experience?
 # * We need at least two additional attributes to simulate transportation and 
@@ -185,6 +176,7 @@ extends "res://classes/entity.gd"
 @export var attack_bonus = null
 
 # Experience
+# A float value between 0 and 1.
 # This is mostly a mechanic to gratify players for keeping their units alive for a long time.
 # The gameplay effect is minor, experience level is mapped to one of n ranges. Each range 
 # gives a multiplier. The multiplier negates (according to its value, higher == more) the
@@ -192,7 +184,7 @@ extends "res://classes/entity.gd"
 # the order of single combat actions etc.
 # It tries to portrait the increased routine and its effect in cancelling out the random influence
 # in actions during combat.
-@export var experience = 0
+@export var experience : float = 0
 
 # Unit sprites
 # This array is for the representation of the entity in the game. It is responsible
@@ -220,10 +212,16 @@ extends "res://classes/entity.gd"
 # This array contains the IDs of all modifiers that should be applied to the entity.
 # When the game starts, the corresponding modifier objects are pulled from the theme
 # and their effects applied to the units base stats.
-# Also, a 'has modifier/s' icon is shown at the entity in-game which, on hover, reveals the
-# name and effects of the modifiers. Details can be found in the units detail screen (description
-# and maybe icon of each modifier, mostly)
+# If a modifier is added to a unit, it is first marked as "applied" = false, so we can later
+# (might be just a few cylces later, but "later" in terms of program logic) apply them to the
+# units stats.
+# Since modifiers can be applied from the scenario creator, but also dynamically during the game
+# (e.g. a suppression), we track active modifiers in a different variable, "active_modifiers:Dictionary".
+# A icon is shown at the entity in-game which, on hover, reveals the name and effects of
+# the modifiers. Details can be found in the units detail screen (description, icon, stat changes
+# of each modifier).
 @export var modifiers = []
+var active_modifiers = {}
 
 # Private class members
 var animation_step_active = false
@@ -234,7 +232,6 @@ var entity_representation = null
 var last_movement_angle = null
 var max_movement_points = 0
 var experience_definitions = null
-var active_modifiers = {}
 var state_save = {}
 enum UnitState {
 	IDLE,
@@ -257,6 +254,7 @@ var stationary_turns = 0
 var last_attacked_turn = null
 var attack_streak = 0
 var suppression_turns = 0
+var _is_hovered_flag = false
 const DAMAGE_VARIANCE = 0.2
 const GRAZE_CHANCE = 0.2
 const GRAZE_MULTIPLIER = 0.3
@@ -268,6 +266,7 @@ const DEFAULT_MOVEMENT_EFFECT_SCENE = "res://effects/core/move_dust_small.tscn"
 @export var qp_strength_text: RichTextLabel
 @export var qp_movement_text: RichTextLabel
 @export var qp_ammo_text: RichTextLabel
+@onready var modifiers_container: HBoxContainer = $ModifiersContainer
 
 @onready var sound_emitter = $'SoundEmitter'
 @onready var move_particles = $MoveParticles
@@ -276,6 +275,32 @@ const DEFAULT_MOVEMENT_EFFECT_SCENE = "res://effects/core/move_dust_small.tscn"
 @export var themeMgr: Node
 @export var gui: Node
 @export var sfxMgr: Node
+
+func _ready():
+	## Init ingame
+	type = 'entity'
+	# Set necessary offset for correct position relative to grid
+	offset = Vector2(-6, 0) # @TODO Magic number!
+	set_process_input(true)
+	# Mark entity as selectable
+	self.set_selectable(true)
+	set_state(UnitState.IDLE)
+	_debug_log("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
+	combat_debug = settingsMgr.get_combat_debug()
+
+func _input(_event):
+	pass
+
+func _process(_delta):
+	if unit_quick_panel != null and unit_quick_panel.visible:
+		_update_quick_panel_transform()
+	if _is_hovered():
+		print("Unit '%s' is hovered." % display_name)
+		show_quick_panel()
+		_update_modifier_icons()
+	else:
+		if not is_selected():
+			hide_quick_panel()
 
 # This function simply is a getter for the unit_id string, corresponding to
 # one entry in the theme files.
@@ -299,7 +324,7 @@ func move_unit(start_point, end_point, moving_entity):
 		return false
 	var new_path = game.find_path(start_point, end_point, self)
 	if new_path.is_empty():
-		print("No valid path found from " + str(start_point) + " to " + str(end_point))
+		print_debug("No valid path found from " + str(start_point) + " to " + str(end_point))
 		return false
 	var start_grid = hexmap.global_to_map(start_point)
 	while not new_path.is_empty() and new_path[0]["grid_pos"] == start_grid:
@@ -309,7 +334,7 @@ func move_unit(start_point, end_point, moving_entity):
 	var path_cost = 0
 	for tile in new_path:
 		if path_cost + tile.move_cost > self.movement_points:
-			print("This movement would be too expensive: "+str(path_cost + tile.move_cost))
+			print_debug("This movement would be too expensive: "+str(path_cost + tile.move_cost))
 			return false
 		path_cost += tile.move_cost
 	self.set_move_path(new_path)
@@ -319,18 +344,7 @@ func move_unit(start_point, end_point, moving_entity):
 	set_state(UnitState.MOVING)
 	self.animate_path(new_path, moving_entity)
 	self.deselect()
-	# Update movement points display
-	# gui.update_unit_info("","","","")
 
-func show_quick_panel() -> void:
-	# Figure out entities position + offset so panel is above it
-	unit_quick_panel.show()
-	_update_quick_panel_transform()
-	_update_quick_panel()
-	
-func hide_quick_panel() -> void:
-	unit_quick_panel.hide()
-	
 func _update_quick_panel() -> void:
 	if qp_state_text != null:
 		qp_state_text.text = _get_state_emoji(state)
@@ -338,7 +352,45 @@ func _update_quick_panel() -> void:
 	qp_movement_text.text = str(self.get_movement_points())
 	qp_ammo_text.text = str(self.get_ammo())
 
-# Return emoji indicator for a given unit state.
+func _update_modifier_icons() -> void:
+	if modifiers_container == null:
+		return
+	
+	for child in modifiers_container.get_children():
+		modifiers_container.remove_child(child)
+	
+	for mod_id in active_modifiers:
+		var mod_data = active_modifiers[mod_id]
+		if mod_data == null or not mod_data.has("icon"):
+			continue
+		
+		var icon_path = mod_data["icon"]
+		var resolved_path = _resolve_theme_sprite_path(icon_path + ".png")
+		
+		var texture_rect = TextureRect.new()
+		texture_rect.custom_minimum_size = Vector2(24, 24)
+		texture_rect.stretch_mode = TextureRect.STRETCH_SCALE
+		texture_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		
+		var texture = load(resolved_path) as Texture2D
+		if texture != null:
+			texture_rect.texture = texture
+			modifiers_container.add_child(texture_rect)
+
+func _is_hovered() -> bool:
+	return _is_hovered_flag
+
+func show_quick_panel() -> void:
+	var should_show = is_selected() or modifiers_container.visible or _is_hovered()
+	unit_quick_panel.visible = should_show
+	modifiers_container.visible = should_show and not active_modifiers.is_empty()
+	_update_quick_panel_transform()
+	_update_quick_panel()
+
+func hide_quick_panel() -> void:
+	unit_quick_panel.hide()
+	modifiers_container.hide()
+
 # @input {int} current_state - state enum value from UnitState
 # @returns {String} emoji representing the state
 func _get_state_emoji(current_state: int) -> String:
@@ -370,7 +422,7 @@ func _get_state_emoji(current_state: int) -> String:
 		_:
 			return "❓"
 
-# Set crest icon based on faction of entity
+# Set flag icon based on faction of entity
 func _set_faction_icon():
 	var icon_texture = themeMgr.get_faction_icon(self.unit_faction)
 	$Flag/FlagSin.set_texture(icon_texture)
@@ -448,7 +500,6 @@ func _play_death_animation() -> void:
 # This resets movement points to original value (e.g. when turn ends)
 func reset_movement_points():
 	self.movement_points = self.max_movement_points
-	self._update_movementpoints_indicator()
 	if self.movement_points > 0 and state == UnitState.SPENT:
 		set_state(UnitState.IDLE)
 
@@ -511,9 +562,9 @@ func get_owner_id() -> String:
 # is the owner of this entity.
 # @returns {Boolean}
 func owned_by_active_player():
-	#print("ID of clicked entity:")
-	#print('Active player: '+str(game.active_player.get_id()))
-	#print('Entity owner: '+str(self.unit_owner))
+	print_debug("ID of clicked entity:")
+	print_debug('Active player: '+str(game.active_player.get_id()))
+	print_debug('Entity owner: '+str(self.unit_owner))
 	return game.active_player.get_id() == self.unit_owner
 
 # Returns the stance of the player this entity belongs to towards the current player.
@@ -546,9 +597,10 @@ func resupply(grid_pos):
 		var supplied_entity = is_unit.node
 		# Check if entity is eligible for supplying
 		if supplied_entity.owned_by_active_player() or supplied_entity.get_unit_stance() == 'ally':
-			print('Valid target for resupply. Resupplying now!')
-			# Perform the supply action. It is not defined if supplying action takes action points, 
+			print_debug('Valid target for resupply. Resupplying now!')
+			# Perform the supply action. It is not defined if supplying action takes action points,
 			# but it definitely removes supplies from the supplying unit.
+			# @TODO Add a check to prevent supplying more than the max supply storage of the target entity.
 
 # This function should update the appearance of the entity, calculate stat
 # changes etc. after each round. There is no need to do this in _process
@@ -557,9 +609,6 @@ func update():
 	self._set_sprite(direction)
 	self._set_faction_icon()
 	self._apply_mods()
-	self._update_unitstrength_indicator()
-	self._update_movementpoints_indicator()
-	self._update_unitammo_indicator()
 
 # Public getter for movement points of this entity.
 # @returns {int} Movement points of this entity
@@ -574,22 +623,6 @@ func get_strength_points():
 # Internal, updates movement points based on next tile movement.
 func _update_movement_points(target_tile):
 	self.movement_points -= target_tile.move_cost
-	self._update_movementpoints_indicator()
-
-# Internal, updates the indicator at the entity to show the movement points.
-func _update_movementpoints_indicator():
-	# $Panel/MovementPointsIndicator.set_bbcode(str(self.get_movement_points()))
-	pass
-
-# Internal, updates the visual unit_strength indicator, e.g. after getting attacked.
-func _update_unitstrength_indicator():
-	# $Panel/UnitStrengthIndicator.set_bbcode(str(self.get_strength_points()))
-	pass
-
-# Internal, updates the visual ammo counter at the entity, e.g. after attacking.
-func _update_unitammo_indicator():
-	# $Panel/UnitAmmoIndicator.set_bbcode(str(self.get_ammo()))
-	pass
 
 # Public getter for ammo left in this entity.
 # @outputs {int} Ammo of this entity
@@ -633,7 +666,18 @@ func kill():
 # Public method to damage this entity and update its strength indicators.
 func damage(new_strength):
 	self.unit_strength = new_strength
-	self._update_unitstrength_indicator()
+	self.add_experience(0.05) # @TODO Maybe restrict this to damage sustained in combat only?
+
+# Public method to add experience to this entity. It takes a float value between 0 and 1, which is added to 
+# the current experience value of the entity. If the resulting experience exceeds 1, it is capped at 1.
+# If the threshold for the next experience level is reached, the entity's stats are increased according to the 
+# definitions in the theme.
+# @input {Float} exp_amount - A float value between 0 and 1 representing the amount of experience to add.
+func add_experience(exp_amount):
+	self.experience += exp_amount
+	if self.experience > 1:
+		self.experience = 1
+	# @TODO Add level up mechanics here.
 
 # This method returns a Boolean indicating if it can attack a given entity,
 # or if no target is given, general combat readiness.
@@ -835,11 +879,11 @@ func attack(target_entity, weapon=null):
 	if weapon == null:
 		weapon = _get_weapon_in_range(target_entity.get_global_position(), target_entity)
 		if weapon == null:
-			print("Cannot comply, no weapon in range for this target.")
+			print_combat_debug("Cannot comply, no weapon in range for this target.")
 			return false
 	else:
 		if not _is_weapon_in_range(weapon, target_entity.get_global_position()):
-			print("Cannot comply, target out of range for selected weapon.")
+			print_combat_debug("Cannot comply, target out of range for selected weapon.")
 			return false
 	set_state(UnitState.ATTACKING)
 	turn_towards(target_entity.get_global_position())
@@ -850,46 +894,46 @@ func attack(target_entity, weapon=null):
 	# Set some environmental parameters
 	var defending_unit = target_entity
 	var defender_effective_strength
-	print('Defending entity is ',defending_unit.display_name,' (',defending_unit._get_experience_display_name(),')')
+	print_combat_debug('Defending entity is ',defending_unit.display_name,' (',defending_unit._get_experience_display_name(),')')
 	var attacking_unit = self
 	var attacker_effective_attack
 	var attacking_unit_weapon = weapon
-	print('Attacking entity is ',attacking_unit.display_name,' (',attacking_unit._get_experience_display_name(),')')
+	print_combat_debug('Attacking entity is ',attacking_unit.display_name,' (',attacking_unit._get_experience_display_name(),')')
 	
 	# find out basic attributes
 	var defender_base_defense = defending_unit.base_defense + defending_unit.temp_defense_bonus
 	var defense_factor = maxf(0.1, 1.0 + (defender_base_defense / 10.0))
 	defender_effective_strength = defending_unit.unit_strength * defense_factor
-	print('Defending entity has strength of ',defending_unit.unit_strength,', effective strength of ',defender_effective_strength,' (',defending_unit.unit_strength,'+',defending_unit.unit_strength * (defender_base_defense/10),')')
+	print_combat_debug('Defending entity has strength of ',defending_unit.unit_strength,', effective strength of ',defender_effective_strength,' (',defending_unit.unit_strength,'+',defending_unit.unit_strength * (defender_base_defense/10),')')
 	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10)
-	print('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10),')')
+	print_combat_debug('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10),')')
 		
 	# adding attack_bonus
 	var total_attack_bonus = attacking_unit.attack_bonus + attacking_unit.temp_attack_bonus
 	if total_attack_bonus != 0:
 		attacker_effective_attack += total_attack_bonus
-		print('Attacker has attack modifier of ',total_attack_bonus,' resulting in effective attack value change to: ',attacker_effective_attack)
+		print_combat_debug('Attacker has attack modifier of ',total_attack_bonus,' resulting in effective attack value change to: ',attacker_effective_attack)
 
 	## Armor piercing weapon & armor effects
 	if defending_unit.armor > 0:
-		print('Defender has armor value of ',defending_unit.armor)
+		print_combat_debug('Defender has armor value of ',defending_unit.armor)
 		if attacking_unit_weapon['armor_piercing'] <= 0:
 			attacker_effective_attack = attacker_effective_attack * 0.1
-			print('Thus, the attacker is ineffective, will only deal ',attacker_effective_attack,' damage.')
+			print_combat_debug('Thus, the attacker is ineffective, will only deal ',attacker_effective_attack,' damage.')
 		elif attacking_unit_weapon['armor_piercing'] >= 0:
 			var at_factor = defending_unit.armor / attacking_unit_weapon['armor_piercing']
 			attacker_effective_attack = attacker_effective_attack + at_factor
-			print('But attackers weapons are armor piercing, dealing additional damage of ',at_factor,' totalling ',attacker_effective_attack,' attack value.')
+			print_combat_debug('But attackers weapons are armor piercing, dealing additional damage of ',at_factor,' totalling ',attacker_effective_attack,' attack value.')
 
 	## Area of effect weapon
 	if defending_unit.armor <= 0 and attacking_unit_weapon['explosive'] > 0:
 		attacker_effective_attack = attacker_effective_attack * (attacking_unit_weapon['explosive'] * 0.5)
 		var he_factor = ((attacker_effective_attack * (attacking_unit_weapon['explosive'])) - attacker_effective_attack) / 0.75
 		attacker_effective_attack -= defending_unit.base_defense
-		print('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack,' attack value.')
+		print_combat_debug('Defender is soft target and attacker has HE weapons, attack will deal additional damage of ',he_factor,' totalling ',attacker_effective_attack,' attack value.')
 
 	# #### Finally, battling it out
-	prints('Attacker attempts attack with',attacker_effective_attack,'effective attack, while defender has',defender_effective_strength,'effective strength.')
+	print_combat_debug('Attacker attempts attack with',attacker_effective_attack,'effective attack, while defender has',defender_effective_strength,'effective strength.')
 
 	#### Good or bad luck
 	# value_proximity = attacking_unit['effective_attack'] - defending_unit['effective_strength']
@@ -918,10 +962,10 @@ func attack(target_entity, weapon=null):
 	var rand = randf()
 	var hit = false
 	if rand >= (0.45 - _get_experience_multiplier()):
-		print("Attacker scores a hit.")
+		print_combat_debug("Attacker scores a hit.")
 		hit = true
 	else:
-		print("Attacker misses and the attack ends.")
+		print_combat_debug("Attacker misses and the attack ends.")
 	# Track that the defender was attacked (for suppression).
 	defending_unit.register_attacked()
 
@@ -931,11 +975,10 @@ func attack(target_entity, weapon=null):
 		var graze = 1.0
 		if randf() <= GRAZE_CHANCE:
 			graze = GRAZE_MULTIPLIER
-		var pre_variance_attack = attacker_effective_attack
 		var post_variance_attack = attacker_effective_attack * variance
 		var post_graze_attack = post_variance_attack * graze
-		prints("Damage variance:", "%.2f" % variance, "Graze multiplier:", "%.2f" % graze)
-		prints("Damage after variance:", "%.2f" % post_variance_attack, "Damage after graze:", "%.2f" % post_graze_attack)
+		print_combat_debug("Damage variance:", "%.2f" % variance, "Graze multiplier:", "%.2f" % graze)
+		print_combat_debug("Damage after variance:", "%.2f" % post_variance_attack, "Damage after graze:", "%.2f" % post_graze_attack)
 		attacker_effective_attack = float("%.1f" % post_graze_attack)
 
 	# Update base stats, ragardless of hit or miss
@@ -944,6 +987,15 @@ func attack(target_entity, weapon=null):
 	attacking_unit.movement_points -= 1
 	attacking_unit.update()
 
+	# Handle experience gain
+	if hit:
+		attacking_unit.experience += 0.05
+		print_combat_debug(report_result(attacking_unit, 0.05))
+	else:
+		attacking_unit.experience += 0.03
+		print_combat_debug(report_result(attacking_unit, 0.03))
+
+	# If hit, apply damage and spawn effects, otherwise, just end the attack.
 	if hit:
 		state_save = {
 			'defending_unit': defending_unit,
@@ -968,6 +1020,17 @@ func attack(target_entity, weapon=null):
 		# 		print(random_events['pro_def'][random.randint(0, len(random_events['pro_def'])-1)], '// Attack decreased by',round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2))
 		# 		attacking_unit['effective_attack'] -= round((attacking_unit['effective_attack'] * luck) / attacking_unit['effective_attack'],2)
 
+func print_combat_debug(...args) -> void:
+	if not combat_debug:
+		return
+	var message: String = ""
+	for arg in args:
+		message += str(arg)
+	print(message)
+
+func report_result(attacking_unit, exp_value) -> String:
+	return "Unit " + str(attacking_unit.display_name) + " gains " + str(exp_value) + " experience, total experience is now " + str(attacking_unit.experience) + " (" + attacking_unit._get_experience_display_name() + ")"
+
 # Finish attack, because how Godot works (or rather, how I don't work)
 func _process_attack_finish():
 	var defending_unit = state_save['defending_unit']
@@ -975,26 +1038,29 @@ func _process_attack_finish():
 	var defender_defense_factor = state_save.get('defender_defense_factor', 1.0)
 	var attacking_unit_weapon = state_save['attacking_unit_weapon']
 	var attacker_effective_attack = state_save['attacker_effective_attack']
-	var _attacking_unit = state_save['attacking_unit']
+	var attacking_unit = state_save['attacking_unit']
 
 	_spawn_weapon_impact_effect(defending_unit, attacking_unit_weapon)
 	defending_unit._play_sound('hit', attacking_unit_weapon)
 
 	# If attacker has attack value greater zero...
 	if attacker_effective_attack > 0:
-		prints('Defending entity strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))
+		print_combat_debug('Defending entity strength is calculated by',defender_effective_strength,'-',attacker_effective_attack,'rounded, which is ',"%.1f" % (defender_effective_strength - attacker_effective_attack))
 		# Calculate how much strength is left after attack
 		var new_effective_strength = float("%.1f" % (defender_effective_strength - attacker_effective_attack))
 		var new_defender_strength = float("%.1f" % (new_effective_strength / maxf(defender_defense_factor, 0.1)))
 		# Has attack managed to overcome effective defense boost?
 		if new_effective_strength < defender_effective_strength:
 			if float(new_defender_strength) <= 0:
-				prints('Defending unit is destroyed!')
+				print_combat_debug('Defending unit is destroyed!')
 				defending_unit.kill()
+				# Handle experience gain for the attacking unit for killing the defender
+				attacking_unit.experience += 0.08
+				print_combat_debug(report_result(attacking_unit, 0.08))
 			else:
 				defending_unit.damage(new_defender_strength)
 		else:
-			prints('Attack did not manage to get trough to defenders base strength.')
+			print_combat_debug('Attack did not manage to get trough to defenders base strength.')
 	_finalize_action_state()
 
 # Function to fill the attributes of the entity from the themes data object
@@ -1007,33 +1073,29 @@ func fill_attributes(data_object):
 		if entry in self:
 			set(entry, data_object[entry])
 	_debug_log("fill_attributes(): after fill -> display_name='" + str(display_name) + "', unit_faction='" + str(unit_faction) + "', unit_strength=" + str(unit_strength) + ", base_defense=" + str(base_defense) + ", armor=" + str(armor))
-	self._update_movementpoints_indicator()
 	self.max_movement_points = self.movement_points
 	self._populate_weapons()
 	self._fill_mods()
 	self.experience_definitions = themeMgr.get_faction_experience_definitions(self.unit_faction)
-	self._update_unitammo_indicator()
 	_debug_log("fill_attributes(): done.")
 
-# Fill modifiers from theme
+# Fill modifiers, that were given to the unit before game start, from themeMgr
 func _fill_mods():
 	for index in range(0, self.modifiers.size()):
 		var modifier_id = modifiers[index]
 		self.active_modifiers[modifier_id] = themeMgr.get_modifier(modifier_id)
 		self.active_modifiers[modifier_id]['applied'] = false
+	_update_modifier_icons()
 
 func _add_dynamic_modifier(modifier_id: String) -> void:
-	if themeMgr == null:
-		return
 	var modifier = themeMgr.get_modifier(modifier_id)
 	if modifier == null:
 		return
 	self.active_modifiers[modifier_id] = modifier
 	self.active_modifiers[modifier_id]['applied'] = false
+	_update_modifier_icons()
 
 func _update_stationary_state() -> void:
-	if hexmap == null:
-		return
 	var current_grid = hexmap.global_to_map(self.global_position)
 	if last_grid_pos == null:
 		last_grid_pos = current_grid
@@ -1046,8 +1108,6 @@ func _update_stationary_state() -> void:
 		stationary_turns = 0
 
 func _apply_cover_modifier() -> void:
-	if game == null:
-		return
 	var tile = game._get_hex_object_from_grid_pos(Vector2i(hexmap.global_to_map(self.global_position)))
 	if tile == null or not tile.has("name"):
 		return
@@ -1061,7 +1121,8 @@ func _apply_cover_modifier() -> void:
 		_add_dynamic_modifier(str(rule["modifier"]))
 
 func _get_cover_rule(tile_name: String) -> Dictionary:
-	# Defaults: high cover in forest/village/city, medium in mountains, low in open terrain after 1 turn.
+	# @TODO Since tiles are theme specific, all this should be simplified and the cover/chance value moved
+	# to the theme data, so it can be defined per theme instead of hardcoded here. 
 	if tile_name.find("forest") >= 0:
 		return {"modifier": "cover_heavy", "chance": 0.9, "min_stay": 0}
 	if tile_name.find("village") >= 0 or tile_name.find("city") >= 0:
@@ -1095,6 +1156,7 @@ func register_attacked():
 			suppression_turns = 1
 
 # Apply modifier changes to entity stats, also deletes mods if their max duration is reached.
+# Marks every modifier with "applied" = true so it will not be added to the units stats twice.
 func _apply_mods():
 	var delete_mods = []
 	for mod in self.active_modifiers:
@@ -1109,6 +1171,7 @@ func _apply_mods():
 	if delete_mods.size() > 0:
 		for index in range(0,delete_mods.size()):
 			self.active_modifiers.erase(delete_mods[index])
+	_update_modifier_icons()
 
 # Public function to count down all active mods with duration. This is to be called
 # every time a turn ends.
@@ -1176,22 +1239,22 @@ func _get_direction(angle):
 	var dir = 0
 	if angle > 145 and angle < 155:
 		dir = 0
-		# print("Moving southwest")
+		print_debug("Moving southwest")
 	elif angle > -155 and angle < -145:
 		dir = 1
-		# print("Moving northwest")
+		print_debug("Moving northwest")
 	elif angle > -95 and angle < -85:
 		dir = 2
-		# print("Moving north")
+		print_debug("Moving north")
 	elif angle > -35 and angle < -25:
 		dir = 3
-		# print("Moving northeast")
+		print_debug("Moving northeast")
 	elif angle > 25 and angle < 35:
 		dir = 4
-		# print("Moving southeast")
+		print_debug("Moving southeast")
 	elif angle > 85 and angle < 95:
 		dir = 5
-		# print("Moving south")
+		print_debug("Moving south")
 	return dir
 
 # internal function to play sounds
@@ -1244,7 +1307,7 @@ func _get_weapon_range(weapon) -> int:
 func _is_weapon_in_range(weapon, target_global_pos: Vector2) -> bool:
 	var distance = _get_distance_to_target(target_global_pos)
 	if distance < 0:
-		print("Weapon " + weapon.display_name + " is out of range.")
+		print_combat_debug("Weapon " + weapon.display_name + " is out of range.")
 		return false
 	return distance <= _get_weapon_range(weapon)
 
@@ -1271,48 +1334,33 @@ func _get_weapon_in_range(target_global_pos: Vector2, target_unit = null):
 func _is_in_range(target_global_pos: Vector2) -> bool:
 	return _get_weapon_in_range(target_global_pos) != null
 
+# Internal function to estimate the effective attack value of a weapon against a target unit,
+# taking into account the weapon's attack strength, the unit's strength, attack bonuses, and 
+# the target's defense and armor.
 func _estimate_weapon_effective_attack(weapon, target_unit) -> float:
 	if weapon == null or target_unit == null:
 		return -INF
 	var attack_strength = float(weapon.get("attack_strength", 0))
-	var attack = attack_strength + (attack_strength * (self.unit_strength / 10.0))
-	attack += float(self.attack_bonus) + float(self.temp_attack_bonus)
+	var attack_value = attack_strength + (attack_strength * (self.unit_strength / 10.0))
+	attack_value += float(self.attack_bonus) + float(self.temp_attack_bonus)
 	var target_armor = float(target_unit.armor)
 	if target_armor > 0:
 		var armor_piercing = float(weapon.get("armor_piercing", 0))
 		if armor_piercing <= 0:
-			attack *= 0.1
+			attack_value *= 0.1
 		else:
-			attack += target_armor / armor_piercing
+			attack_value += target_armor / armor_piercing
 	elif float(weapon.get("explosive", 0)) > 0:
-		attack *= float(weapon.get("explosive", 0)) * 0.5
-		attack -= float(target_unit.base_defense)
-	return attack
+		attack_value *= float(weapon.get("explosive", 0)) * 0.5
+		attack_value -= float(target_unit.base_defense)
+	return attack_value
 
 # Internal function to populate weapon list with actual theme objects
-func _populate_weapons():
+func _populate_weapons() -> void:
 	var weapon_ids = self.weapons
 	self.weapons = {}
 	for weapon_id in weapon_ids:
 		self.weapons[weapon_id] = themeMgr.get_weapon(weapon_id)
-
-func _ready():
-	## Init ingame
-	type = 'entity'
-	# Set necessary offset for correct position relative to grid
-	offset = Vector2(-6, 0)
-	set_process_input(true)
-	# Mark entity as selectable
-	self.set_selectable(true)
-	set_state(UnitState.IDLE)
-	_debug_log("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
-
-func _input(_event):
-	pass
-
-func _process(_delta):
-	if unit_quick_panel != null and unit_quick_panel.visible:
-		_update_quick_panel_transform()
 
 func _update_quick_panel_transform() -> void:
 	if unit_quick_panel == null or hexmap == null:
@@ -1339,9 +1387,7 @@ func _on_move_tween_finished():
 	else:
 		# Done animating, update entity locally
 		self.update()
-		# $"/root/Game"._delete_all_nodes_with('path_vis')
-		# ...then call global update
-		# Global update is for udpating global look-up tables with grid positions
+		# Global update is for updating global look-up tables with grid positions
 		root.update_entity_list_entry(entity_representation)
 		_stop_move_particles()
 	_finalize_action_state()
@@ -1353,14 +1399,24 @@ func _on_AttackEffectDelay_timeout():
 	attack_delay_timer.stop()
 	self._process_attack_finish()
 
+func _on_mouse_entered():
+	_is_hovered_flag = true
+	if not is_selected():
+		show_quick_panel()
+
+func _on_mouse_exited():
+	_is_hovered_flag = false
+	if not is_selected():
+		hide_quick_panel()
+
 func _on_selected():
 	set_state(UnitState.SELECTED)
-	self.show_quick_panel()
+	show_quick_panel()
 	
 func _on_deselected():
 	if state == UnitState.SELECTED:
 		set_state(UnitState.IDLE)
-	self.hide_quick_panel()
+	hide_quick_panel()
 
 func set_state(new_state: int) -> void:
 	if state == new_state:

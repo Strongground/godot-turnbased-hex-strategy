@@ -1,9 +1,7 @@
-extends Node2D
+extends "res://classes/game_manager.gd"
 
 @export var game: Node
 @export var cloud_shadows: ColorRect
-
-@onready var map_graphic: Node = game.get_node("MapGraphic")
 
 var current_weather: String
 var current_temperature: int
@@ -23,15 +21,25 @@ var shader_parameters: Dictionary = {
 ### This Manager class manages the weather effects both visually in the game as well as any modifiers that weather effects may have.
 # It gets its information from the themes scenarios.json, where weather is defined.
 
-# Called when the node enters the scene tree for the first time.
-func _ready() -> void:
-	var map_texture: Texture = map_graphic.get_texture()
-	var map_scale: Vector2 = map_graphic.get_scale()
-	$ColorRect.set_size(Vector2(map_texture.get_width()*map_scale.x, map_texture.get_height()*map_scale.y))
-	self.set_visible(true)
-	self.set_position(Vector2(0,0))
-	print("Weather Manager initialized")
+func _ready():
+	# Keep empty - initialization happens via initialize() method
+	pass
 
+func _initialize_internal() -> Variant:
+	# WeatherManager has no dependencies on other managers
+	# But it can optionally wait for ThemeManager to be ready if game references it
+	if game != null and is_instance_valid(game):
+		if game.themeMgr != null and is_instance_valid(game.themeMgr):
+			_debug_log("_initialize_internal(): Awaiting themeMgr initialization for weather data")
+			await game.themeMgr.initialize()
+	_debug_log("_initialize_internal(): WeatherManager ready")
+	cloud_shadows.set_custom_minimum_size(game.get_map_size())
+	return true
+
+# This method is called every turn by the GameManager. It updates the weather effects 
+# and temperature based on the current weather and time of day. If random weather is enabled, 
+# it will also change the weather randomly each turn. If the day-night cycle is active, it will 
+# also change the time of day each turn.
 func process_turn():
 	if is_random_weather:
 		change_weather()
@@ -56,9 +64,9 @@ func init_weather_system(weather_information):
 # This method updates the shader parameters for the cloud shadows based on the current weather. It is called every turn to 
 # ensure that the visual effects are consistent with the current weather conditions.
 func update_weather_effects():
-	$ColorRect.get_material().set_shader_parameter("cloud_threshold", shader_parameters[current_weather]["cloud_threshold"])
-	$ColorRect.get_material().set_shader_parameter("cloud_softness", shader_parameters[current_weather]["cloud_softness"])
-	$ColorRect.get_material().set_shader_parameter("shadow_darkness", shader_parameters[current_weather]["shadow_darkness"])
+	cloud_shadows.get_material().set_shader_parameter("cloud_threshold", shader_parameters[current_weather]["cloud_threshold"])
+	cloud_shadows.get_material().set_shader_parameter("cloud_softness", shader_parameters[current_weather]["cloud_softness"])
+	cloud_shadows.get_material().set_shader_parameter("shadow_darkness", shader_parameters[current_weather]["shadow_darkness"])
 
 # Public setter to change the weather. It can be called by other classes to change the weather conditions, 
 # or it can be called internally if random weather is enabled.
@@ -74,7 +82,7 @@ func change_weather(new_weather: String = ""):
 				if random_value < cumulative_probability:
 					current_weather = weather_type
 					break
-				
+		
 # Public setter to change the time of day. It can be called by other classes to change the time of day,
 # or it can be called internally if the day-night cycle is active.
 func change_time_of_day(new_time: int = -1):

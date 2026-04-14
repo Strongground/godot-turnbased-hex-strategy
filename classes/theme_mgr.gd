@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://classes/game_manager.gd"
 
 # This is the manager for game themes. A theme is described as a folder containing
 # json files for some parts of the game, that are interchangeable, like factions, 
@@ -6,7 +6,7 @@ extends Node2D
 # it may contain custom GUI and missions and campaigns as well.
 
 # Essentially this manager provides some generic getters that provide the data from
-# the structured json files in an easy way for the game logic.
+# the structured json files in the themes in an easy way for the game logic.
 
 # member vars here
 var standard_themes_path = 'res://themes'
@@ -15,11 +15,10 @@ var standard_unit_sprites_path = 'units'
 var standard_sounds_path = 'sounds'
 var standard_sprite_format = 'png'
 var fallback_unit_sprite_path = 'res://assets/images/humvee_placeholder_d.png'
-@export var debug_logging = true
 @export var weather_mgr: Node
 var theme_object = {}
 var theme_path = ''
-@onready var default_sounds = {} 
+var default_sounds = {}
 
 # Main function to get a theme from the standard themes folder. It reads the config.json
 # which contains the references to all contained data files which in turn contain the 
@@ -62,8 +61,9 @@ func load_theme(theme_name):
 		'tank': load(theme_path+'/'+standard_sounds_path+'/default_tank_drive.wav'),
 		'infantry': load(theme_path+'/'+standard_sounds_path+'/default_marching.wav')
 	}
+	# Note: weather_mgr.init_weather_system is now called by WeatherManager's initialize()
+	# or by game.gd after both managers are initialized
 	# _debug_log("load_theme(): active theme='" + get_current_theme_name() + "', units=" + str(theme_object.get("units", {}).size()))
-	weather_mgr.init_weather_system(theme_object.get("scenarios")["scenario_1"]["environment"]) # @TODO Maybe put this and other initis in dedicated method later and call dedicated getters?
 	return theme_object
 
 # Public getter for theme name string
@@ -120,14 +120,8 @@ func get_tiles():
 func get_scenarios():
 	if _is_theme_loaded():
 		return theme_object.get("scenarios", {})
-
-# Private getter for scenario data. This contains information about weather, mission goals, 
-# factions, scenario specific modifiers, etc.
-func _get_current_scenario():
-	if _is_theme_loaded():
-		# @TODO Dynamically get the correct scneario information for the current scenario.
-		# Currently the loaded scenario does not know which one in the scenario list it is - add some kind of link.
-		return theme_object.get("scenarios")["scenario_1"]
+	else:
+		return {'No scenarios loaded - race condition?': {}}
 
 # Public getter for specific hexUnit object
 # @input {String} id of the hexUnit to get
@@ -137,12 +131,6 @@ func get_unit(unit_id):
 		var units = theme_object['units']
 		if unit_id in units:
 			return units[str(unit_id)]
-
-# Public getter for specific weather information for this scenario.
-func get_weather():
-	if _is_theme_loaded():
-		# @TODO Replace this call by the more specific "_get_current_scenario()" 
-		return theme_object.get("scenarios")["scenario_1"]["environment"]
 
 # Public getter for table of experience levels 
 # for this faction, with according display names, 
@@ -366,3 +354,13 @@ func _is_theme_loaded():
 func _debug_log(message):
 	if debug_logging:
 		print("[Debug][ThemeMgr] " + message)
+
+# Initialize weather system from theme data
+# Called by WeatherManager during its initialization or by game.gd
+func initialize_weather_from_theme():
+	if weather_mgr != null and is_instance_valid(weather_mgr):
+		if _is_theme_loaded() and theme_object.has("scenarios"):
+			var scenario_data = theme_object["scenarios"].get("scenario_1", {})
+			if typeof(scenario_data) == TYPE_DICTIONARY:
+				weather_mgr.init_weather_system(scenario_data.get("environment", {}))
+				_debug_log("initialize_weather_from_theme(): Weather system initialized from theme")

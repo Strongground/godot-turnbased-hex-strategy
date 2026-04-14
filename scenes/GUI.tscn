@@ -15,13 +15,10 @@
 [ext_resource type="Texture2D" uid="uid://3cx653y600t7" path="res://assets/buttons/end_turn.png" id="12_llryh"]
 [ext_resource type="Texture2D" uid="uid://eqchbnuoa4ao" path="res://assets/buttons/end_turn_clicked.png" id="13_v4rwy"]
 [ext_resource type="Theme" uid="uid://duxnjsw464w05" path="res://default_gui_theme.tres" id="14_b3g3y"]
-[ext_resource type="Texture2D" uid="uid://bejs7y6nxj8jt" path="res://assets/icons/heart_icon.png" id="15_6hhfy"]
-[ext_resource type="Texture2D" uid="uid://catss378pujh1" path="res://assets/icons/walk_icon.png" id="16_pd6gp"]
-[ext_resource type="Texture2D" uid="uid://dy7s40jb3b025" path="res://assets/icons/ammo_icon.png" id="17_ux20m"]
 
 [sub_resource type="Shortcut" id="8"]
 
-[node name="Control" type="Control" unique_id=1437505244 node_paths=PackedStringArray("move_button", "attack_button", "supply_button")]
+[node name="Control" type="Control" unique_id=1437505244 node_paths=PackedStringArray("move_button", "attack_button", "supply_button", "panel")]
 layout_mode = 3
 anchors_preset = 12
 anchor_top = 1.0
@@ -35,6 +32,7 @@ script = ExtResource("1_m8p4d")
 move_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/MoveButton")
 attack_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/AttackButton")
 supply_button = NodePath("Panel/MarginContainer/VBoxContainer/HBoxContainer/SupplyButton")
+panel = NodePath("Panel")
 
 [node name="Panel" type="Panel" parent="." unique_id=1636567235]
 custom_minimum_size = Vector2(0, 100)
@@ -143,77 +141,3 @@ scroll_active = false
 [node name="UnitInfoButton" type="Button" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=2101174238]
 layout_mode = 2
 text = "Show Selection Info"
-
-[node name="UnitInfo" type="VBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer" unique_id=589048598]
-visible = false
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="UnitName" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=1108393660]
-layout_mode = 2
-size_flags_horizontal = 2
-size_flags_vertical = 2
-scroll_active = false
-
-[node name="HoveringTileInfo" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=252492291]
-layout_mode = 2
-size_flags_horizontal = 2
-size_flags_vertical = 2
-scroll_active = false
-
-[node name="HBoxContainer" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=941516576]
-layout_mode = 2
-
-[node name="TextureRect" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer" unique_id=111720257]
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("15_6hhfy")
-expand_mode = 1
-
-[node name="UnitStrength" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer" unique_id=335767844]
-clip_contents = false
-layout_mode = 2
-size_flags_horizontal = 3
-text = "100"
-fit_content = true
-scroll_active = false
-vertical_alignment = 3
-
-[node name="HBoxContainer2" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=1467947618]
-layout_mode = 2
-
-[node name="TextureRect2" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2" unique_id=1791011627]
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("16_pd6gp")
-expand_mode = 1
-
-[node name="UnitActionPoints" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2" unique_id=1904854256]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "26
-"
-fit_content = true
-scroll_active = false
-
-[node name="HBoxContainer3" type="HBoxContainer" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo" unique_id=913194119]
-layout_mode = 2
-
-[node name="TextureRect3" type="TextureRect" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3" unique_id=105559816]
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("17_ux20m")
-expand_mode = 1
-
-[node name="UnitAmmo" type="RichTextLabel" parent="Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3" unique_id=1052985017]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "45"
-fit_content = true
-scroll_active = false

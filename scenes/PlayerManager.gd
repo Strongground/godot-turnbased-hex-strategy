@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://classes/game_manager.gd"
 
 # This is the player manager. It creates players as well as keeps track of
 # their index and stance to each other. This will become much more important
@@ -8,7 +8,13 @@ extends Node2D
 var players = {}
 
 func _ready():
+	# Keep empty - initialization happens via initialize() method
 	pass
+
+func _initialize_internal() -> Variant:
+	# PlayerManager has no dependencies on other managers
+	_debug_log("_initialize_internal(): PlayerManager ready")
+	return true
 
 # Instanciate the associated nodes for each registered player.
 # @input {Array} of dictionary objects of options to create new players.

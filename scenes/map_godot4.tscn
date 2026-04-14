@@ -1,4 +1,4 @@
-[gd_scene format=4 uid="uid://xa0eghafxh0"]
+[gd_scene format=4 uid="uid://b6rld8n4udalc"]
 
 [ext_resource type="Script" uid="uid://dpr2kqisrg4hu" path="res://classes/game.gd" id="1_shlmr"]
 [ext_resource type="Script" uid="uid://c8b74t5l5mp8y" path="res://scenes/SettingsMgr.gd" id="2_0mmhl"]
@@ -7,18 +7,14 @@
 [ext_resource type="Script" uid="uid://b5w1i0nts6lkb" path="res://scenes/FactionManager.gd" id="5_6ptp3"]
 [ext_resource type="Script" uid="uid://di0axlrmnflr0" path="res://scenes/MusicManager.gd" id="6_1wmah"]
 [ext_resource type="Script" uid="uid://8s2ksxfalie8" path="res://scenes/SfxManager.gd" id="7_xxf0i"]
-[ext_resource type="PackedScene" uid="uid://bqn0a5tvjl262" path="res://scenes/WeatherManager.tscn" id="8_8pvrq"]
+[ext_resource type="PackedScene" uid="uid://bfbb03yvxfy14" path="res://scenes/WeatherOverlay.tscn" id="8_8pvrq"]
 [ext_resource type="Script" uid="uid://cknoac1letoo8" path="res://addons/carmel4a97.RTS_Camera2D/RTS-Camera2D.gd" id="8_77437"]
-[ext_resource type="Script" uid="uid://dwvoyy5o221pq" path="res://scenes/UnitInfoPopup.gd" id="9_unitinfopopup"]
 [ext_resource type="PackedScene" uid="uid://d13fmt3mmejd7" path="res://scenes/GUI.tscn" id="11_wrybb"]
-[ext_resource type="PackedScene" uid="uid://cnwtwp1bkqsnf" path="res://scenes/HexgridOverlay.tscn" id="12_b6k2v"]
 [ext_resource type="Texture2D" uid="uid://c4h0c7hja04q4" path="res://assets/images/stripes.png" id="17_wrybb"]
-[ext_resource type="Texture2D" uid="uid://bejs7y6nxj8jt" path="res://assets/icons/heart_icon.png" id="25_rkr1l"]
-[ext_resource type="Texture2D" uid="uid://catss378pujh1" path="res://assets/icons/walk_icon.png" id="26_u6t61"]
 [ext_resource type="PackedScene" uid="uid://13ycmaxrlj3x" path="res://classes/unit_attributes_panel.tscn" id="26_ubpat"]
-[ext_resource type="Texture2D" uid="uid://dy7s40jb3b025" path="res://assets/icons/ammo_icon.png" id="27_b6k2v"]
 [ext_resource type="Texture2D" uid="uid://t4wiejg53xto" path="res://themes/example-modern/maps/north_bagdad.jpeg" id="27_twv4c"]
 [ext_resource type="TileSet" uid="uid://bcfignvk2xqkx" path="res://assets/tilesets/standard.res" id="28_487p6"]
+[ext_resource type="Texture2D" uid="uid://c5e3c1pm52hkm" path="res://assets/images/tiles.png" id="30_m7no4"]
 [ext_resource type="Texture2D" uid="uid://bum0ta18rmr7g" path="res://assets/images/dot.png" id="31_u2sxe"]
 [ext_resource type="Texture2D" uid="uid://yj05gllfeafh" path="res://assets/images/hex_outline_red.png" id="32_ke8sd"]
 [ext_resource type="Texture2D" uid="uid://qfm5ivedtdym" path="res://assets/images/hex_thin_outline.png" id="33_j4vbo"]
@@ -26,29 +22,23 @@
 [ext_resource type="PackedScene" path="res://classes/editor_marker.tscn" id="35_q88fy"]
 [ext_resource type="PackedScene" uid="uid://qhanmbr84ihp" path="res://classes/unit.tscn" id="37_aerme"]
 [ext_resource type="Texture2D" uid="uid://cj0j6nd0d21hp" path="res://assets/images/arrow.png" id="39_0hx81"]
+[ext_resource type="Texture2D" uid="uid://c7cu6u7wrnu0d" path="res://assets/images/mandel.png" id="40_wa06u"]
 [ext_resource type="Script" uid="uid://dhyj551s877lb" path="res://classes/tilemap_layer.gd" id="41_6f1pm"]
 [ext_resource type="Script" uid="uid://bogwne1n16yck" path="res://classes/range_overlay.gd" id="42_range"]
-[ext_resource type="PackedScene" uid="uid://4rewmbuqj0ox" path="res://scenes/ScenarioDescriptionPopup.tscn" id="44_popup_scene"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_u6t61"]
-bg_color = Color(0, 0, 0, 0.25)
-
-[node name="Game" type="Node2D" unique_id=2078416644 node_paths=PackedStringArray("hexmap", "marker", "hex_grid", "hex_highlight", "map_graphic", "playerMgr", "factionMgr", "themeMgr", "musicMgr", "settingsMgr", "sfxMgr", "weatherMgr")]
+[node name="Game" type="Node2D" unique_id=2078416644 node_paths=PackedStringArray("hexmap", "marker", "hex_grid", "rect", "hex_highlight", "playerMgr", "factionMgr", "themeMgr", "musicMgr")]
 script = ExtResource("1_shlmr")
 hexmap = NodePath("MapZones")
 marker = NodePath("RedDot")
 hex_grid = NodePath("HexGridOverlay")
+rect = NodePath("SizeRect")
 hex_highlight = NodePath("HexOutline")
-map_graphic = NodePath("MapGraphic")
 grid_visible = true
 debug_logging = false
 playerMgr = NodePath("PlayerManager")
 factionMgr = NodePath("FactionManager")
 themeMgr = NodePath("ThemeManager")
 musicMgr = NodePath("MusicManager")
-settingsMgr = NodePath("SettingsManager")
-sfxMgr = NodePath("SfxManager")
-weatherMgr = NodePath("WeatherManager")
 
 [node name="SettingsManager" type="Node2D" parent="." unique_id=1478852362 node_paths=PackedStringArray("musicManager", "sfxManager")]
 position = Vector2(-447, 761)
@@ -56,13 +46,10 @@ script = ExtResource("2_0mmhl")
 musicManager = NodePath("../MusicManager")
 sfxManager = NodePath("../SfxManager")
 musicVolume = 1.0
-combat_debug = true
-mute_music_on_start = true
 
-[node name="ThemeManager" type="Node2D" parent="." unique_id=1347171064 node_paths=PackedStringArray("weather_mgr")]
-position = Vector2(-442, 653)
+[node name="ThemeManager" type="Node2D" parent="." unique_id=1347171064]
+position = Vector2(-443, 653)
 script = ExtResource("3_8na6e")
-weather_mgr = NodePath("../WeatherManager")
 debug_logging = false
 
 [node name="PlayerManager" type="Node2D" parent="." unique_id=2061554447]
@@ -74,27 +61,27 @@ position = Vector2(-427, 409)
 script = ExtResource("5_6ptp3")
 game = NodePath("..")
 
-[node name="MusicManager" type="Node2D" parent="." unique_id=1984944471 node_paths=PackedStringArray("game", "settingsMgr", "streamPlayer")]
+[node name="MusicManager" type="Node2D" parent="." unique_id=1984944471 node_paths=PackedStringArray("game", "settingsMgr")]
 position = Vector2(-435, 201)
 script = ExtResource("6_1wmah")
 game = NodePath("..")
 settingsMgr = NodePath("../SettingsManager")
-streamPlayer = NodePath("../BackgroundMusicPlayer")
 
-[node name="SfxManager" type="Node2D" parent="." unique_id=642894840 node_paths=PackedStringArray("themeMgr", "game")]
+[node name="SfxManager" type="Node2D" parent="." unique_id=642894840 node_paths=PackedStringArray("themeMgr")]
 position = Vector2(-443, 309)
 script = ExtResource("7_xxf0i")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
 
-[node name="WeatherManager" parent="." unique_id=1994887789 node_paths=PackedStringArray("game", "cloud_shadows") instance=ExtResource("8_8pvrq")]
+[node name="WeatherManager" parent="." unique_id=1994887789 node_paths=PackedStringArray("game", "ThemeMgr") instance=ExtResource("8_8pvrq")]
+visible = false
+position = Vector2(1223, 1113)
 game = NodePath("..")
-cloud_shadows = NodePath("ColorRect")
+ThemeMgr = NodePath("../ThemeManager")
 
 [node name="MapGraphic" type="Sprite2D" parent="." unique_id=389715334]
+position = Vector2(1672.2795, 1718.37)
 scale = Vector2(1.8, 1.8)
 texture = ExtResource("27_twv4c")
-centered = false
 metadata/_edit_lock_ = true
 
 [node name="MapZones" type="TileMapLayer" parent="." unique_id=304381984]
@@ -106,8 +93,15 @@ tile_set = ExtResource("28_487p6")
 script = ExtResource("41_6f1pm")
 metadata/_edit_lock_ = true
 
-[node name="HexGridOverlay" parent="." unique_id=1931460765 instance=ExtResource("12_b6k2v")]
+[node name="HexGridOverlay" type="Sprite2D" parent="." unique_id=1078757932]
+self_modulate = Color(1, 1, 1, 0.16078432)
+texture_repeat = 2
 position = Vector2(1686, 1722)
+rotation = 3.1415925
+scale = Vector2(1.01, 1)
+texture = ExtResource("30_m7no4")
+region_enabled = true
+region_rect = Rect2(0, 0, 3335.036, 3550)
 
 [node name="RedDot" type="Sprite2D" parent="." unique_id=1421507310]
 position = Vector2(-1182.4619, 784.1689)
@@ -305,6 +299,7 @@ position = Vector2(960, 1192)
 unit_faction = "usarmy"
 unit_id = "hmmwv_tow"
 can_traverse = ["LAND", "RIVER"]
+modifiers = ["tusk2"]
 settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
@@ -317,6 +312,7 @@ unit_faction = "usarmy"
 graphical_scheme = 1
 unit_id = "hmmwv_tow"
 can_traverse = ["LAND", "RIVER"]
+modifiers = ["tusk2"]
 settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
@@ -428,10 +424,10 @@ layout_mode = 3
 anchors_preset = 0
 offset_left = -1220.0
 offset_top = 386.0
-offset_right = -1220.0
-offset_bottom = 386.0
-size_flags_horizontal = 3
-size_flags_vertical = 3
+offset_right = -1180.0
+offset_bottom = 426.0
+size_flags_horizontal = 6
+size_flags_vertical = 6
 
 [node name="HexLabelTemplate" type="RichTextLabel" parent="Control" unique_id=1013205037]
 clip_contents = false
@@ -440,11 +436,11 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_bottom = 6.0
 grow_horizontal = 2
 grow_vertical = 2
 size_flags_horizontal = 3
 size_flags_vertical = 2
-theme_override_styles/normal = SubResource("StyleBoxFlat_u6t61")
 bbcode_enabled = true
 text = "LabelText"
 fit_content = true
@@ -453,6 +449,13 @@ scroll_active = false
 [node name="Arrow" type="Sprite2D" parent="." unique_id=461385043]
 position = Vector2(-1317, 880.77826)
 texture = ExtResource("39_0hx81")
+
+[node name="SizeRect" type="TextureRect" parent="." unique_id=1918210529]
+visible = false
+size_flags_horizontal = 2
+size_flags_vertical = 2
+texture = ExtResource("40_wa06u")
+stretch_mode = 2
 
 [node name="BackgroundMusicPlayer" type="AudioStreamPlayer" parent="." unique_id=1243549331]
 
@@ -472,218 +475,47 @@ public_camera_zoom_speed = 0.008
 
 [node name="UI" type="CanvasLayer" parent="." unique_id=749754727]
 
-[node name="GUI" parent="UI" unique_id=1220723568 node_paths=PackedStringArray("hexmap", "game", "unit_info_popup", "theme_mgr", "shown_unit_name", "unit_info_strength", "unit_info_actionpoints", "unit_info_ammo", "hexgrid_overlay") instance=ExtResource("11_wrybb")]
+[node name="GUI" parent="UI" unique_id=1220723568 node_paths=PackedStringArray("hexmap", "game", "tile_info") instance=ExtResource("11_wrybb")]
 anchors_preset = 15
 anchor_top = 0.0
 grow_vertical = 2
 hexmap = NodePath("../../MapZones")
 game = NodePath("../..")
-unit_info_popup = NodePath("UnitInfoPopup")
-theme_mgr = NodePath("../../ThemeManager")
-shown_unit_name = NodePath("UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitName")
-unit_info_strength = NodePath("UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/StrengthContainer/ValueStrength")
-unit_info_actionpoints = NodePath("UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/ActionPointsContainer/ValueActionPoints")
-unit_info_ammo = NodePath("UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/AmmoContainer/ValueAmmo")
-hexgrid_overlay = NodePath("../../HexGridOverlay")
+tile_info = NodePath("Tile_Info/Tile_Text")
 
-[node name="MoveButton" parent="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(1220723568, 573672681) index="0" unique_id=2076888496]
-tooltip_text = "Issue a move order"
+[node name="UnitInfo" type="Control" parent="UI/GUI" unique_id=254742131]
+anchors_preset = 0
+size_flags_horizontal = 2
+size_flags_vertical = 2
 
-[node name="AttackButton" parent="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(1220723568, 573672681) index="1" unique_id=1686728762]
-tooltip_text = "Order the unit to attack"
+[node name="UnitInfoText" type="RichTextLabel" parent="UI/GUI/UnitInfo" unique_id=1498033730]
+layout_mode = 0
+size_flags_horizontal = 2
+size_flags_vertical = 2
 
-[node name="SupplyButton" parent="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(1220723568, 573672681) index="2" unique_id=398804219]
-tooltip_text = "Order the unit to supply a target"
+[node name="Tile_Info" type="Control" parent="UI/GUI" unique_id=80650909]
+anchors_preset = 0
+size_flags_horizontal = 2
+size_flags_vertical = 2
 
-[node name="EndTurnButton" parent="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(1220723568, 573672681) index="4" unique_id=367045423]
-tooltip_text = "End your turn"
-
-[node name="Debug-Label" parent="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer" parent_id_path=PackedInt32Array(1220723568, 573672681) index="5" unique_id=1434321023]
-text = "Current player: 
-Turn No#: "
+[node name="Tile_Text" type="RichTextLabel" parent="UI/GUI/Tile_Info" unique_id=974466722]
+layout_mode = 0
+size_flags_horizontal = 2
+size_flags_vertical = 2
 
 [node name="UnitQuickPanel" parent="UI/GUI" unique_id=2089442962 instance=ExtResource("26_ubpat")]
 visible = false
 custom_minimum_size = Vector2(200, 50)
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_right = 0.0
-offset_bottom = 0.0
-
-[node name="UnitInfoPopup" type="Control" parent="UI/GUI" unique_id=825430095 node_paths=PackedStringArray("theme_mgr", "unit_name", "unit_strength", "unit_actionpoints", "unit_ammo", "unit_modifiers")]
-visible = false
-custom_minimum_size = Vector2(200, 400)
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
 anchor_top = 0.5
 anchor_right = 0.5
 anchor_bottom = 0.5
-offset_left = -235.0
-offset_top = -200.0
-offset_right = 219.0
-offset_bottom = 200.0
-grow_horizontal = 2
-grow_vertical = 2
-script = ExtResource("9_unitinfopopup")
-theme_mgr = NodePath("../../../ThemeManager")
-unit_name = NodePath("Panel/MarginContainer/UnitInfoHorContainer/UnitName")
-unit_strength = NodePath("Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/StrengthContainer/ValueStrength")
-unit_actionpoints = NodePath("Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/ActionPointsContainer/ValueActionPoints")
-unit_ammo = NodePath("Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/AmmoContainer/ValueAmmo")
-unit_modifiers = NodePath("Panel/MarginContainer/UnitInfoHorContainer/ModifierContainer/ModifiersList")
-
-[node name="Panel" type="Panel" parent="UI/GUI/UnitInfoPopup" unique_id=284341522]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-
-[node name="MarginContainer" type="MarginContainer" parent="UI/GUI/UnitInfoPopup/Panel" unique_id=2100183188]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-theme_override_constants/margin_left = 20
-theme_override_constants/margin_top = 20
-theme_override_constants/margin_right = 20
-theme_override_constants/margin_bottom = 20
-
-[node name="UnitInfoHorContainer" type="VBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer" unique_id=1847566756]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="UnitName" type="RichTextLabel" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=294431194]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "Unit Name"
-fit_content = true
-scroll_active = false
-
-[node name="HSeparator" type="HSeparator" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=409334987]
-layout_mode = 2
-
-[node name="UnitStatsContainer" type="VBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=1159420897]
-layout_mode = 2
-
-[node name="StatsLabel" type="Label" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer" unique_id=583381555]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Unit Stats"
-
-[node name="StatsContainer" type="HBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer" unique_id=1247892355]
-layout_mode = 2
-size_flags_vertical = 0
-
-[node name="StrengthContainer" type="HBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer" unique_id=1316409712]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="LabelStrength" type="Label" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/StrengthContainer" unique_id=1383770293]
-layout_mode = 2
-text = "Strength:"
-
-[node name="IconStrength" type="TextureRect" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/StrengthContainer" unique_id=1672635967]
-visible = false
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("25_rkr1l")
-expand_mode = 1
-
-[node name="ValueStrength" type="RichTextLabel" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/StrengthContainer" unique_id=105174968]
-clip_contents = false
-layout_mode = 2
-size_flags_horizontal = 3
-text = "100"
-fit_content = true
-scroll_active = false
-vertical_alignment = 3
-
-[node name="ActionPointsContainer" type="HBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer" unique_id=922391387]
-layout_mode = 2
-size_flags_horizontal = 3
-
-[node name="LabelActionPoints" type="Label" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/ActionPointsContainer" unique_id=1446538234]
-layout_mode = 2
-text = "Action Points:"
-
-[node name="IconActionPoints" type="TextureRect" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/ActionPointsContainer" unique_id=115091172]
-visible = false
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("26_u6t61")
-expand_mode = 1
-
-[node name="ValueActionPoints" type="RichTextLabel" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/ActionPointsContainer" unique_id=1892596756]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "26
-"
-fit_content = true
-scroll_active = false
-
-[node name="AmmoContainer" type="HBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer" unique_id=1174660748]
-layout_mode = 2
-size_flags_horizontal = 3
-size_flags_vertical = 4
-
-[node name="LabelAmmo" type="Label" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/AmmoContainer" unique_id=1116279491]
-layout_mode = 2
-text = "Ammo:"
-
-[node name="IconAmmo" type="TextureRect" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/AmmoContainer" unique_id=1685461795]
-visible = false
-custom_minimum_size = Vector2(16, 16)
-layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 4
-texture = ExtResource("27_b6k2v")
-expand_mode = 1
-
-[node name="ValueAmmo" type="RichTextLabel" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/UnitStatsContainer/StatsContainer/AmmoContainer" unique_id=1621474587]
-layout_mode = 2
-size_flags_horizontal = 3
-text = "45"
-fit_content = true
-scroll_active = false
-
-[node name="HSeparator2" type="HSeparator" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=1731386048]
-layout_mode = 2
-
-[node name="ModifierContainer" type="VBoxContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=1488796908]
-layout_mode = 2
-
-[node name="ModifierLabel" type="Label" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/ModifierContainer" unique_id=655118949]
-layout_mode = 2
-theme_override_font_sizes/font_size = 12
-text = "Active Modifiers"
-
-[node name="ModifiersList" type="PanelContainer" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/ModifierContainer" unique_id=1678994505]
-layout_mode = 2
-
-[node name="HSeparator3" type="HSeparator" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=1575755561]
-layout_mode = 2
-
-[node name="CloseButton" type="Button" parent="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer" unique_id=797192100]
-layout_mode = 2
-size_flags_horizontal = 6
-size_flags_vertical = 10
-text = "Close"
-
-[node name="ScenarioDescriptionPopup" parent="UI" unique_id=1587078037 node_paths=PackedStringArray("theme_mgr", "game") instance=ExtResource("44_popup_scene")]
-visible = false
-theme_mgr = NodePath("../../ThemeManager")
-game = NodePath("../..")
+offset_left = -97.0
+offset_top = -25.0
+offset_right = 103.0
+offset_bottom = 25.0
 
 [connection signal="finished" from="BackgroundMusicPlayer" to="MusicManager" method="_on_AudioStreamPlayer_finished"]
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/MoveButton" to="UI/GUI" method="_on_MoveButton_pressed"]
@@ -692,9 +524,6 @@ game = NodePath("../..")
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/ToggleGridButton" to="UI/GUI" method="_on_toggle_grid_button_pressed"]
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/EndTurnButton" to="UI/GUI" method="_on_end_turn_button_pressed"]
 [connection signal="pressed" from="UI/GUI/Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfoButton" to="UI/GUI" method="_on_UnitInfoButton_pressed"]
-[connection signal="pressed" from="UI/GUI/UnitInfoPopup/Panel/MarginContainer/UnitInfoHorContainer/CloseButton" to="UI/GUI/UnitInfoPopup" method="_on_close_button_pressed"]
 
-[editable path="WeatherManager"]
 [editable path="UI/GUI"]
 [editable path="UI/GUI/UnitQuickPanel"]
-[editable path="UI/ScenarioDescriptionPopup"]

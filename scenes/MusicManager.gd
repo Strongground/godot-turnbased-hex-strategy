@@ -1,4 +1,4 @@
-extends Node2D
+extends "res://classes/game_manager.gd"
 
 # This is the manager class to handle the music playback during the game.
 # First step: Just play music, defined in the theme.
@@ -29,13 +29,20 @@ var mood_check_interval = 1.0
 # public members
 
 func _ready():
-	if streamPlayer == null:
-		streamPlayer = AudioStreamPlayer.new()
-		streamPlayer.name = "BackgroundMusicPlayer"
-		var parent_node = game if game != null else self
-		parent_node.add_child.call_deferred(streamPlayer)
-		streamPlayer.finished.connect(_on_AudioStreamPlayer_finished)
-	print('MusicManager: I am ready!')
+	# Keep empty - initialization happens via initialize() method
+	pass
+
+func _initialize_internal() -> Variant:
+	# MusicManager depends on SettingsManager and ThemeManager
+	if settingsMgr != null and is_instance_valid(settingsMgr):
+		_debug_log("_initialize_internal(): Awaiting settingsMgr initialization")
+		await settingsMgr.initialize()
+	if game != null and is_instance_valid(game):
+		if game.themeMgr != null and is_instance_valid(game.themeMgr):
+			_debug_log("_initialize_internal(): Awaiting game.themeMgr initialization")
+			await game.themeMgr.initialize()
+	_debug_log("_initialize_internal(): MusicManager ready")
+	return true
 
 func _process(delta):
 	_mood_check_timer += delta
@@ -57,9 +64,12 @@ func _loadMusic():
 func play():
 	self._sync_music_state(true)
 	self.adjust_volume(settingsMgr.get_music_volume())
-	if self.playlist.size() > 0:
-		self.streamPlayer.stream = playlist[0]
-		self.streamPlayer.play()
+	if streamPlayer == null:
+		print('Error: streamPlayer is not assigned!')
+		return
+	if self.playlist != null and self.playlist.size() > 0:
+		streamPlayer.stream = playlist[0]
+		streamPlayer.play()
 	else:
 		print('Playlist is empty!')
 
@@ -102,14 +112,17 @@ func _get_current_mood() -> String:
 
 func _resolve_music_path(songfile: String) -> String:
 	var base_path = ""
-	if game != null and game.themeMgr != null and game.themeMgr.has_method("get_theme_base_path"):
+	if game != null and game.themeMgr != null and is_instance_valid(game.themeMgr) and game.themeMgr.has_method("get_theme_base_path"):
 		base_path = game.themeMgr.get_theme_base_path()
 	if base_path == "":
-		var theme_name = game.themeMgr.get_current_theme_name()
-		base_path = standard_themes_path + '/' + theme_name
+		if game != null and game.themeMgr != null and is_instance_valid(game.themeMgr):
+			var theme_name = game.themeMgr.get_current_theme_name()
+			base_path = standard_themes_path + '/' + theme_name
 	return base_path + '/' + standard_music_path + '/' + songfile
 
 func _get_music_entries() -> Array:
+	if game == null or !is_instance_valid(game) or game.themeMgr == null or !is_instance_valid(game.themeMgr):
+		return []
 	var music_def = game.themeMgr.get_music_list()
 	if typeof(music_def) != TYPE_DICTIONARY:
 		return []

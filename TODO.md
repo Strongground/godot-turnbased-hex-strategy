@@ -35,8 +35,8 @@
     - Maybe allow the scenario creator to control if units can gain experience or not? This would allow for more static scenarios where the player is supposed to use specific units with specific levels, and more dynamic scenarios where the player can level up their units as they play.
     - Also plan for a way to have units gain experience during a scenario but are only able to be levelled up between scenarios in a campaign - like classic PanzerGeneral with core army.
 
-- [ ] Eye Candy: Add particle system for each unit that displays little smoke puffs when they move on certain tiles (where configureable?).
-- [ ] Eye Candy: Add a moving cloud shadow effect to the map. This can be done by having a cloud texture that moves across the map, and using a shader to darken the tiles that are under the clouds. This would add some visual interest to the map and make it feel more dynamic.
+- [X] Eye Candy: Add particle system for each unit that displays little smoke puffs when they move on certain tiles (where configureable?).
+- [X] Eye Candy: Add a moving cloud shadow effect to the map. This can be done by having a cloud texture that moves across the map, and using a shader to darken the tiles that are under the clouds. This would add some visual interest to the map and make it feel more dynamic.
 - [ ] Eye Candy: Add simple weather system that can display sunny, cloudy, rainy and snowy weather. Could be enhanced by shaders in the future. Also may affect gameplay by giving modifiers.
 - [ ] Eye Candy: Evaluate particle systems for all the effects instead of spritesheet animations - since they are hard to find in good quality and for free. This would also allow to have things like lingering smoke chimneys for destroyed units etc.
 - [ ] Add a entity with attributes "Is_Cover"=true "Cover_Modifier"=1.5 and "Static"=true with a random crater image variation shown for each spawn, after an explosive attack misses or hits a non-cover entity. Add "craters" attribute to weapons.yaml.
@@ -54,3 +54,9 @@
     - For a simple AI, units can just move towards the nearest player unit and attack if they are in range. For a more complex AI, units can have different behaviors based on their type and the situation, e.g. a tank might try to flank the player's units, while an artillery unit might try to stay back and provide support.
     - The scenario designer should be able to optionally control the AI behavior of enemy units in a scenario. 
     - Maybe also plan for a simple scripting system for scenarios, so that certain events like reinforcements, retreats etc. can be triggered by player actions.
+
+- [ ] Certain modifiers should be part of the base game. For example, "In_Cover" and "Garrisoned" modifiers that are applied to units that are in cover or garrisoned, respectively.
+
+- [ ] Make sure that the game has a "paused" state, where only a popup or other UI element has focus and can be clicked, but nothing else. This is important for things like the briefing/debriefing screens, as well as for a potential pause menu in the future.
+
+- [ ] Create a proper layout for the unit info popup to display all the desired information, like exp, mods and experience progression as well as all stat changes and stats. 

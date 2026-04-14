@@ -55,6 +55,27 @@ offset_bottom = 81.0
 size_flags_horizontal = 3
 size_flags_vertical = 3
 
+[node name="ModifiersContainer" parent="." type="HBoxContainer" unique_id=1844373057]
+layout_mode = 2
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -8.0
+offset_top = -40.0
+offset_right = 8.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 0
+visible = false
+
+[node name="ModifierIcon" parent="ModifiersContainer" type="TextureRect" unique_id=1221054668]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+expand_mode = 1
+
 [connection signal="timeout" from="AttackEffectDelay" to="." method="_on_AttackEffectDelay_timeout"]
 
 [editable path="UnitQuickPanel"]

@@ -2,23 +2,24 @@ extends Control
 
 @export var hexmap: TileMapLayer
 @export var game: Node
-@export var tile_info: RichTextLabel = null
 @export var move_button: TextureButton = null
 @export var attack_button: TextureButton = null
 @export var supply_button: TextureButton = null
+@export var unit_info_popup: Node = null
+@export var theme_mgr: Node = null
+@export var shown_unit_name: Node = null
+@export var unit_info_strength: Node = null
+@export var unit_info_actionpoints: Node = null
+@export var unit_info_ammo: Node = null
+@export var panel: Node = null
+@export var hexgrid_overlay: Node = null
 
 var root = null
-var tile_info_popup = null
-var tile_info_popup_text = null
-var panel = null
 var unit_info = null
-var shown_unit_name = null
-var unit_info_strength = null
-var unit_info_actionpoints = null
-var unit_info_ammo = null
 var panel_pos = null
 var panel_size = null
 var panel_area = null
+var grid_visible = false
 
 # Public helper function to check mouse local position against GUI elements
 # @TODO enhance this for other GUI elements, currently only checking against
@@ -54,21 +55,9 @@ func disable_supply_button(disabled) -> void:
 func _ready() -> void:
 	set_process_input(true)
 	root = get_tree().current_scene
-	tile_info_popup = get_node_or_null("Tile_Info")
-	if tile_info_popup != null:
-		tile_info_popup_text = tile_info_popup.get_node_or_null("Tile_Text")
-	shown_unit_name = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/UnitName")
-	unit_info_strength = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer/UnitStrength")
-	unit_info_actionpoints = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer2/UnitActionPoints")
-	unit_info_ammo = get_node_or_null("Panel/MarginContainer/VBoxContainer/HBoxContainer/UnitInfo/HBoxContainer3/UnitAmmo")
 	##### Panel
-	panel = find_child('Panel', true, false)
 	panel_pos = panel.position
 	panel_size = panel.size
-	if tile_info_popup != null and not tile_info_popup.has_method("popup"):
-		tile_info_popup.visible = false
-	if $UnitInfo != null and not $UnitInfo.has_method("popup"):
-		$UnitInfo.visible = false
 
 # Handle input that was not handled yet, but was intended for GUI.
 # Currently just stops event from propagating.
@@ -78,17 +67,6 @@ func _unhandled_input(_event):
 	# accept_event()
 	### This approach no longer works, since the GUI is viewport sized and will intercept all clicks.
 	pass
-
-# Show a popup window with information about the selected tile
-# @input {Object} the tile object which information should be shown
-func _show_tile_info_popup(tile_object) -> void:
-	var popup_pos = get_viewport().get_visible_rect().size * 0.5
-	tile_info_popup.set_position(popup_pos)
-	tile_info_popup_text.set_text(str(tile_object))
-	if tile_info_popup.has_method("popup"):
-		tile_info_popup.popup()
-	else:
-		tile_info_popup.visible = true
 
 # Public helper method to update units infos in gui panel
 func update_unit_info(unit_name, strength, actionpoints, ammo) -> void:
@@ -117,12 +95,8 @@ func update_unit_ammo(value) -> void:
 	if unit_info_ammo != null and is_instance_valid(unit_info_ammo):
 		unit_info_ammo.text = str(value)
 
-func update_tile_info(tile) -> void:
-	tile_info.text = str(tile.name)
-
 func _physics_process(_delta) -> void:
-	var popup_pos = get_viewport().get_visible_rect().size * 0.5
-	tile_info_popup.set_position(popup_pos)
+	pass
 
 # If MoveButton in GUI pressed, and a unit is selected,
 # set movement selection
@@ -157,23 +131,38 @@ func _on_SupplyButton_pressed() -> void:
 			root.attack_selection = false
 			root.resupply_selection = true
 
+# If the button is pressed, open a unit info popup showing the 
+# selected unit's information.
 func _on_UnitInfoButton_pressed() -> void:
-	if game.selected_unit != null:
-		var selected_unit_id = game.selected_unit
-		var selected_unit = game._get_entity_by_id(selected_unit_id).node
-		var popup_pos = selected_unit.get_global_transform().get_origin()
-		var movement_points = str(selected_unit.get_movement_points())
-		$UnitInfo.set_position(popup_pos)
-		$UnitInfo/UnitInfoText.set_text("Movement Points: " + movement_points)
-		if $UnitInfo.has_method("popup"):
-			$UnitInfo.popup()
-		else:
-			$UnitInfo.visible = true
+	if game.get_selected_unit() != null:
+		var selected_unit = game.get_selected_unit()
+		if unit_info_popup != null and is_instance_valid(unit_info_popup):
+			# var viewport_size = get_viewport_rect().size
+			# var popup_size = unit_info_popup.size
+			# var popup_pos = (viewport_size - popup_size) / 2.0
+			# unit_info_popup.set_position(popup_pos)
+			unit_info_popup.show_unit_info(selected_unit)
+			unit_info_popup.visible = true
 	else:
 		print("ERROR: No unit selected.")
 
 func _on_toggle_grid_button_pressed() -> void:
-	pass # Replace with function body.
+	var grid_opacity = 1.0
+	var from_opacity = null
+	var to_opacity = null
+	if self.grid_visible:
+		from_opacity = Color(1, 1, 1, grid_opacity)
+		to_opacity = Color(1, 1, 1, 0)
+		self.grid_visible = false
+	else:
+		from_opacity = Color(1, 1, 1, 0)
+		to_opacity = Color(1, 1, 1, grid_opacity)
+		self.grid_visible = true
+	hexgrid_overlay.modulate = from_opacity
+	var grid_tween = create_tween()
+	grid_tween.set_trans(Tween.TRANS_LINEAR)
+	grid_tween.set_ease(Tween.EASE_IN_OUT)
+	grid_tween.tween_property(hexgrid_overlay, "modulate", to_opacity, 0.5)
 
 func _on_end_turn_button_pressed() -> void:
 	if game != null:

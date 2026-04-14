@@ -5,12 +5,12 @@
 # One modifier can only be active once per unit but unlimited modifiers can be applied
 # per unit.
 
-# As in all theme data files, the container ID of a modifier is not used in game,
-# only the 'mod_id' inside the container, so name the containers like you want.
-
 # duration: Number of turns until the modifier will be removed.
 # It can be applied again immedietly. If the duration is set to -1, the modifier
 # will never be removed, except explicitly.
+
+# icon: A path starting from the theme root to the icon that is shown at the unit if the modifier
+# is applied to it. Must be a PNG. 128x128 is a good format.
 
 # modifiers: Contains the name of an attribute of units. But not all of them can
 # be modified by a modifier. Just for reference, the attributes available to modifiers
@@ -34,19 +34,36 @@
 # If a attribute is modified twice in the same modifier, and it is applied, the last occurance
 # will win.
 
-bad_morale_taliban:
+bad_morale_taliban_permanent:
   display_name: 'Bad Morale'
   description: 'Knowing the odds are against them, and the enemies superior technology and training, these soldiers are gloomy and hopeless.'
   duration: -1
-  icon: ''
+  icon: 'graphics/mods/bad_morale'
+  modifiers: 
+    base_defense: -2
+
+bad_morale_us_permanent:
+  display_name: 'Bad Morale'
+  description: 'These soldiers are not sure why they are here. They have seen unspeakable things and just want to get home.'
+  duration: -1
+  icon: 'graphics/mods/bad_morale'
+  modifiers:
+    base_defense: -2
+    attack_bonus: -1
+
+bad_morale_taliban:
+  display_name: 'Bad Morale'
+  description: 'Knowing the odds are against them, and the enemies superior technology and training, these soldiers are gloomy and hopeless.'
+  duration: 1
+  icon: 'graphics/mods/bad_morale'
   modifiers: 
     base_defense: -2
 
 bad_morale_us:
   display_name: 'Bad Morale'
   description: 'These soldiers are not sure why they are here. They have seen unspeakable things and just want to get home.'
-  duration: -1
-  icon: ''
+  duration: 1
+  icon: 'graphics/mods/bad_morale'
   modifiers:
     base_defense: -2
     attack_bonus: -1
@@ -55,7 +72,7 @@ tusk2:
   display_name: 'TUSK II'
   description: 'This vehicle has been supplied with the Tank Urban Survival Kit 2nd Generation, which increases the general survivability in urban combat environments drastically.'
   duration: -1
-  icon: ''
+  icon: 'graphics/mods/tusk2'
   modifiers:
     attack_bonus: 1
     base_defense: 4
@@ -64,7 +81,7 @@ terrain_knowledge:
   display_name: 'Good Knowledge Of Terrain'
   description: 'This unit has exceptional knowledge about the terrain, having memorized most major and even minor landmarks, it can navigate faster, find better defensive positions and more effective angles of attack.'
   duration: -1
-  icon: ''
+  icon: 'graphics/mods/terrain_knowledge'
   modifiers:
     attack_bonus: 1
     base_defense: 2
@@ -73,7 +90,7 @@ cover_light:
   display_name: 'Light Cover'
   description: 'Some light cover gained from terrain or dug in positions.'
   duration: 1
-  icon: ''
+  icon: 'graphics/mods/cover'
   modifiers:
     temp_defense_bonus: 1
 
@@ -81,7 +98,7 @@ cover_medium:
   display_name: 'Cover'
   description: 'Good cover from terrain, foliage or shallow fortifications.'
   duration: 1
-  icon: ''
+  icon: 'graphics/mods/cover'
   modifiers:
     temp_defense_bonus: 2
 
@@ -89,7 +106,7 @@ cover_heavy:
   display_name: 'Heavy Cover'
   description: 'Excellent cover from structures or dense terrain.'
   duration: 1
-  icon: ''
+  icon: 'graphics/mods/cover'
   modifiers:
     temp_defense_bonus: 3
 
@@ -97,6 +114,6 @@ suppressed:
   display_name: 'Suppressed'
   description: 'Unit is pinned and less effective at fighting.'
   duration: 1
-  icon: ''
+  icon: 'graphics/mods/supressed'
   modifiers:
     temp_attack_bonus: -1

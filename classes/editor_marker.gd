@@ -46,7 +46,6 @@ func _ready():
 	# Show owner icon
 	$'OwnerIcon'.set_visible(true)
 
-
 func initialize():
 	if location_owner:
 		var faction_id = playerMgr.get_player_faction(location_owner)
