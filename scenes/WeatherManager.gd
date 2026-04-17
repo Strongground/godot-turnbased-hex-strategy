@@ -76,11 +76,15 @@ func change_weather(new_weather: String = ""):
 	if is_random_weather:
 		var random_value = randf()
 		var cumulative_probability = 0.0
+		var weather_found = false
 		for weather_option in random_weather_options:
+			if weather_found:
+				break
 			for weather_type in weather_option.keys():
 				cumulative_probability += weather_option[weather_type]
 				if random_value < cumulative_probability:
 					current_weather = weather_type
+					weather_found = true
 					break
 		
 # Public setter to change the time of day. It can be called by other classes to change the time of day,
