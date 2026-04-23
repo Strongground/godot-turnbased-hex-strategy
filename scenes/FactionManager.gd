@@ -3,7 +3,7 @@ extends "res://classes/game_manager.gd"
 # This is the faction manager. It manages factions, d'oh.
 
 # member vars here
-@export var game: Node
+var game: Node = null
 var factions = {}
 
 func _ready():

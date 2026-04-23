@@ -8,7 +8,7 @@ var current_temperature: int
 var current_time: int
 var is_random_weather: bool
 var is_day_night_cycle_active: bool
-var random_weather_options: Array = []
+var random_weather_options: Dictionary = {}
 var max_temp: int
 var min_temp: int
 
@@ -49,7 +49,6 @@ func process_turn():
 	set_temperature()
 
 # Public method to initialize the weather system with the information from the scenario file.
-# It is called by the ThemeMgr when the scenario is loaded.
 func init_weather_system(weather_information):
 	is_random_weather = bool(weather_information["random_weather"].size() > 0)
 	is_day_night_cycle_active = weather_information["day_night_cycle"]
@@ -76,16 +75,11 @@ func change_weather(new_weather: String = ""):
 	if is_random_weather:
 		var random_value = randf()
 		var cumulative_probability = 0.0
-		var weather_found = false
-		for weather_option in random_weather_options:
-			if weather_found:
+		for weather_type in random_weather_options.keys():
+			cumulative_probability += random_weather_options[weather_type]
+			if random_value < cumulative_probability:
+				current_weather = weather_type
 				break
-			for weather_type in weather_option.keys():
-				cumulative_probability += weather_option[weather_type]
-				if random_value < cumulative_probability:
-					current_weather = weather_type
-					weather_found = true
-					break
 		
 # Public setter to change the time of day. It can be called by other classes to change the time of day,
 # or it can be called internally if the day-night cycle is active.

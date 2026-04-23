@@ -16,7 +16,7 @@ Usage pattern:
 Initialization order (based on dependencies):
 1. SettingsManager (no dependencies)
 2. ThemeManager (no dependencies)  
-3. PlayerManager (no dependencies)
+3. PlayerManager (depends on ThemeManager)
 4. WeatherManager (no dependencies)
 5. FactionManager (depends on ThemeManager)
 6. SfxManager (depends on ThemeManager)

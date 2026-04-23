@@ -12,7 +12,7 @@ extends "res://classes/game_manager.gd"
 # Also define and utilize music volume but get it - like all settings - from SettingsMgr.
 
 # member vars here
-@export var game: Node
+var game: Node = null
 @export var settingsMgr: Node
 var standard_themes_path = 'res://themes'
 var standard_music_path = 'music'

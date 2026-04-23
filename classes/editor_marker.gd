@@ -17,6 +17,7 @@ var victory_icon = null
 @export var themeMgr: Node
 
 func _ready():
+	super._ready()
 	# Initialization here
 	self.village_icon = load("res://assets/icons/editor_marker_city.png")
 	self.reinforcements_icon = load("res://assets/icons/editor_marker_reinforcement.png")
@@ -34,7 +35,7 @@ func _ready():
 	if root.city_names_visible and map_text.length() > 0:
 		self._create_map_text(map_text)
 	
-	# For victory markers, show colored utline
+	# For victory markers, show colored outline
 	if self.marker_type == 'VICTORY':
 		$'hex_outline'.set_visible(true)
 		$'hex_outline'.set_modulate(Color("ffa300ff"))

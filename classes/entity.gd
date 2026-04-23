@@ -1,8 +1,13 @@
-extends Area2D
-class_name entity
+## Base class for all entities in the game. This includes units, towns, markers, and more.
+class_name Entity extends Area2D
+
 ### public class member vars
 # is selectable by player
-@export var selectable = null
+@export var selectable: bool = false
+
+# Unique id for referencing in scenario win conditions or other scripted
+# events. This is not required to be unique by the game, but it is recommended.
+@export var unique_id: String = ''
 
 ### internal class member variables
 @onready var root = get_tree().current_scene
@@ -10,15 +15,18 @@ class_name entity
 @export var globals: Node
 @onready var hex_outline = find_child("HexOutline", true, false)
 @onready var hexmap = root.find_child("MapZones", true, false)
-var selected = null
-var type = null
-var path = null
-var id = null
-var container = null
+var selected: bool = false
+var type: String = ''
+var path: Array = []
+var id: int
+var container: bool = false
 
 ## Called every time the node is added to the scene.
 func _ready():
-	self._snap_to_grid()
+	if Engine.is_editor_hint():
+		self._snap_to_grid()
+		return
+	_connect_runtime_snap()
 
 func _physics_process(_delta):
 	if Engine.is_editor_hint():
@@ -26,6 +34,20 @@ func _physics_process(_delta):
 
 func initialize():
 	pass
+
+func _connect_runtime_snap():
+	if game == null:
+		game = get_tree().current_scene
+	if game != null and game.has_method("is_setup_complete") and game.is_setup_complete():
+		self._snap_to_grid()
+		return
+	if game != null and game.has_signal("setup_complete"):
+		var snap_callback = Callable(self, "_on_game_setup_complete")
+		if not game.setup_complete.is_connected(snap_callback):
+			game.setup_complete.connect(snap_callback, CONNECT_ONE_SHOT)
+
+func _on_game_setup_complete():
+	self._snap_to_grid()
 
 # Getter for if this entity is selectable
 func is_selectable():
@@ -96,8 +118,12 @@ func _hide_marker():
 
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():
+	if hexmap == null or root == null:
+		return
 	var grid_coords = hexmap.global_to_map(self.get_global_position())
 	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(-6,0))
+	if world_coords == null:
+		return
 	self.set_position(world_coords)
 
 # Internal helper function that returns the centered coordinates corrected
@@ -106,8 +132,12 @@ func _snap_to_grid():
 # @input {Vector2} offset, this can depend on entity type
 # @returns {Vector2} global coordinates that represent the center of a hex
 func _get_centered_grid_pos(grid_coords, offset):
+	if hexmap == null or root == null:
+		return null
 	var world_coords = hexmap.map_to_global(Vector2i(grid_coords))
 	var center_coords = root.get_center_of_hex(world_coords)
+	if center_coords == null:
+		return null
 	center_coords.x += offset.x
 	center_coords.y += offset.y
 	return center_coords

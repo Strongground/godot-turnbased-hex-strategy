@@ -16,9 +16,11 @@ var standard_sounds_path = 'sounds'
 var standard_sprite_format = 'png'
 var fallback_unit_sprite_path = 'res://assets/images/humvee_placeholder_d.png'
 @export var weather_mgr: Node
+var game: Node = null
 var theme_object = {}
 var theme_path = ''
 var default_sounds = {}
+var current_scenario_id = ''
 
 # Main function to get a theme from the standard themes folder. It reads the config.json
 # which contains the references to all contained data files which in turn contain the 
@@ -92,6 +94,21 @@ func get_factions():
 	if _is_theme_loaded():
 		return theme_object['factions']
 
+func set_current_scenario_id(scenario_id):
+	self.current_scenario_id = scenario_id
+
+func get_current_scenario_id():
+	return self.current_scenario_id
+
+func get_current_scenario(scenario_id=null):
+	if scenario_id == null:
+		scenario_id = self.current_scenario_id
+	if _is_theme_loaded():
+		var scenarios = theme_object.get("scenarios", {})
+		if scenario_id in scenarios:
+			return scenarios[scenario_id]
+	return {}
+
 # Public getter for faction icon
 # @input {String} The if of the faction, whose icon should be returned
 # @returns {Texture} A texture containing the icon
@@ -122,6 +139,13 @@ func get_scenarios():
 		return theme_object.get("scenarios", {})
 	else:
 		return {'No scenarios loaded - race condition?': {}}
+
+func get_scenario(scenario_id):
+	if _is_theme_loaded():
+		var scenarios = theme_object.get("scenarios", {})
+		if scenario_id in scenarios:
+			return scenarios[scenario_id]
+	return {}
 
 # Public getter for specific hexUnit object
 # @input {String} id of the hexUnit to get
@@ -355,12 +379,16 @@ func _debug_log(message):
 	if debug_logging:
 		print("[Debug][ThemeMgr] " + message)
 
-# Initialize weather system from theme data
+func _initialize_internal() -> Variant:
+	_debug_log("_initialize_internal(): ThemeManager ready")
+	return true
+
+# Initialize weather system from scenario data
 # Called by WeatherManager during its initialization or by game.gd
-func initialize_weather_from_theme():
+func initialize_weather_from_scenario():
 	if weather_mgr != null and is_instance_valid(weather_mgr):
 		if _is_theme_loaded() and theme_object.has("scenarios"):
-			var scenario_data = theme_object["scenarios"].get("scenario_1", {})
-			if typeof(scenario_data) == TYPE_DICTIONARY:
+			var scenario_data = self.get_current_scenario(self.get_current_scenario_id())
+			if typeof(scenario_data) == TYPE_DICTIONARY and scenario_data.has("environment"):
 				weather_mgr.init_weather_system(scenario_data.get("environment", {}))
-				_debug_log("initialize_weather_from_theme(): Weather system initialized from theme")
+				_debug_log("initialize_weather_from_scenario(): Weather system initialized from scenario")

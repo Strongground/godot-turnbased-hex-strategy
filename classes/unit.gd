@@ -19,7 +19,7 @@ extends "res://classes/entity.gd"
 # * "none" = -1 (For static entites like buildings)
 # * "left/right" = 0/1 (Done in software by mirroring)
 # * "northwest/north/northeast/southeast/south/southwest" = 0,1,2,3,4,5
-@export var direction = 0
+@export var direction: int = 0
 
 # if a entity has e.g. various camo schemes (desert, woodland) or randomized appearance.
 # the detailed documentation for these go into the faction object
@@ -28,7 +28,7 @@ extends "res://classes/entity.gd"
 
 # entity id, from which all additional data like sprite, entity attributes, name etc
 # are loaded from units.data
-@export var unit_id = ''
+@export var unit_id: String = ''
 
 # For debugging sprite loading in detail
 @export var debug_logging = false
@@ -57,41 +57,41 @@ extends "res://classes/entity.gd"
 
 #################################################################################
 # Display name. This is a short string shown in-game.
-@export var display_name = ''
+@export var display_name: String = ''
 
 # Description of the entity, possibly shown in a ingame encyclopedia or on the
 # extended info-screen for this entity.
-@export var description = ''
+@export var description: String = ''
 
 # If this entity has the ability to hold supplies and also resupply allied units nearby.
-@export var is_supplier = null
+@export var is_supplier: bool = false
 
 # The amount of supplies this entity can hold, if it is a supplier.
-@export var max_supply_storage = null
+@export var max_supply_storage: int = 0
 
 # How much fuel supplies can this entity hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-@export var supply_storage_fuel = 0
+@export var supply_storage_fuel: int = 0
 
 # How much ammo supplies can this entity hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-@export var supply_storage_ammo = 0
+@export var supply_storage_ammo: int = 0
 
 # How much support supplies can this entity hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
 # 'Support' can refer to both medical equipment and food, so depending on the situation, the entity
 # type and the scenario, this may be used with some flexibility.
-@export var supply_storage_support = 0
+@export var supply_storage_support: int = 0
 
 # How much construction supplies can this entity hold? This amount, added with all other supply types,
 # can never exceed "this.max_supply_storage".
-@export var supply_storage_construction = 0
+@export var supply_storage_construction: int = 0
 
 # The Unit's strength defines, depending on the nature of the entity, its technical
 # or medical status.
 # For example, a standard squad consists of 8 men. This translates
 # directly to entity strength of "8". A successful hit against this entity may remove
-# 1-2 points, making 1-2 men unable to fight (killing or wounding is threated equally
+# 1-2 points, making 1-2 men unable to fight (killing or wounding is treated equally
 # here).
 # For another example, a light vehicle group may consist of 3 vehicles, being able
 # to function with some damage sustained, it could translate into 4 strength points.
@@ -99,12 +99,12 @@ extends "res://classes/entity.gd"
 # combat-ineffective. It is not shown any more on the game map.
 # The attack value of this entity is also factored by the entity's strength. The lesser
 # of a entity remains, the less damage it is able to inflict.
-@export var unit_strength = null
+@export var unit_strength: int = 0
 
 # Base defense value, this is used as a base to calculate how well this entity can
 # defend from an attack. Based on the kind of attack, additional values are added
 # These can also depend on the tile the entity is on, as well as type of the entity.
-@export var base_defense = null
+@export var base_defense: int = 0
 
 # Is this entity armored? How much? Generally, armor piercing weapons have a greater effect on 
 # armored targets, while explosive weapons have a bigger effect against soft targets.
@@ -112,18 +112,18 @@ extends "res://classes/entity.gd"
 # that armored troops generally have more chance to not sustain a lot of damage when
 # hit by certain weapons, while non-armored units do (e.g. classical roman era, where arrows
 # against velites would do more damage than against heavily armored triarii).
-@export var armor = null
+@export var armor: int = 0
 
 # What medium this entity can move in/on primarily.
 # Expects an array with one string per traversable terrain type:
 # "land", "river", "water", "mountain"
-@export var can_traverse = []
+@export var can_traverse: Array = []
 
 # Movement points
 # These are consumed when moving from one tile to another tile. The amount of points
 # used for this is based on the terrain type of the tile that is entered (not the one
 # the entity is coming from).
-@export var movement_points = null
+@export var movement_points: int = 0
 
 # Fuel
 # This is a one-time value that only decreases with each movement over a hex tile.
@@ -138,7 +138,7 @@ extends "res://classes/entity.gd"
 # speaks against a mechanism that allows to tell crew to eject and continue fighting
 # on foot. Such a system is needed anway for motorized transport, siege towers, landing
 # craft, paratroopers etc.
-@export var fuel = null
+@export var fuel: int = 0
 
 # Weapons
 # What kind of attacks the entity has. Contains an array of the IDs of the weapons 
@@ -151,7 +151,7 @@ extends "res://classes/entity.gd"
 # fighter aircraft with a multitude of cannons, bombs, rockets etc.
 # Since fully utilizing this and creating a system with matching ammo for each weapon
 # warrants additional logic back- and frontend, this will be an after-thought for now.
-@export var weapons = null
+@export var weapons: Array = []
 
 # Ammunition for its own weapons
 # Basically, how many times can this entity attack until ammo runs out, not really how
@@ -162,7 +162,7 @@ extends "res://classes/entity.gd"
 # @TODO At the moment this is only a int, in future it needs to be converted to array or
 # similar, to represent ammunition for each type of weapon, but also to allow for shared
 # ammo for similar weapons (same caliber e.g.)
-@export var ammo = null
+@export var ammo: int = 0
 
 # Attack bonus
 # This can be thought of as a "base_attack" bonus value to the entity. It could be used
@@ -173,7 +173,7 @@ extends "res://classes/entity.gd"
 # Usage example: Standard infantry with assault rifles vs. elite commando units,
 # using the same assault rifles but having much more skill, experience and training,
 # thus doing more damage with the same weapon.
-@export var attack_bonus = null
+@export var attack_bonus: int = 0
 
 # Experience
 # A float value between 0 and 1.
@@ -271,12 +271,13 @@ const DEFAULT_MOVEMENT_EFFECT_SCENE = "res://effects/core/move_dust_small.tscn"
 @onready var sound_emitter = $'SoundEmitter'
 @onready var move_particles = $MoveParticles
 @onready var attack_delay_timer = $'AttackEffectDelay'
-@export var settingsMgr: Node
-@export var themeMgr: Node
-@export var gui: Node
-@export var sfxMgr: Node
+@export var settingsMgr = null
+@export var themeMgr = null
+@export var gui = null
+@export var sfxMgr = null
 
 func _ready():
+	super._ready()
 	## Init ingame
 	type = 'entity'
 	# Set necessary offset for correct position relative to grid
@@ -718,6 +719,7 @@ func is_valid_attack_target(grid_pos):
 		if target_entity.get_unit_stance() == 'enemy' && self.can_attack_unit(target_entity) == true:
 			# Check if valid attack target for currently selected units weapons
 			return true
+	return false
 
 # Simple public getter to return the first weapon found, if no weapon exists,
 # return null.
@@ -739,9 +741,8 @@ func get_weapon(weapon_id):
 # @returns {Array} sorted unique integer ranges
 func get_attack_ranges() -> Array:
 	var result: Array = []
-	var weapons_dict = _get_weapons_dict()
-	for weapon_id in weapons_dict:
-		var weapon = weapons_dict[weapon_id]
+	var weapons_array = _get_weapons_array()
+	for weapon in weapons_array:
 		if weapon == null:
 			continue
 		if weapon.has("range"):
@@ -907,7 +908,7 @@ func attack(target_entity, weapon=null):
 	print_combat_debug('Defending entity has strength of ',defending_unit.unit_strength,', effective strength of ',defender_effective_strength,' (',defending_unit.unit_strength,'+',defending_unit.unit_strength * (defender_base_defense/10),')')
 	attacker_effective_attack = attacking_unit_weapon['attack_strength'] + attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10)
 	print_combat_debug('Attacking entity has effective attack of ',attacker_effective_attack,' (',attacking_unit_weapon['attack_strength'],'+',attacking_unit_weapon['attack_strength'] * (attacking_unit.unit_strength/10),')')
-		
+	
 	# adding attack_bonus
 	var total_attack_bonus = attacking_unit.attack_bonus + attacking_unit.temp_attack_bonus
 	if total_attack_bonus != 0:
@@ -1281,14 +1282,14 @@ func _play_sound(keyword, info=null):
 	self.sound_emitter.stream = stream
 	self.sound_emitter.play()
 
-func _get_weapons_dict() -> Dictionary:
+func _get_weapons_array() -> Array:
 	if weapons == null:
-		return {}
-	if typeof(weapons) != TYPE_DICTIONARY:
+		return []
+	if typeof(weapons) != TYPE_ARRAY:
 		_populate_weapons()
-	if typeof(weapons) == TYPE_DICTIONARY:
+	if typeof(weapons) == TYPE_ARRAY:
 		return weapons
-	return {}
+	return []
 
 func _get_distance_to_target(target_global_pos: Vector2) -> int:
 	if game == null or hexmap == null:
@@ -1312,13 +1313,12 @@ func _is_weapon_in_range(weapon, target_global_pos: Vector2) -> bool:
 	return distance <= _get_weapon_range(weapon)
 
 func _get_weapon_in_range(target_global_pos: Vector2, target_unit = null):
-	var weapons_dict = _get_weapons_dict()
-	if weapons_dict.is_empty():
+	var weapons_array = _get_weapons_array()
+	if weapons_array.is_empty():
 		return null
 	var best_weapon = null
 	var best_score = -INF
-	for weapon_id in weapons_dict:
-		var weapon = weapons_dict[weapon_id]
+	for weapon in weapons_array:
 		if weapon == null:
 			continue
 		if not _is_weapon_in_range(weapon, target_global_pos):
@@ -1358,9 +1358,9 @@ func _estimate_weapon_effective_attack(weapon, target_unit) -> float:
 # Internal function to populate weapon list with actual theme objects
 func _populate_weapons() -> void:
 	var weapon_ids = self.weapons
-	self.weapons = {}
+	self.weapons = []
 	for weapon_id in weapon_ids:
-		self.weapons[weapon_id] = themeMgr.get_weapon(weapon_id)
+		self.weapons.append(themeMgr.get_weapon(weapon_id))
 
 func _update_quick_panel_transform() -> void:
 	if unit_quick_panel == null or hexmap == null:

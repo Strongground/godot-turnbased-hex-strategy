@@ -1,5 +1,7 @@
 extends Node2D
 
+signal setup_complete
+
 # The map class should serve as a parent class from which all map instances in the game inherit
 # general comfort functions to select hexes and display information about hexes (highlighting,
 # showing of terrain information etc.). These functions are currently present in this ('game')
@@ -50,7 +52,7 @@ extends Node2D
 @export var map_graphic: Sprite2D
 var map_size = null
 var tile_list = null
-var hex_offset = null
+var hex_offset = Vector2(-6, 0)
 var current_tile = null
 var hex_directions = null
 var all_tiles = null
@@ -72,10 +74,11 @@ var attack_made_this_turn = false
 ## Loop vars
 var turn_counter = 0
 var active_player = null
-var active_player_rot_index = null
+var active_player_rot_index = -1
 var player_rotation = []
-var players = {}
+var players = []
 var _last_mouse_pos = Vector2(INF, INF)
+var _setup_complete: bool = false
 ## Game Resource Managers
 @export var playerMgr: Node
 @export var factionMgr: Node
@@ -92,6 +95,7 @@ const RANGE_VIS_NODE_NAME = "range_vis"
 func _ready():
 	if globals == null:
 		globals = get_node_or_null("/root/globals")
+	_ensure_launch_selection_context()
 	_debug_log("_ready(): start")
 
 	# Determine map size and make it public for easier access
@@ -107,10 +111,48 @@ func _ready():
 	
 	# Now proceed with game setup
 	_setup_game()
+	print_debug("[Game] Globals initialized: selected_theme='" + globals.selected_theme + "', selected_scenario='" + globals.selected_scenario + "'")
 	
 	# Re-enable physics after setup is complete
 	set_process(true)
+	GUI.set_visible(true)
+	_setup_complete = true
+	emit_signal("setup_complete")
 	_debug_log("_ready(): initialization complete")
+
+func _ensure_launch_selection_context() -> void:
+	if globals == null:
+		return
+
+	var scene_path = _get_current_scene_path()
+	if scene_path == "":
+		return
+
+	if globals.selected_theme_folder == "":
+		var theme_folder = _derive_theme_folder_from_scene_path(scene_path)
+		if theme_folder != "":
+			globals.set_selected_theme(theme_folder, theme_folder)
+			_debug_log("_ensure_launch_selection_context(): inferred theme='" + theme_folder + "' from scene path")
+
+	if globals.selected_scenario == "":
+		var scenario_id = scene_path.get_file().get_basename()
+		globals.set_selected_scenario(scenario_id, scene_path)
+		_debug_log("_ensure_launch_selection_context(): inferred scenario='" + scenario_id + "' from scene path")
+
+func _get_current_scene_path() -> String:
+	if scene_file_path != "":
+		return scene_file_path
+	var current_scene = get_tree().current_scene
+	if current_scene != null:
+		return str(current_scene.scene_file_path)
+	return ""
+
+func _derive_theme_folder_from_scene_path(scene_path: String) -> String:
+	var path_parts = scene_path.split("/")
+	var themes_index = path_parts.find("themes")
+	if themes_index != -1 and themes_index + 1 < path_parts.size():
+		return path_parts[themes_index + 1]
+	return ""
 
 # "Place" units according to the ID of their placeholder entity. This means:
 # Fill all atributes of the entity with the values of the entity with the given
@@ -312,9 +354,14 @@ func _create_entity_list():
 		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
 			node.initialize()
-			if node is entity:
-				node.game = self
-				node.globals = globals
+		if node is Entity:
+			node.game = self
+			node.globals = globals
+			if node.type == "entity":
+				node.settingsMgr = settingsMgr
+				node.themeMgr = themeMgr
+				node.gui = GUI
+				node.sfxMgr = sfxMgr
 			var hex_object = self._get_hex_object_from_global_pos(node.get_global_position())
 			var grid_pos = null
 			if hex_object == null:
@@ -497,13 +544,13 @@ func _handle_primary_click(click_pos):
 				# If in attack mode
 				if self.attack_selection == true:
 					# Check if, for the player entity the click pos is a valid attack target
-						if player_unit.is_valid_attack_target(click_pos):
-							var enemy_unit = self._is_unit(click_pos, true).node
-							player_unit.attack(enemy_unit)
-							self.register_attack(player_unit)
-							_clear_action_selection_modes()
-							# Deselect all selectable entities
-							self.deselect_all_entities()
+					if player_unit.is_valid_attack_target(click_pos):
+						var enemy_unit = self._is_unit(click_pos, true).node
+						player_unit.attack(enemy_unit)
+						self.register_attack(player_unit)
+						_clear_action_selection_modes()
+						# Deselect all selectable entities
+						self.deselect_all_entities()
 
 # Process the current turn
 func _end_turn():
@@ -530,8 +577,12 @@ func _update_all_entities():
 func _advance_player_rotation():
 	var _player_active = false
 	var _next_player = ''
+	if players.is_empty():
+		push_warning("Game: Cannot advance player rotation because no players were loaded for the current scenario.")
+		return false
 	# first call of this function
-	if players.size() != self.player_rotation.size():
+	if self.player_rotation.is_empty() or self.active_player == null:
+		self.player_rotation.clear()
 		# set first human player as active
 		for i in range(players.size()):
 			var player = players[i]
@@ -541,6 +592,10 @@ func _advance_player_rotation():
 				self.active_player_rot_index = i
 			# fill player rotation once
 			self.player_rotation.append(player.node.get_id())
+		if self.active_player == null:
+			self.active_player = players[0].node
+			self.active_player.set_active(true)
+			self.active_player_rot_index = 0
 		# for the initial call of this function, nothing more needs to
 		# be done, exit here.
 		return true
@@ -687,6 +742,8 @@ func _show_attack_range_for_selected() -> void:
 func _get_reachable_movement_tiles(selected_entity) -> Array:
 	var result: Array = []
 	if selected_entity == null or selected_entity.node == null:
+		return result
+	if tile_list == null:
 		return result
 	var selected_unit_node = selected_entity.node
 	var max_points = float(selected_unit_node.get_movement_points())
@@ -865,8 +922,6 @@ func _is_unit(given_position, return_unit=false):
 		if every_entity.node.get_type() == 'entity':
 			if every_entity.grid_pos == grid_position:
 				if return_unit == true:
-					# print("Found entity at location "+str(every_entity.node.get_global_position()))
-					# print(every_entity)
 					return every_entity
 				else:
 					return true
@@ -1286,7 +1341,7 @@ func _initialize_managers() -> Variant:
 	# Initialize managers in dependency order:
 	# 1. SettingsManager (no dependencies)
 	# 2. ThemeManager (no dependencies, but provides data to others)
-	# 3. PlayerManager (no dependencies)
+	# 3. PlayerManager (depends on ThemeManager)
 	# 4. WeatherManager (no dependencies)
 	# 5. FactionManager (depends on ThemeManager)
 	# 6. SfxManager (depends on ThemeManager)
@@ -1299,42 +1354,47 @@ func _initialize_managers() -> Variant:
 	
 	if themeMgr != null and is_instance_valid(themeMgr):
 		_debug_log("_initialize_managers(): initializing ThemeManager")
+		themeMgr.game = self
 		await themeMgr.initialize()
 		_debug_log("_initialize_managers(): ThemeManager ready")
+		themeMgr.load_theme(_determine_theme_name())
+		_debug_log("_initialize_managers(): theme loaded")
+		
+		if weatherMgr != null and is_instance_valid(weatherMgr):
+			themeMgr.initialize_weather_from_scenario()
+
+		# Finally pass current scenario ID to themeMgr
+		themeMgr.set_current_scenario_id(globals.selected_scenario)
 	
 	if playerMgr != null and is_instance_valid(playerMgr):
 		_debug_log("_initialize_managers(): initializing PlayerManager")
+		playerMgr.game = self
 		await playerMgr.initialize()
 		_debug_log("_initialize_managers(): PlayerManager ready")
 	
 	if weatherMgr != null and is_instance_valid(weatherMgr):
 		_debug_log("_initialize_managers(): initializing WeatherManager")
+		weatherMgr.game = self
 		await weatherMgr.initialize()
 		_debug_log("_initialize_managers(): WeatherManager ready")
 	
 	if factionMgr != null and is_instance_valid(factionMgr):
 		_debug_log("_initialize_managers(): initializing FactionManager")
+		factionMgr.game = self
 		await factionMgr.initialize()
 		_debug_log("_initialize_managers(): FactionManager ready")
 	
 	if sfxMgr != null and is_instance_valid(sfxMgr):
 		_debug_log("_initialize_managers(): initializing SfxManager")
+		sfxMgr.game = self
 		await sfxMgr.initialize()
 		_debug_log("_initialize_managers(): SfxManager ready")
 	
 	if musicMgr != null and is_instance_valid(musicMgr):
 		_debug_log("_initialize_managers(): initializing MusicManager")
+		musicMgr.game = self
 		await musicMgr.initialize()
 		_debug_log("_initialize_managers(): MusicManager ready")
-	
-	# Now that all managers are initialized, load theme data
-	if themeMgr != null and is_instance_valid(themeMgr):
-		themeMgr.load_theme(_determine_theme_name())
-		_debug_log("_initialize_managers(): theme loaded")
-		
-		# Initialize weather from theme data
-		if weatherMgr != null and is_instance_valid(weatherMgr):
-			themeMgr.initialize_weather_from_theme()
 	
 	_debug_log("_initialize_managers(): all managers initialized")
 	return true
@@ -1343,22 +1403,21 @@ func _initialize_managers() -> Variant:
 func get_map_size() -> Vector2:
 	return self.map_size
 
+func is_setup_complete() -> bool:
+	return _setup_complete
+
+func _snap_runtime_entities_to_grid() -> void:
+	for node in get_children():
+		if node is Entity and node.has_method("_snap_to_grid"):
+			node._snap_to_grid()
+
 # Setup the game after managers are initialized
 func _setup_game():
 	_debug_log("_setup_game(): start")
 	
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
-	# Define players, this should later be done either in the scenario
-	# or the pre-scenario settings for multiplayer matches.
-	var registered_players = [
-		{'id': 0, 'name': 'Human Tester', 'factionID': 'usarmy', 'isHuman': true, 'stances': {'enemies':[1,2],'neutral':[3]}},
-		{'id': 1, 'name': 'Test AI (Dumb)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0,3],'allied':[2]}},
-		{'id': 2, 'name': 'Test AI (Clever)', 'factionID': 'taliban', 'isHuman': false, 'stances': {'enemies':[0],'allied':[1],'neutral':[3]}},
-		{'id': 3, 'name': 'Refugees', 'factionID': 'civilians', 'isHuman': false, 'stances': {'neutral':[0,1,2]}},
-	]
-	players = playerMgr.create_players(registered_players)
-	_debug_log("_setup_game(): players created=" + str(players.size()))
+	players = playerMgr.get_players()
 	
 	# Apply tile definitions from theme (if provided)
 	var theme_tiles = themeMgr.get_tiles()
@@ -1392,6 +1451,9 @@ func _setup_game():
 	_debug_log("_setup_game(): astar_grid built")
 	if debug_show_move_costs:
 		_display_move_costs()
+	# Snap runtime entities only after hex centering data is ready, so the entity
+	# list is built from their final in-game positions.
+	_snap_runtime_entities_to_grid()
 	# Place the units according to their ID and fill attributes.
 	# Create a global list of all entities on the map, their type, positions and nodes
 	entities = self._create_entity_list()

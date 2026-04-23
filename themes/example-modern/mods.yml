@@ -85,6 +85,7 @@ terrain_knowledge:
   modifiers:
     attack_bonus: 1
     base_defense: 2
+    movement_points: 1
 
 cover_light:
   display_name: 'Light Cover'

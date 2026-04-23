@@ -2,39 +2,94 @@
 # First basic implementation, this will likely be extended a lot later on to accomodate complex
 # scenario flows.
 ### Data description
-# id: string | can be anything, will enumerate for now but branching paths may make this obsolete later
-# display_name: string
-# description: string
-# scene: string | path to scene file
-# experience_gain: boolean | If 'true', units can gain experience from actions (getting attacked, attacking) and
+# id: String | can be anything, will enumerate for now but branching paths may make this obsolete later
+# display_name: String
+# description: String
+# scene: String | path to scene file
+# experience_gain: Boolean | If 'true', units can gain experience from actions (getting attacked, attacking) and
 #                            will 'level up' if certain thresholds are reached (defined in factions.yml). If 'false'
 #                            units will always stay at the exp level they start the scenario with.
 # environment: dict
 # time_of_day: int | 0-24, hour of the day. Influences the visual lighting and maybe modifiers.
-# day_night_cycle: boolean | If 'false', time of day won't change. If 'true', each turn will forward the
-# 							 time by one hour, changing "time_of_day" gradually.
-# weather: string | One of 'sunny', 'cloudy', 'overcast', 'rain', 'snow'. May influence unit performance
-#										through modifiers.
-# random_weather: dict | A dictionary containing the weather types that should appear during the scenario. Must
-#												 either be empty (no random weather) or contain one or more of the types from "weather",
-#												 followed by a float value between 0 and 1. All values in this dict added together must
-#												 equal 1.
+# day_night_cycle: Boolean | If 'false', time of day won't change. If 'true', each turn will forward the
+#                            time by one hour, changing "time_of_day" gradually.
+# weather: String | One of 'sunny', 'cloudy', 'overcast', 'rain', 'snow'. May influence unit performance
+#                   through modifiers.
+# random_weather: dict | An object containing the weather types that should appear during the scenario. Must
+#                        either be empty (no random weather) or contain one or more of the types from "weather",
+#                        followed by a float value between 0 and 1. All values in this dict added together must
+#                        equal 1.
 # max_temp: int | The peak temperature in degrees Celsius during the day. If "day_night_cycle" is 'true', the actual
-#									temperature each turn will be calculated using a curve between min and max temperature.
-#									If "day_night_cycle" is 'false', the temperature will be calculated by dividing the difference
-#									between min and max temperature into 24 values and then taking the "time_of_day"-nth value.
+#                 temperature each turn will be calculated using a curve between min and max temperature.
+#                 If "day_night_cycle" is 'false', the temperature will be calculated by dividing the difference
+#                 between min and max temperature into 24 values and then taking the "time_of_day"-nth value.
 # min_temp: int | The minimum temperature in degrees Celsius during the night.
+# players: Array | An array containing player objects, which define what players are present in the scenario.
+#                  A player object looks like:
+#                  id: int | The internal id of the player. Mostly used to reference other players directly here in the definition.
+#                  name: String | The name of the player as visible in the game.
+#                  factionID: String | The faction name according to the theme this scenario belongs to. 
+#                  isHuman: Boolean | Wether this player is controlled by a human or by AI. @TODO Flesh out possibility to select which AI.
+#                  stances: dict | A dictionary with the stances this player has against other players.
+#                                  It may contain (but doesn't have to):
+#                                  enemies: Array | The list of player IDs this player is an enemy of.
+#                                  neutral: Array | The list of player IDs this player is neutral of.
+#                                  allied: Array | The list of player IDs this player is allied to.
+# win_condition: Array | An array of win condition objects.
+#                        A win condition object may be any of the following:
+#                        type: String | The type of win condition. The following types are valid:
+#                                       "hold_hex" - Own 1-n hexes. This can include neutral hexes that need to be 
+#                                                    conquered first or already owned hexes at the start of the scenario.
+#                                       "destroy_units" - Destroy specific 1-n units.
+#                                       "destroy_all_units" - Destroy all units of a specific player.
+#                                       "capture_hex" - Capture a hex and hold it for 1-n turns.
+#                                       "unit_position" - Have a specified unit at a specified place for 1-n turns.
+#                        player: int | The player (by id) for whom this win condition is evaluated.
+#                        target_ids: Array | The unique_ids of the hex_markers which need to be owned for x turns.
+#                        turns: int | The number of turns the hex field/s need to be owned by this player.
+#                        description: String | A description that is shown in-game to track scenario objectives.
+# 
 scenario_1:
-  display_name: 'Skirmish'
+  # Base information 
+  display_name: "Skirmish"
   description: "[b]Welcome to the Skirmish scenario[/b]\n\nThis is a [i]test scenario[/i] with rich text formatting.\n\nYou can include [color=red]colored text[/color], images (when supported), and formatting.\n\nGood luck!"
-  scene: 'scenario_1'
+  scene: "scenario_1"
+  # Environmental definitions like weather and time of day
   environment:
     time_of_day: 12
     day_night_cycle: false
-    weather: 'sunny'
+    weather: "sunny"
     random_weather:
-      - sunny: 0.7
-      - cloudy: 0.3
+      sunny: 0.7
+      cloudy: 0.3
     max_temp: 35
     min_temp: 5
   experience_gain: true
+  # Players (also AI)
+  players:
+    - id: 0
+      name: "Human Tester"
+      factionID: "usarmy"
+      isHuman: true
+      stances:
+        enemies: [1]
+        neutral: [2]
+    - id: 1
+      name: "Standard AI"
+      factionID: "taliban"
+      isHuman: false
+      stances:
+        enemies: [0, 2]
+    - id: 2
+      name: "Neutral Player"
+      factionID: "civilians"
+      isHuman: false
+      stances:
+        enemies: [1]
+        neutral: [0]
+  # Win conditions
+  win_conditions:
+    - type: "capture_hex"
+      marker_ids: ["vp1_balad", "vp2_dudschail", "vp3_tadschi"]
+      turns: 2
+      description: "Force a spearhead over the Tigris and towards Baghdad. Capture the three villages of Balad and Dudschail before forcing the attack on Tadschi."
