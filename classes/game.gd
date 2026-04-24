@@ -52,7 +52,6 @@ signal setup_complete
 @export var map_graphic: Sprite2D
 var map_size = null
 var tile_list = null
-var hex_offset = Vector2(-6, 0)
 var current_tile = null
 var hex_directions = null
 var all_tiles = null
@@ -276,7 +275,8 @@ func _apply_astar_unit_constraints(moving_unit):
 func _update_units():
 	for current_entity in entities:
 		if current_entity.type == 'entity':
-			current_entity.node.update() 
+			current_entity.node._snap_to_grid()
+			current_entity.node.update()
 
 # Check if the given position is a valid move-to destination for the given
 # entity.
@@ -354,14 +354,14 @@ func _create_entity_list():
 		if "type" in node and node.type in allowed_node_types:
 			node.set_id(i)
 			node.initialize()
-		if node is Entity:
-			node.game = self
-			node.globals = globals
-			if node.type == "entity":
-				node.settingsMgr = settingsMgr
-				node.themeMgr = themeMgr
-				node.gui = GUI
-				node.sfxMgr = sfxMgr
+			if node is Entity:
+				node.game = self
+				node.globals = globals
+				if node.type == "entity":
+					node.settingsMgr = settingsMgr
+					node.themeMgr = themeMgr
+					node.gui = GUI
+					node.sfxMgr = sfxMgr
 			var hex_object = self._get_hex_object_from_global_pos(node.get_global_position())
 			var grid_pos = null
 			if hex_object == null:
@@ -685,7 +685,7 @@ func _clear_range_highlights() -> void:
 # @returns {Void}
 func _render_range_highlights(grid_positions: Array, color_name: String, opacity: float = 0.35) -> void:
 	if range_overlay != null and range_overlay.has_method("set_highlight_tiles"):
-		range_overlay.set_highlight_tiles(grid_positions, hexmap, hex_offset, globals, color_name, opacity)
+		range_overlay.set_highlight_tiles(grid_positions, hexmap, globals, color_name, opacity)
 		return
 	for grid_pos in grid_positions:
 		_set_hex_fill(hexmap.map_to_global(grid_pos), color_name, RANGE_VIS_NODE_NAME, opacity)
@@ -979,8 +979,8 @@ func highlight_hex(given_position):
 # @input {Vector2} global position of hex
 # @output {Vector2} global position of center of hex
 func get_center_of_hex(given_position):
-	return Vector2(given_position.x + self.hex_offset.x,
-				   given_position.y + self.hex_offset.y)
+	return Vector2(given_position.x,
+				   given_position.y)
 
 # Determine path from tile to tile, all coordinates are global
 # @input {Vector2} start_position, from this the start tile is derived
@@ -1432,7 +1432,6 @@ func _setup_game():
 		_debug_log("_setup_game(): music manager play() called")
 	else:
 		_debug_log("_setup_game(): headless run, skipping music playback")
-	hex_offset = Vector2(-6,0) # @TODO Magic numbers! Why? How?
 	# This table serves as easy shortcut for the grid local coordinate change
 	# that needs to be done when a neighbour of a hex tile has to be found.
 	# The mapping is identical for odd and even, so hex_directions[0] always

@@ -1,4 +1,4 @@
-extends "res://classes/entity.gd"
+extends Entity
 
 # Public class members
 
@@ -288,6 +288,8 @@ func _ready():
 	set_state(UnitState.IDLE)
 	_debug_log("_ready(): node='" + name + "', unit_id='" + str(unit_id) + "', unit_faction='" + str(unit_faction) + "'")
 	combat_debug = settingsMgr.get_combat_debug()
+	# Call the base class ready function
+	super._ready()
 
 func _input(_event):
 	pass

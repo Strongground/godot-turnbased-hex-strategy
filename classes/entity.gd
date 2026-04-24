@@ -31,6 +31,7 @@ func _ready():
 func _physics_process(_delta):
 	if Engine.is_editor_hint():
 		self._snap_to_grid()
+		return
 
 func initialize():
 	pass
@@ -121,7 +122,7 @@ func _snap_to_grid():
 	if hexmap == null or root == null:
 		return
 	var grid_coords = hexmap.global_to_map(self.get_global_position())
-	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(-6,0))
+	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(0,0))
 	if world_coords == null:
 		return
 	self.set_position(world_coords)

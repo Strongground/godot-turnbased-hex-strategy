@@ -1,8 +1,8 @@
-extends "res://classes/entity.gd"
+extends Entity
 
 ## public class members
 @export var map_text = ""
-@export_enum("VILLAGE", "VICTORY", "REINFORCEMENT") var marker_type: String = "VILLAGE"
+@export_enum("SETTLEMENT", "VICTORY", "REINFORCEMENT") var marker_type: String = "SETTLEMENT"
 @export var location_owner: String = ""
 
 ## internal class members go here
@@ -25,7 +25,10 @@ func _ready():
 	self.type = 'editor_marker'
 	self.hex_label_template = root.find_child('HexLabelTemplate', true, false)
 	self.icon = find_child('Icon', true, false)
+	# This entity can hold units
 	set_container(true)
+	# Call the base class ready function
+	super._ready()
 	
 	# Finally hide the marker in-game
 	self.icon.hide()
