@@ -570,8 +570,7 @@ func _update_all_entities():
 			current_entity.node.reset_movement_points()
 			current_entity.node.update_timed_modifiers()
 		elif current_entity.type == 'editor_marker':
-			if current_entity.node.get_marker_type() == 'VICTORY':
-				current_entity.node.check_ownership()
+			current_entity.node.check_ownership()
 
 # Internal function to advance player rotation, normally when turn ends.
 func _advance_player_rotation():
@@ -741,7 +740,7 @@ func _show_attack_range_for_selected() -> void:
 # @returns {Array} array of reachable grid positions (Vector2i)
 func _get_reachable_movement_tiles(selected_entity) -> Array:
 	var result: Array = []
-	if selected_entity == null or selected_entity.node == null:
+	if selected_entity == null or selected_entity.node == null or tile_list == null:
 		return result
 	if tile_list == null:
 		return result
@@ -1359,13 +1358,13 @@ func _initialize_managers() -> Variant:
 		_debug_log("_initialize_managers(): ThemeManager ready")
 		themeMgr.load_theme(_determine_theme_name())
 		_debug_log("_initialize_managers(): theme loaded")
-		
+
 		if weatherMgr != null and is_instance_valid(weatherMgr):
 			themeMgr.initialize_weather_from_scenario()
 
 		# Finally pass current scenario ID to themeMgr
 		themeMgr.set_current_scenario_id(globals.selected_scenario)
-	
+
 	if playerMgr != null and is_instance_valid(playerMgr):
 		_debug_log("_initialize_managers(): initializing PlayerManager")
 		playerMgr.game = self
@@ -1418,7 +1417,7 @@ func _setup_game():
 	# Set hex grid to not visible
 	hex_grid.modulate.a = 0
 	players = playerMgr.get_players()
-	
+
 	# Apply tile definitions from theme (if provided)
 	var theme_tiles = themeMgr.get_tiles()
 	if typeof(theme_tiles) == TYPE_ARRAY and not theme_tiles.is_empty():

@@ -558,8 +558,8 @@ func get_experience_points():
 
 # Public getter for owning players ID
 # @returns {String} ID of owning player
-func get_owner_id() -> String:
-	return str(self.unit_owner)
+func get_owner_id() -> int:
+	return self.unit_owner
 
 # This function returns a boolean indicating if the currently active player
 # is the owner of this entity.

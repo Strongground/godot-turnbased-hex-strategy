@@ -327,12 +327,14 @@ func _generate_flipped_version(sprite_path, target_path):
 		else:
 			_debug_log("_generate_flipped_version(): wrote flipped sprite successfully.")
 
+# This function takes a sprite path and builds the path for the flipped version of this sprite.
 func _build_flipped_sprite_path(sprite_path):
 	var extension = '.' + standard_sprite_format
 	if sprite_path.ends_with(extension):
 		return sprite_path.substr(0, sprite_path.length() - extension.length()) + '-1' + extension
 	return sprite_path + '-1.' + standard_sprite_format
 
+# Takes a path and checks if it is already an absolute path. If not, it adds the theme base path in front of it.
 func _to_theme_resource_path(path):
 	var normalized = str(path)
 	if normalized.begins_with('res://') or normalized.begins_with('user://'):
