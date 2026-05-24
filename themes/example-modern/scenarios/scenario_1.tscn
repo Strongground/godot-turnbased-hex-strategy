@@ -63,7 +63,6 @@ mute_music_on_start = true
 position = Vector2(-442, 653)
 script = ExtResource("3_8na6e")
 weather_mgr = NodePath("../WeatherManager")
-debug_logging = false
 
 [node name="PlayerManager" type="Node2D" parent="." unique_id=2061554447]
 position = Vector2(-447, 529)
@@ -131,176 +130,180 @@ texture = ExtResource("34_a7u5s")
 script = ExtResource("42_range")
 fill_texture = ExtResource("17_wrybb")
 
-[node name="Editor_Marker" parent="." unique_id=102055624 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker" parent="." unique_id=102055624 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1076, 741)
 map_text = "Balad"
-location_owner = "0"
+marker_type = "VICTORY"
+location_owner = 0
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker9" parent="." unique_id=1360000931 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker9" parent="." unique_id=1360000931 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1185, 425)
 map_text = "Dhuluija"
-location_owner = "0"
+location_owner = 0
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker10" parent="." unique_id=730390909 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker10" parent="." unique_id=730390909 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(406, 106)
 map_text = "Samarra"
 marker_type = "VICTORY"
-location_owner = "0"
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker18" parent="." unique_id=891208656 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker18" parent="." unique_id=891208656 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(965, 168)
+map_text = null
 marker_type = "REINFORCEMENT"
-location_owner = "0"
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker19" parent="." unique_id=182244197 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker19" parent="." unique_id=182244197 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(741, 167)
+map_text = null
 marker_type = "REINFORCEMENT"
-location_owner = "0"
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker22" parent="." unique_id=1015019072 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker22" parent="." unique_id=1015019072 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(851, 104)
 map_text = "US Provisional Airstrip"
 marker_type = "REINFORCEMENT"
-location_owner = "0"
+location_owner = 0
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker21" parent="." unique_id=1913822920 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker21" parent="." unique_id=1913822920 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(854, 233)
+map_text = null
 marker_type = "REINFORCEMENT"
-location_owner = "0"
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker1" parent="." unique_id=606835865 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker1" parent="." unique_id=606835865 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1406, 1573)
 map_text = "Tadschi"
 marker_type = "VICTORY"
-location_owner = "2"
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker8" parent="." unique_id=1607576183 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker8" parent="." unique_id=1607576183 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1074, 1128)
 map_text = "Dudschail"
-location_owner = "0"
+marker_type = "VICTORY"
+location_owner = 0
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker2" parent="." unique_id=1334685804 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker2" parent="." unique_id=1334685804 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(2072, 1063)
 map_text = "al-Chalis"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker6" parent="." unique_id=1369869592 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker6" parent="." unique_id=1369869592 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(2407, 1255)
 map_text = "Abu Khanazir"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker3" parent="." unique_id=1813821288 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker3" parent="." unique_id=1813821288 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(2408, 1512)
 map_text = "Zwhraa"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker4" parent="." unique_id=132137703 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker4" parent="." unique_id=132137703 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(2074, 1833)
 map_text = "Baquba"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker12" parent="." unique_id=858454807 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker12" parent="." unique_id=858454807 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(751, 2214)
 map_text = "Ibrahim Bin Ali"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker13" parent="." unique_id=1786520603 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker13" parent="." unique_id=1786520603 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(300, 2472)
 map_text = "Abu Ghuraib"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker14" parent="." unique_id=1879601913 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker14" parent="." unique_id=1879601913 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(966, 2731)
 map_text = "Baghdad International Airport"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker15" parent="." unique_id=199448382 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker15" parent="." unique_id=199448382 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1184, 2600)
 map_text = "Baghdad al-Amiriya"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker16" parent="." unique_id=1036877863 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker16" parent="." unique_id=1036877863 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1521, 2665)
 map_text = "Baghdad Karrada"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker17" parent="." unique_id=2029544508 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker17" parent="." unique_id=2029544508 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(1523, 2411)
 map_text = "Baghdad Sadr City"
-location_owner = "1"
+marker_type = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker5" parent="." unique_id=1113697134 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker5" parent="." unique_id=1113697134 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(3186, 679)
 map_text = "al-Muqdadiyya"
+marker_type = null
+location_owner = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Editor_Marker11" parent="." unique_id=1568638235 node_paths=PackedStringArray("playerMgr", "themeMgr", "game") instance=ExtResource("35_q88fy")]
+[node name="Editor_Marker11" parent="." unique_id=1568638235 node_paths=PackedStringArray("playerMgr", "themeMgr") instance=ExtResource("35_q88fy")]
 position = Vector2(2965, 425)
 map_text = "Sharwain"
+marker_type = null
+location_owner = null
 playerMgr = NodePath("../PlayerManager")
 themeMgr = NodePath("../ThemeManager")
-game = NodePath("..")
+selectable = null
 
-[node name="Unit" parent="." unique_id=1913522057 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit" parent="." unique_id=1913522057 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(960, 1192)
 unit_faction = "usarmy"
 unit_id = "hmmwv_tow"
@@ -309,9 +312,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit11" parent="." unique_id=240381712 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit11" parent="." unique_id=240381712 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(851, 110)
 unit_faction = "usarmy"
 graphical_scheme = 1
@@ -321,10 +323,9 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit3" parent="." unique_id=1426823841 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
-position = Vector2(1077, 745)
+[node name="Unit3" parent="." unique_id=1426823841 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
+position = Vector2(1054, 777)
 unit_faction = "usarmy"
 unit_id = "us_truck_cargo_general"
 supply_storage_fuel = 20
@@ -335,9 +336,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit2" parent="." unique_id=1194270884 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit2" parent="." unique_id=1194270884 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(967, 1067)
 unit_faction = "usarmy"
 graphical_scheme = 1
@@ -347,29 +347,26 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit8" parent="." unique_id=281909078 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
-position = Vector2(1183, 681)
+[node name="Unit8" parent="." unique_id=281909078 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
+position = Vector2(1214, 683)
 unit_faction = "usarmy"
 unit_id = "us_infantry_rifles"
 settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit9" parent="." unique_id=681682727 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
-position = Vector2(1188, 426)
+[node name="Unit9" parent="." unique_id=681682727 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
+position = Vector2(1187, 428)
 unit_faction = "usarmy"
 unit_id = "us_infantry_rifles"
 settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit10" parent="." unique_id=1991337894 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit10" parent="." unique_id=1991337894 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(1518, 488)
 unit_faction = "usarmy"
 unit_id = "us_infantry_rifles"
@@ -377,9 +374,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit7" parent="." unique_id=1219676073 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit7" parent="." unique_id=1219676073 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(1074, 1129)
 unit_faction = "usarmy"
 unit_id = "us_infantry_rifles"
@@ -388,9 +384,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit4" parent="." unique_id=2048548445 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit4" parent="." unique_id=2048548445 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(1290.979, 1386.0336)
 unit_owner = 1
 unit_faction = "taliban"
@@ -399,9 +394,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit6" parent="." unique_id=1068954032 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit6" parent="." unique_id=1068954032 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(1396.3596, 1321.6278)
 unit_owner = 1
 unit_faction = "taliban"
@@ -410,9 +404,8 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
-[node name="Unit5" parent="." unique_id=315177860 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr", "game") instance=ExtResource("37_aerme")]
+[node name="Unit5" parent="." unique_id=315177860 node_paths=PackedStringArray("settingsMgr", "themeMgr", "gui", "sfxMgr") instance=ExtResource("37_aerme")]
 position = Vector2(1399.2083, 1447.7244)
 unit_owner = 1
 unit_faction = "taliban"
@@ -421,7 +414,6 @@ settingsMgr = NodePath("../SettingsManager")
 themeMgr = NodePath("../ThemeManager")
 gui = NodePath("../UI/GUI")
 sfxMgr = NodePath("../SfxManager")
-game = NodePath("..")
 
 [node name="Control" type="Control" parent="." unique_id=27170619]
 layout_mode = 3
@@ -473,6 +465,7 @@ public_camera_zoom_speed = 0.008
 [node name="UI" type="CanvasLayer" parent="." unique_id=749754727]
 
 [node name="GUI" parent="UI" unique_id=1220723568 node_paths=PackedStringArray("hexmap", "game", "unit_info_popup", "theme_mgr", "shown_unit_name", "unit_info_strength", "unit_info_actionpoints", "unit_info_ammo", "hexgrid_overlay") instance=ExtResource("11_wrybb")]
+visible = false
 anchors_preset = 15
 anchor_top = 0.0
 grow_vertical = 2

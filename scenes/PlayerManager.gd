@@ -59,7 +59,7 @@ func _get_theme_manager() -> Node:
 		return game.themeMgr
 	return null
 
-func _set_player_stances(player_options):
+func _set_player_stances(player_options: Array) -> void:
 	for player_entry in self.players:
 		for player_option in player_options:
 			var player = player_entry.node
@@ -86,17 +86,17 @@ func get_players():
 # Get a player object by its id from the list of players.
 # @returns {Object | False} If a player object with the given ID can
 # be found, it is returned. Otherwise, false is returned.
-func get_player_by_id(id):
+func get_player_by_id(id: int) -> Variant:
 	for player in self.players:
-		if str(player.node.get_id()) == str(id):
+		if player.node.get_id() == id:
 			return player
 	return false
 
 # Public getter to return faction ID of player
-# @input {String} ID of player
-# @returns {String} ID of faction of player
-func get_player_faction(id):
+# @input {int} ID of player
+# @returns {int} ID of faction of player
+func get_player_faction(id: int) -> Variant:
 	for player in self.players:
-		if str(player.node.get_id()) == str(id):
+		if player.node.get_id() == id:
 			return player.node.get_faction_id()
 	return false

@@ -10,11 +10,11 @@ class_name Entity extends Area2D
 @export var unique_id: String = ''
 
 ### internal class member variables
-@onready var root = get_tree().current_scene
+@onready var root = get_tree().get_edited_scene_root() if Engine.is_editor_hint() else get_tree().current_scene
 @export var game: Node
 @export var globals: Node
 @onready var hex_outline = find_child("HexOutline", true, false)
-@onready var hexmap = root.find_child("MapZones", true, false)
+@onready var hexmap = root.find_child("MapZones", true, false) if root != null else null
 var selected: bool = false
 var type: String = ''
 var path: Array = []
@@ -31,6 +31,7 @@ func _ready():
 func _physics_process(_delta):
 	if Engine.is_editor_hint():
 		self._snap_to_grid()
+		return
 
 func initialize():
 	pass
@@ -118,10 +119,10 @@ func _hide_marker():
 
 # Snap entity to the next suitable hex-tile
 func _snap_to_grid():
-	if hexmap == null or root == null:
+	if hexmap == null:
 		return
 	var grid_coords = hexmap.global_to_map(self.get_global_position())
-	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(-6,0))
+	var world_coords = _get_centered_grid_pos(grid_coords, Vector2(0,0))
 	if world_coords == null:
 		return
 	self.set_position(world_coords)

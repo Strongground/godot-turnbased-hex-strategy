@@ -6,14 +6,14 @@ extends Node2D
 # A player can have a stance towards other players.
 
 # Basic members
-var active = false
-var faction = 0
-var is_human_player = true
-var player_name = ''
-var identifer = 0
-var enemies = []
-var neutrals = []
-var allies = []
+var active: bool = false
+var faction: String = ""
+var is_human_player: bool = true
+var player_name: String = ''
+var identifer: int = 0
+var enemies: Array = []
+var neutrals: Array = []
+var allies: Array = []
 
 func _ready():
 	pass
@@ -31,7 +31,7 @@ func create(playerName, factionID=null, isHuman=false, id=null):
 		var tempName = "UnknownPlayer" + str(self.get_instance_id())
 		self.set_player_name(tempName)
 	if factionID == null:
-		self.faction = 0
+		self.faction = ""
 	else:
 		self.faction = factionID
 	if isHuman:
@@ -46,9 +46,8 @@ func get_player_name():
 	return self.player_name
 
 # To get Godots node ID, use player.id, to get custom ID the
-# game logic actually uses, use this
-# public getter.
-func get_id():
+# game logic actually uses, use this public getter.
+func get_id() -> int:
 	return self.identifer
 
 # To set the custom game ID, use this public setter.
@@ -63,11 +62,11 @@ func is_active():
 func set_active(active):
 	self.active = active
 
-# Public getter to get the faction this players plays as.
+# Public getter to get the faction this player plays as.
 func get_faction():
 	return $FactionManager.get_faction(self.faction)
 
-# Public getter to get faction ID this players plays as.
+# Public getter to get faction ID this player plays as.
 func get_faction_id():
 	return faction
 

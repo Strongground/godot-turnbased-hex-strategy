@@ -27,12 +27,11 @@ func clear_highlights() -> void:
 # Set highlighted tiles by grid positions and redraw as polygons.
 # @input {Array} grid_positions - grid local tile positions (Vector2i)
 # @input {TileMapLayer} hexmap - tilemap to resolve grid to world coordinates
-# @input {Vector2} hex_offset - center offset used by game.get_center_of_hex()
 # @input {Node} globals - global helper for named colors
 # @input {String} color_name - named color key for globals.getColor()
 # @input {float} opacity - fill opacity from 0.0 to 1.0; set to 0.0 for outline only
 # @returns {Void}
-func set_highlight_tiles(grid_positions: Array, hexmap: TileMapLayer, hex_offset: Vector2, globals: Node, color_name: String, opacity: float = 0.35) -> void:
+func set_highlight_tiles(grid_positions: Array, hexmap: TileMapLayer, globals: Node, color_name: String, opacity: float = 0.35) -> void:
 	_fill_polygons.clear()
 	_boundary_segments.clear()
 	if hexmap == null or globals == null:
@@ -47,7 +46,7 @@ func set_highlight_tiles(grid_positions: Array, hexmap: TileMapLayer, hex_offset
 	var edge_points: Dictionary = {}
 	for grid_pos in grid_positions:
 		var world_pos = hexmap.map_to_global(Vector2i(grid_pos))
-		var center = Vector2(world_pos.x + hex_offset.x, world_pos.y + hex_offset.y)
+		var center = Vector2(world_pos.x, world_pos.y)
 		var polygon = _build_hex_polygon(center, hexmap.get_cell_size())
 		if fill_opacity > 0.0:
 			_fill_polygons.append({"points": polygon, "color": fill_color})
